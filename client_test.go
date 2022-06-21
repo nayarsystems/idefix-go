@@ -2,7 +2,6 @@ package idefixgo
 
 import (
 	"context"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,13 +13,11 @@ func TestPublish(t *testing.T) {
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
-		Address:       "jaime-test",
-		Token:         "jaime-token",
+		Address:       "test",
+		Token:         "token",
 	})
 
-	if err != nil {
-		log.Fatalln(err)
-	}
+	require.NoError(t, err)
 
 	err = imc.Publish("5c9719505534d914", &Message{
 		To:       "asdf",
@@ -29,5 +26,16 @@ func TestPublish(t *testing.T) {
 	})
 
 	require.NoError(t, err)
+}
 
+func TestUnauthorized(t *testing.T) {
+	_, err := NewClient(context.Background(), &ConnectionOptions{
+		BrokerAddress: "tcp://localhost:1883",
+		Encoding:      "mg",
+		CACert:        cert.CaCert,
+		Address:       "test",
+		Token:         "tokenn",
+	})
+
+	require.Error(t, err)
 }

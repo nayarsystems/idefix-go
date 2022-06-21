@@ -1,11 +1,9 @@
 package idefixgo
 
 import (
+	"context"
 	"fmt"
 	"time"
-
-	"github.com/nayarsystems/pubsub-go/ps"
-	"gitlab.com/garagemakers/idefix/core/idefix"
 )
 
 func (im *Client) Publish(remoteAddress string, msg *Message) error {
@@ -13,17 +11,34 @@ func (im *Client) Publish(remoteAddress string, msg *Message) error {
 	return im.sendMessage(msg)
 }
 
-func (im *Client) Call(remoteAddress string, msg *Message, timeout time.Duration) (*ps.Msg, error) {
+func (im *Client) Call(remoteAddress string, msg *Message, timeout time.Duration) (interface{}, error) {
 	msg.To = fmt.Sprintf("%s.%s", remoteAddress, msg.To)
 	msg.Response, _ = randSessionID()
 
-	su := ps.NewSubscriber(1, msg.Response)
-	im.sendMessage(msg)
+	ch := make(chan *Message, 1)
+	im.ps.RegisterChannel(msg.Response, ch)
 
-	ret := su.GetWithCtx(im.ctx, timeout)
-	if ret == nil {
-		return nil, idefix.ErrInvalidParams
+	defer close(ch)
+	defer im.ps.UnregisterChannel(msg.Response, ch)
+
+	if err := im.sendMessage(msg); err != nil {
+		return nil, err
 	}
 
-	return ret, nil
+	ctx, cancel := context.WithDeadline(im.ctx, time.Now().Add(timeout))
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ErrTimeout
+		case m, ok := <-ch:
+			if !ok {
+				return nil, ErrChannelClosed
+			}
+			if m.To == msg.Response {
+				return m.Data, m.Err
+			}
+		}
+	}
 }

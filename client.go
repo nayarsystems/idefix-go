@@ -16,15 +16,13 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/vmihailenco/msgpack/v5"
-	"gitlab.com/garagemakers/idefix/core/idefix"
+	"gitlab.com/garagemakers/idefix-go/minips"
 	"gitlab.com/garagemakers/idefix/core/idefix/normalize"
-	"gitlab.com/garagemakers/idefix/modules/transport/transportMqtt"
 )
 
 func NewClient(pctx context.Context, opts *ConnectionOptions) (*Client, error) {
 	im := &Client{
-		opts:     opts,
-		Encoding: opts.Encoding,
+		opts: opts,
 	}
 
 	if err := im.connect(pctx, opts.BrokerAddress, opts.CACert); err != nil {
@@ -35,14 +33,13 @@ func NewClient(pctx context.Context, opts *ConnectionOptions) (*Client, error) {
 		return nil, err
 	}
 
-	time.Sleep(time.Second * 3)
 	return im, nil
 }
 
 func (im *Client) connect(pctx context.Context, brokerAddress string, CACert []byte) (err error) {
 	im.ctx, im.cancelFunc = context.WithCancel(pctx)
 	im.prefix = MqttIdefixPrefix
-	im.Messages = make(chan *Message, 100)
+	im.ps = minips.NewMinips[*Message]()
 	im.compThreshold = 128
 
 	opts := mqtt.NewClientOptions()
@@ -83,8 +80,6 @@ func (im *Client) connect(pctx context.Context, brokerAddress string, CACert []b
 		return token.Error()
 	}
 
-	fmt.Printf("%#v\n", im)
-
 	return nil
 }
 
@@ -101,20 +96,24 @@ func (im *Client) login(deviceAddress string, deviceToken string, meta map[strin
 	im.token = deviceToken
 
 	lm := loginMsg{
-		Address:  deviceAddress,
-		Token:    deviceToken,
-		Encoding: im.Encoding,
+		Address:  im.opts.Address,
+		Token:    im.opts.Token,
+		Encoding: im.opts.Encoding,
+		Meta:     im.opts.Meta,
 		Time:     time.Now().UnixMilli(),
-		Meta:     meta,
 	}
 
 	tm := &Message{
-		To:       TopicTransportLogin,
-		Response: im.responseTopic(),
-		Data:     lm,
+		To:   "login",
+		Data: lm,
 	}
 
-	return im.sendMessage(tm)
+	_, err = im.Call("idefix", tm, time.Second*3)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func randSessionID() (string, error) {
@@ -132,7 +131,7 @@ func (im *Client) sendMessage(tm *Message) (err error) {
 	var marshalErr error
 	var data []byte
 
-	if strings.Contains(im.Encoding, "j") && !marshaled {
+	if strings.Contains(im.opts.Encoding, "j") && !marshaled {
 		marshaled = true
 		flags += "j"
 		if v, ok := tm.Data.(map[string]interface{}); ok {
@@ -144,7 +143,7 @@ func (im *Client) sendMessage(tm *Message) (err error) {
 		}
 	}
 
-	if strings.Contains(im.Encoding, "m") && !marshaled {
+	if strings.Contains(im.opts.Encoding, "m") && !marshaled {
 		marshaled = true
 		flags += "m"
 		if v, ok := tm.Data.(map[string]interface{}); ok {
@@ -157,7 +156,7 @@ func (im *Client) sendMessage(tm *Message) (err error) {
 	}
 
 	if marshalErr != nil {
-		return idefix.ErrMarshall
+		return ErrMarshall
 	}
 
 	if !marshaled {
@@ -166,7 +165,7 @@ func (im *Client) sendMessage(tm *Message) (err error) {
 
 	var compressed bool
 
-	if strings.Contains(im.Encoding, "g") && !compressed {
+	if strings.Contains(im.opts.Encoding, "g") && !compressed {
 		buf := new(bytes.Buffer)
 		wr := gzip.NewWriter(buf)
 		n, err := wr.Write(data)
@@ -188,20 +187,18 @@ func (im *Client) sendMessage(tm *Message) (err error) {
 
 func (im *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 	if !strings.HasPrefix(msg.Topic(), im.responseTopic()) {
-		idefix.Warnf(im.ctx, "received alien message with topic: %s", msg.Topic())
 		return
 	}
 
 	topicChuncks := strings.Split(msg.Topic(), "/")
 	if len(topicChuncks) != 4 {
-		idefix.Warnf(im.ctx, "received invalid topic: %s", msg.Topic())
 		return
 	}
 
 	flags := topicChuncks[3]
 	payload := msg.Payload()
 
-	var tm transportMqtt.TransportMsg
+	var tm transportMsg
 	var unmarshalErr error
 	var unmarshaled bool
 
@@ -213,7 +210,7 @@ func (im *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 			gzr.Close()
 		}
 		if err != nil {
-			idefix.Warnf(im.ctx, "can't decompress gzip: %v", err)
+			fmt.Printf("can't decompress gzip: %v\n", err)
 			return
 		}
 	}
@@ -229,12 +226,12 @@ func (im *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	if unmarshalErr != nil {
-		idefix.Warnf(im.ctx, "unmarshal error decoding message: %v", unmarshalErr)
+		fmt.Printf("unmarshal error decoding message: %v\n", unmarshalErr)
 		return
 	}
 
 	if !unmarshaled {
-		idefix.Warnf(im.ctx, "unmarshal error: codec not found ")
+		fmt.Println("unmarshal error: codec not found ")
 		return
 	}
 
@@ -251,12 +248,12 @@ func (im *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 	if msiData, ok := tm.Data.(map[string]interface{}); ok {
 		err := normalize.DecodeTypes(msiData)
 		if err != nil {
-			// idefix.Warnf(im.ctx, "error decoding message types %s")
+			// fmt.Printf(im.ctx, "error decoding message types %s")
 			return
 		}
 	}
 
-	im.Messages <- &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err}
+	im.ps.Publish(tm.To, &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err})
 }
 
 func (im *Client) connectionLostHandler(client mqtt.Client, err error) {

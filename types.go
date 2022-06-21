@@ -3,6 +3,8 @@ package idefixgo
 import (
 	"context"
 
+	"gitlab.com/garagemakers/idefix-go/minips"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -17,8 +19,17 @@ type Client struct {
 	sessionID     string
 	ctx           context.Context
 	cancelFunc    context.CancelFunc
+	ps            *minips.Minips[*Message]
+}
 
-	Messages chan *Message
+type transportMsg struct {
+	Res         string      `json:"r,omitempty" msgpack:"re,omitempty"`
+	To          string      `json:"t" msgpack:"to"`
+	Err         error       `json:"e,omitempty" msgpack:"er,omitempty"`
+	Data        interface{} `json:"d,omitempty" msgpack:"dt,omitempty"`
+	SrcSession  string
+	SrcAddress  string
+	SrcEncoding string
 }
 
 type loginMsg struct {
@@ -41,7 +52,7 @@ type Message struct {
 	To       string      `json:"to" msgpack:"to"`
 	Response string      `json:"re" msgpack:"re"`
 	Data     interface{} `json:"dt" msgpack:"dt"`
-	Err      string      `json:"er" msgpack:"er"`
+	Err      error       `json:"er" msgpack:"er"`
 }
 
 type ConnectionOptions struct {
