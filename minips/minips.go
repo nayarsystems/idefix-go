@@ -35,6 +35,10 @@ func (mp *Minips[T]) UnregisterChannel(topic string, ch chan T) {
 	mp.m.Lock()
 	defer mp.m.Unlock()
 
+	mp.unregisterChannelSafe(topic, ch)
+}
+
+func (mp *Minips[T]) unregisterChannelSafe(topic string, ch chan T) {
 	list, ok := mp.topics[topic]
 	if !ok {
 		return
@@ -48,6 +52,19 @@ func (mp *Minips[T]) UnregisterChannel(topic string, ch chan T) {
 
 	if len(mp.topics[topic]) == 0 {
 		delete(mp.topics, topic)
+	}
+}
+
+func (mp *Minips[T]) UnregisterChannelFromAll(ch chan T) {
+	mp.m.RLock()
+	defer mp.m.RUnlock()
+
+	for topic, chans := range mp.topics {
+		for _, ch2 := range chans {
+			if ch2 == ch {
+				mp.unregisterChannelSafe(topic, ch)
+			}
+		}
 	}
 }
 

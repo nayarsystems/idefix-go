@@ -50,3 +50,18 @@ func TestMinipsInt(t *testing.T) {
 	mp.Publish("test1.asdf.qwe", 123)
 	require.Equal(t, 1, len(ch1))
 }
+
+func TestMinipsUnregAll(t *testing.T) {
+	mp := NewMinips[int]()
+
+	ch1 := make(chan int, 100)
+
+	mp.RegisterChannel("test1", ch1)
+	mp.RegisterChannel("test2", ch1)
+	mp.RegisterChannel("test3", ch1)
+	mp.RegisterChannel("test4", ch1)
+
+	mp.UnregisterChannelFromAll(ch1)
+
+	require.Equal(t, 0, len(mp.topics))
+}
