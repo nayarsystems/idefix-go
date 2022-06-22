@@ -1,25 +1,5 @@
 package idefixgo
 
-import (
-	"context"
-
-	"gitlab.com/garagemakers/idefix-go/minips"
-
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-)
-
-type Client struct {
-	opts          *ClientOptions
-	Encoding      string
-	compThreshold int
-	prefix        string
-	client        mqtt.Client
-	sessionID     string
-	ctx           context.Context
-	cancelFunc    context.CancelFunc
-	ps            *minips.Minips[*Message]
-}
-
 type transportMsg struct {
 	Res         string      `json:"r,omitempty" msgpack:"re,omitempty"`
 	To          string      `json:"t" msgpack:"to"`

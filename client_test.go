@@ -82,3 +82,33 @@ func TestStream(t *testing.T) {
 	require.Equal(t, "test", e.Data)
 
 }
+
+func TestConnectionHandler(t *testing.T) {
+	c := NewClient(context.Background(), &ClientOptions{
+		BrokerAddress: "tcp://localhost:1883",
+		Encoding:      "mg",
+		CACert:        cert.CaCert,
+		Address:       "test",
+		Token:         "token",
+	})
+
+	statuses := []ConnectionStatus{}
+
+	c.ConnectionStatusHandler = func(c *Client, cs ConnectionStatus) {
+		statuses = append(statuses, cs)
+	}
+
+	err := c.Connect()
+	require.NoError(t, err)
+	require.Equal(t, Connected, c.Status())
+
+	err = c.Connect()
+	require.Error(t, err)
+
+	c.Disconnect()
+
+	err = c.Connect()
+	require.NoError(t, err)
+
+	require.Equal(t, []ConnectionStatus{Connected, Disconnected, Connected}, statuses)
+}
