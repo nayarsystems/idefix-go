@@ -253,7 +253,9 @@ func (c *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 		}
 	}
 
-	c.ps.Publish(tm.To, &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err})
+	if n := c.ps.Publish(tm.To, &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err}); n == 0 {
+		fmt.Println("Lost message:", tm.To)
+	}
 }
 
 func (c *Client) connectionLostHandler(client mqtt.Client, err error) {
