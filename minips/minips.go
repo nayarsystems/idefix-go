@@ -140,11 +140,12 @@ func (mp *Minips[T]) unregisterChannelFromAll(ch chan T) {
 	}
 }
 
-func (mp *Minips[T]) Publish(topic string, elem T) {
+func (mp *Minips[T]) Publish(topic string, elem T) uint {
 	mp.m.Lock()
 	defer mp.m.Unlock()
+	var receivers uint
 
-	mp.publishTopic(topic, elem)
+	receivers += mp.publishTopic(topic, elem)
 
 	re := regexp.MustCompile(`^(.*)[.][^.]+$`)
 	remainder := topic
@@ -152,15 +153,15 @@ func (mp *Minips[T]) Publish(topic string, elem T) {
 	for {
 		match := re.FindStringSubmatch(remainder)
 		if match == nil {
-			return
+			return receivers
 		}
 
 		remainder = match[1]
-		mp.publishTopic(remainder, elem)
+		receivers += mp.publishTopic(remainder, elem)
 	}
 }
 
-func (mp *Minips[T]) publishTopic(topic string, elem T) {
+func (mp *Minips[T]) publishTopic(topic string, elem T) uint {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("recovered:", r)
@@ -169,15 +170,20 @@ func (mp *Minips[T]) publishTopic(topic string, elem T) {
 
 	list, ok := mp.topics[topic]
 	if !ok {
-		return
+		return 0
 	}
+
+	var receivers uint
 
 	for _, v := range list {
 		select {
 		case v <- elem:
+			receivers++
 		default:
 		}
 	}
+
+	return receivers
 }
 
 func (mp *Minips[T]) Close() {

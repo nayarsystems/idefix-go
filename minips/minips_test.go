@@ -19,17 +19,21 @@ func TestMinips(t *testing.T) {
 	mp.registerChannel("test2", ch2)
 	mp.registerChannel("test1", ch11)
 
-	mp.Publish("test1.asdf.qwe", "hola")
+	np := mp.Publish("test1.asdf.qwe", "hola")
+	require.Equal(t, uint(2), np)
+
 	mp.Publish("test1.asdf", "hola")
 	mp.Publish("test1", "hola")
-	mp.Publish("test2", "hola")
+	np = mp.Publish("test2", "hola")
+	require.Equal(t, uint(1), np)
 
 	require.Equal(t, 3, len(ch1))
 	require.Equal(t, 3, len(ch11))
 	require.Equal(t, 1, len(ch2))
 
 	mp.unregisterChannel("test2", ch2)
-	mp.Publish("test2", "hola")
+	np = mp.Publish("test2", "hola")
+	require.Equal(t, uint(0), np)
 	require.Equal(t, 1, len(ch2))
 
 	close(ch2)
