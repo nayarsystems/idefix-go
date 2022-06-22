@@ -9,11 +9,9 @@ import (
 )
 
 type Client struct {
-	opts          *ConnectionOptions
+	opts          *ClientOptions
 	Encoding      string
 	compThreshold int
-	address       string
-	token         string
 	prefix        string
 	client        mqtt.Client
 	sessionID     string
@@ -55,7 +53,7 @@ type Message struct {
 	Err      error       `json:"er" msgpack:"er"`
 }
 
-type ConnectionOptions struct {
+type ClientOptions struct {
 	BrokerAddress string
 	Encoding      string
 	CACert        []byte

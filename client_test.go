@@ -10,14 +10,14 @@ import (
 )
 
 func TestPublish(t *testing.T) {
-	imc, err := NewClient(context.Background(), &ConnectionOptions{
+	imc := NewClient(context.Background(), &ClientOptions{
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
 		Address:       "test",
 		Token:         "token",
 	})
-
+	err := imc.Connect()
 	require.NoError(t, err)
 
 	s := imc.NewSubscriber(10, "asdf")
@@ -30,33 +30,37 @@ func TestPublish(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	time.Sleep(time.Second)
-	require.Equal(t, 1, len(s.Channel()))
+
+	_, err = s.WaitOne(time.Second)
+	require.NoError(t, err)
 }
 
 func TestUnauthorized(t *testing.T) {
-	_, err := NewClient(context.Background(), &ConnectionOptions{
+	c := NewClient(context.Background(), &ClientOptions{
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
-		Address:       "test",
-		Token:         "tokenn",
+		Address:       "test11",
+		Token:         "tokenn12312n",
 	})
 
+	err := c.Connect()
 	require.Error(t, err)
 }
 
 func TestStream(t *testing.T) {
-	c, err := NewClient(context.Background(), &ConnectionOptions{
+	c := NewClient(context.Background(), &ClientOptions{
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
 		Address:       "test",
 		Token:         "token",
 	})
+
+	err := c.Connect()
 	require.NoError(t, err)
 
-	c2, err := NewClient(context.Background(), &ConnectionOptions{
+	c2 := NewClient(context.Background(), &ClientOptions{
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
@@ -64,6 +68,7 @@ func TestStream(t *testing.T) {
 		Token:         "token",
 	})
 
+	err = c2.Connect()
 	require.NoError(t, err)
 
 	s, err := c.NewStream("5c9719505534d914", "asdf", 100, time.Minute)

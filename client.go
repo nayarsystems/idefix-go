@@ -20,37 +20,29 @@ import (
 	"gitlab.com/garagemakers/idefix/core/idefix/normalize"
 )
 
-func NewClient(pctx context.Context, opts *ConnectionOptions) (*Client, error) {
+func NewClient(pctx context.Context, opts *ClientOptions) *Client {
 	c := &Client{
 		opts: opts,
 	}
+	c.ctx, c.cancelFunc = context.WithCancel(pctx)
 
-	if err := c.connect(pctx, opts.BrokerAddress, opts.CACert); err != nil {
-		return nil, err
-	}
-
-	if err := c.login(opts.Address, opts.Token, opts.Meta); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return c
 }
 
-func (c *Client) connect(pctx context.Context, brokerAddress string, CACert []byte) (err error) {
-	c.ctx, c.cancelFunc = context.WithCancel(pctx)
+func (c *Client) Connect() (err error) {
 	c.prefix = MqttIdefixPrefix
 	c.ps = minips.NewMinips[*Message](c.ctx)
 	c.compThreshold = 128
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(brokerAddress)
+	opts.AddBroker(c.opts.BrokerAddress)
 	opts.SetCleanSession(true)
 	opts.SetUsername("device")
 	opts.SetPassword("77dev22p1")
 
-	if len(CACert) > 0 {
+	if len(c.opts.CACert) > 0 {
 		certpool := x509.NewCertPool()
-		certpool.AppendCertsFromPEM(CACert)
+		certpool.AppendCertsFromPEM(c.opts.CACert)
 
 		opts.SetTLSConfig(&tls.Config{
 			RootCAs: certpool,
@@ -80,6 +72,10 @@ func (c *Client) connect(pctx context.Context, brokerAddress string, CACert []by
 		return token.Error()
 	}
 
+	if err := c.login(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -91,10 +87,7 @@ func (c *Client) publishTopic(flags string) string {
 	return fmt.Sprintf("%s/%s/t/%s", c.prefix, c.sessionID, flags)
 }
 
-func (c *Client) login(deviceAddress string, deviceToken string, meta map[string]interface{}) (err error) {
-	c.address = deviceAddress
-	c.token = deviceToken
-
+func (c *Client) login() (err error) {
 	lm := loginMsg{
 		Address:  c.opts.Address,
 		Token:    c.opts.Token,
@@ -108,11 +101,13 @@ func (c *Client) login(deviceAddress string, deviceToken string, meta map[string
 		Data: lm,
 	}
 
-	_, err = c.Call("idefix", tm, time.Second*3)
+	m, err := c.Call("idefix", tm, time.Second*3)
 	if err != nil {
 		return err
 	}
-
+	if m.Err != nil {
+		return m.Err
+	}
 	return nil
 }
 
@@ -235,11 +230,11 @@ func (c *Client) messageHandler(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	if strings.HasPrefix(tm.To, c.address+".") {
+	if strings.HasPrefix(tm.To, c.opts.Address+".") {
 		return
 	}
 
-	tm.To = strings.TrimPrefix(tm.To, c.address+".")
+	tm.To = strings.TrimPrefix(tm.To, c.opts.Address+".")
 
 	if tm.To == "" {
 		return

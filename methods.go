@@ -17,7 +17,7 @@ func (c *Client) Answer(origmsg *Message, msg *Message) error {
 	return c.sendMessage(msg)
 }
 
-func (c *Client) Call(remoteAddress string, msg *Message, timeout time.Duration) (interface{}, error) {
+func (c *Client) Call(remoteAddress string, msg *Message, timeout time.Duration) (*Message, error) {
 	msg.To = fmt.Sprintf("%s.%s", remoteAddress, msg.To)
 	msg.Response, _ = randSessionID()
 
