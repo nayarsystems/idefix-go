@@ -3,6 +3,7 @@ package idefixgo
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gitlab.com/garagemakers/idefix/core/cert"
@@ -19,13 +20,18 @@ func TestPublish(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = imc.Publish("5c9719505534d914", &Message{
+	ch := make(chan *Message, 100)
+	imc.Subscribe("asdf", ch)
+
+	err = imc.Publish("test", &Message{
 		To:       "asdf",
 		Data:     map[string]interface{}{"testing": true},
 		Response: "replyhere",
 	})
 
 	require.NoError(t, err)
+	time.Sleep(time.Second)
+	require.Equal(t, 1, len(ch))
 }
 
 func TestUnauthorized(t *testing.T) {
