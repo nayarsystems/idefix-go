@@ -39,7 +39,7 @@ func NewClient(pctx context.Context, opts *ConnectionOptions) (*Client, error) {
 func (im *Client) connect(pctx context.Context, brokerAddress string, CACert []byte) (err error) {
 	im.ctx, im.cancelFunc = context.WithCancel(pctx)
 	im.prefix = MqttIdefixPrefix
-	im.ps = minips.NewMinips[*Message]()
+	im.ps = minips.NewMinips[*Message](im.ctx)
 	im.compThreshold = 128
 
 	opts := mqtt.NewClientOptions()

@@ -20,8 +20,8 @@ func TestPublish(t *testing.T) {
 
 	require.NoError(t, err)
 
-	ch := make(chan *Message, 100)
-	imc.Subscribe("asdf", ch)
+	s := imc.NewSubscriber(10, "asdf")
+	defer s.Close()
 
 	err = imc.Publish("test", &Message{
 		To:       "asdf",
@@ -31,7 +31,7 @@ func TestPublish(t *testing.T) {
 
 	require.NoError(t, err)
 	time.Sleep(time.Second)
-	require.Equal(t, 1, len(ch))
+	require.Equal(t, 1, len(s.Channel()))
 }
 
 func TestUnauthorized(t *testing.T) {
