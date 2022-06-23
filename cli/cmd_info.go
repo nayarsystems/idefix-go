@@ -9,7 +9,7 @@ import (
 )
 
 type InfoCmd struct {
-	DeviceAddress string `name:"device" short:"d" help:"Device address" required:""`
+	DeviceAddress string `name:"device" short:"d" help:"Device address" required:"" `
 }
 
 func (infocmd *InfoCmd) Run(kctx *Context) error {

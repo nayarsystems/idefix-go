@@ -16,8 +16,9 @@ type Context struct {
 var cli struct {
 	ConfigName string `help:"Idefix client config filename" short:"c" default:"default"`
 
-	Log  LogCmd  `cmd:"" help:"Stream device log"`
-	Info InfoCmd `cmd:"" help:"Get device info"`
+	Log    LogCmd    `cmd:"" help:"Stream device log"`
+	Info   InfoCmd   `cmd:"" help:"Get device info"`
+	Config ConfigCmd `cmd:"" help:"Manage config files"`
 }
 
 func main() {
