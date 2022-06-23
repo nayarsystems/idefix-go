@@ -119,6 +119,10 @@ func (c *Client) Disconnect() {
 	c.setState(Disconnected)
 }
 
+func (c *Client) Context() context.Context {
+	return c.ctx
+}
+
 func (c *Client) setState(cs ConnectionStatus) {
 	if c.connectionState == cs {
 		return
