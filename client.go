@@ -44,6 +44,20 @@ func NewClient(pctx context.Context, opts *ClientOptions) *Client {
 	return c
 }
 
+func NewClientFromFile(pctx context.Context, configFile string) (*Client, error) {
+	opts, err := readConfig(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Client{
+		opts: opts,
+		pctx: pctx,
+	}
+
+	return c, nil
+}
+
 func (c *Client) Connect() (err error) {
 	if c.connectionState != Disconnected {
 		return fmt.Errorf("already connected")
