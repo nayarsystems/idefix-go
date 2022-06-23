@@ -33,7 +33,7 @@ func (c *Client) NewStream(address string, topic string, capacity uint, timeout 
 
 	s.ctx, s.cancel = context.WithCancel(c.ctx)
 
-	_, err := s.c.Call(address, &Message{To: s.openTopic()}, time.Second*5)
+	_, err := s.c.Call(address, &Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *Stream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &Message{To: s.openTopic()}, s.timeout)
+			_, err := s.c.Call(s.address, &Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
 			if err != nil {
 				return
 			}
