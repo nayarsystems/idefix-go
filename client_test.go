@@ -40,11 +40,22 @@ func TestUnauthorized(t *testing.T) {
 		BrokerAddress: "tcp://localhost:1883",
 		Encoding:      "mg",
 		CACert:        cert.CaCert,
-		Address:       "test11",
-		Token:         "tokenn12312n",
+		Address:       "unauthorized",
+		Token:         "token",
 	})
 
 	err := c.Connect()
+	require.NoError(t, err)
+
+	c2 := NewClient(context.Background(), &ClientOptions{
+		BrokerAddress: "tcp://localhost:1883",
+		Encoding:      "mg",
+		CACert:        cert.CaCert,
+		Address:       "unauthorized",
+		Token:         "wrongtoken",
+	})
+
+	err = c2.Connect()
 	require.Error(t, err)
 }
 
