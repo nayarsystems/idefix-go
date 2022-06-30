@@ -1,15 +1,19 @@
-module idefix
+module gitlab.com/garagemakers/idefix-go/tools/idefix
 
 go 1.18
 
-require github.com/alecthomas/kong v0.6.1
+require (
+	github.com/alecthomas/kong v0.6.1
+	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
+	gitlab.com/garagemakers/idefix-go v0.0.3
+	gopkg.in/yaml.v3 v3.0.1
+)
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -22,7 +26,6 @@ require (
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	gitlab.com/garagemakers/idefix-go v0.0.3 // indirect
 	gitlab.com/garagemakers/idefix-go/minips v0.0.2 // indirect
 	gitlab.com/garagemakers/idefix/core/idefix v0.0.11 // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
@@ -31,5 +34,4 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
