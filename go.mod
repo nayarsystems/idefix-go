@@ -3,11 +3,10 @@ module gitlab.com/garagemakers/idefix-go
 go 1.18
 
 require (
-	github.com/alecthomas/kong v0.6.1
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/stretchr/testify v1.7.4
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	gitlab.com/garagemakers/idefix-go/minips v0.0.1
+	gitlab.com/garagemakers/idefix-go/minips v0.0.2
 	gitlab.com/garagemakers/idefix/core/cert v0.0.0-20220610083502-8dd9faf3adf2
 	gitlab.com/garagemakers/idefix/core/idefix v0.0.9
 )
