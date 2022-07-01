@@ -6,29 +6,46 @@ import (
 	"time"
 
 	"github.com/jaracil/ei"
+	"github.com/spf13/cobra"
 )
 
-type LogCmd struct {
-	DeviceAddress string `name:"device" short:"d" help:"Device address" required:""`
-	Wait          bool   `name:"wait" short:"w" help:"Wait if device is not connected"`
-	Level         int    `name:"loglevel" short:"l" default:"1" help:"Filter lower log levels"`
+func init() {
+	cmdLog.PersistentFlags().StringP("device", "d", "", "Device ID")
+	cmdLog.MarkPersistentFlagRequired("device")
+	cmdLog.PersistentFlags().BoolP("wait", "w", false, "Wait for the device if not connected")
+	cmdLog.PersistentFlags().IntP("loglevel", "l", 2, "Filter lower log levels")
+
+	rootCmd.AddCommand(cmdLog)
 }
 
-func (logcmd *LogCmd) Run(kctx *Context) error {
-	ic := kctx.Client
+var cmdLog = &cobra.Command{
+	Use:   "log",
+	Short: "Stream Device ID sys.evt.log messages",
+	RunE:  cmdLogRunE,
+}
 
-	err := ic.Connect()
+func cmdLogRunE(cmd *cobra.Command, args []string) error {
+	addr, err := cmd.Flags().GetString("device")
 	if err != nil {
-		log.Fatalln("Cannot login:", err)
+		return err
+	}
+	level, err := cmd.Flags().GetInt("loglevel")
+	if err != nil {
+		return err
+	}
+
+	ic, err := getConnectedClient()
+	if err != nil {
+		return err
 	}
 	defer ic.Disconnect()
 
-	s, err := ic.NewStream(logcmd.DeviceAddress, "sys.evt.log", 100, time.Minute*10)
+	s, err := ic.NewStream(addr, "sys.evt.log", 100, time.Minute*10)
 	if err != nil {
 		log.Fatalln("Cannot open stream:", err)
 	}
 
-	fmt.Printf("-- Streaming %s sys.evt.log --\n", logcmd.DeviceAddress)
+	fmt.Printf("-- Streaming %s sys.evt.log --\n", addr)
 	for {
 		select {
 		case k := <-s.Channel():
@@ -38,7 +55,7 @@ func (logcmd *LogCmd) Run(kctx *Context) error {
 				continue
 			}
 
-			if logcmd.Level > l {
+			if level > l {
 				continue
 			}
 
@@ -50,7 +67,7 @@ func (logcmd *LogCmd) Run(kctx *Context) error {
 
 			fmt.Printf("[%d] %s\n", l, m)
 
-		case <-kctx.Client.Context().Done():
+		case <-ic.Context().Done():
 			return nil
 		}
 	}

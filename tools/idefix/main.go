@@ -2,35 +2,47 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 
-	"github.com/alecthomas/kong"
+	"github.com/spf13/cobra"
 	idf "gitlab.com/garagemakers/idefix-go"
 )
 
-type Context struct {
-	Client  *idf.Client
-	Context context.Context
-	Cancel  context.CancelFunc
-}
+var rootctx context.Context
+var cancel context.CancelFunc
 
-var cli struct {
-	ConfigName string `help:"Idefix client config filename" short:"c" default:"default"`
-
-	Log    LogCmd    `cmd:"" help:"Stream device log"`
-	Info   InfoCmd   `cmd:"" help:"Get device info"`
-	Config ConfigCmd `cmd:"" help:"Manage config files"`
+var rootCmd = &cobra.Command{
+	Use:   "idefix",
+	Short: "idefix multi-tool",
 }
 
 func main() {
-	var err error
-	ctx := kong.Parse(&cli)
+	rootctx, cancel = context.WithCancel(context.Background())
 
-	kctx := &Context{}
-	kctx.Context, kctx.Cancel = context.WithCancel(context.Background())
-	kctx.Client, err = idf.NewClientFromFile(kctx.Context, cli.ConfigName)
+	rootCmd.PersistentFlags().StringP("config", "c", "default", "idefix-go config file for connection settings")
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func getConnectedClient() (*idf.Client, error) {
+	configName, err := rootCmd.Flags().GetString("config")
 	if err != nil {
-		ctx.FatalIfErrorf(err)
+		return nil, err
 	}
 
-	ctx.FatalIfErrorf(ctx.Run(kctx))
+	client, err := idf.NewClientFromFile(rootctx, configName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.Connect()
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }

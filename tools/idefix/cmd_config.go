@@ -1,103 +1,82 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"io/fs"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 
+	"github.com/spf13/cobra"
 	idf "gitlab.com/garagemakers/idefix-go"
-	"gopkg.in/yaml.v3"
 )
 
-type ConfigCmd struct {
-	Load  LoadConfigCmd  `cmd:"" help:"Load config parameters from $HOME/.config/idefix/<profile>" name:"load"`
-	Write StoreConfigCmd `cmd:"" help:"Write config parameters to $HOME/.config/idefix/<profile>" name:"store"`
+func init() {
+	cmdConfig.AddCommand(cmdConfigLoad)
+
+	cmdConfigStore.Flags().StringP("broker", "b", "ssl://mqtt.terathings.com", "Broker Address")
+	cmdConfigStore.Flags().StringP("encoding", "e", "mg", "Encoding")
+	cmdConfigStore.Flags().StringP("address", "a", "", "Address")
+	cmdConfigStore.Flags().StringP("token", "t", "", "Token")
+	cmdConfig.AddCommand(cmdConfigStore)
+
+	rootCmd.AddCommand(cmdConfig)
 }
 
-type StoreConfigCmd struct {
-	Filename      string `name:"profile" help:"Config name" required:"" arg:""`
-	Address       string `name:"address" help:"Address" required:""`
-	Token         string `name:"token" help:"Token" required:""`
-	BrokerAddress string `name:"broker" help:"Broker Address" default:"ssl://mqtt.terathings.com:8883"`
-	Encoding      string `name:"encoding" help:"Encoding" default:"mg"`
+var cmdConfig = &cobra.Command{
+	Use:   "config",
+	Short: "Manage idefix configurations",
 }
 
-func (storecmd *StoreConfigCmd) Run(kctx *Context) error {
+var cmdConfigLoad = &cobra.Command{
+	Use:   "show <file>",
+	Short: "Show and print configuration file",
+	Args:  cobra.MinimumNArgs(1),
+	RunE:  cmdConfigShowRunE,
+}
 
-	options := idf.ClientOptions{
-		BrokerAddress: storecmd.BrokerAddress,
-		Address:       storecmd.Address,
-		Token:         storecmd.Token,
-		Encoding:      storecmd.Encoding,
-		Meta:          map[string]interface{}{"Holi": true},
-	}
+func cmdConfigShowRunE(cmd *cobra.Command, args []string) error {
 
-	d, err := yaml.Marshal(options)
+	cfg, err := idf.ReadConfig(args[0])
 	if err != nil {
 		return err
 	}
 
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(configDir+"/idefix/", 0755); err != nil {
-		return err
-	}
-
-	configPath := fmt.Sprintf("%s/idefix/%s.yaml", configDir, storecmd.Filename)
-
-	fmt.Printf("Writing file to %s\n", configPath)
-	return os.WriteFile(configPath, d, 0644)
-}
-
-type LoadConfigCmd struct {
-	Filename string `name:"profile" help:"Config name" required:"" arg:""`
-}
-
-func (loadcmd *LoadConfigCmd) Run(kctx *Context) error {
-
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-
-	configPath := fmt.Sprintf("%s/idefix/%s.yaml", configDir, loadcmd.Filename)
-
-	b, err := os.ReadFile(configPath)
-	if err != nil {
-		fmt.Println(err)
-		if errors.Is(err, fs.ErrNotExist) {
-			fmt.Println("Profile not found. Available profiles:")
-			finfo, err := ioutil.ReadDir(configDir + "/idefix/")
-			if err != nil {
-				return err
-			}
-
-			for _, v := range finfo {
-				fmt.Printf(" - %s\n", strings.TrimSuffix(v.Name(), filepath.Ext(v.Name())))
-			}
-
-			return nil
-		}
-		return err
-	}
-
-	options := idf.ClientOptions{
-		Meta: make(map[string]interface{}),
-	}
-
-	if err := yaml.Unmarshal(b, &options); err != nil {
-		return err
-	}
-
-	fmt.Printf("Printing file %s\n", configPath)
-	fmt.Printf("%#v\n", options)
+	j, _ := json.MarshalIndent(cfg, "", "  ")
+	fmt.Printf("%s\n", j)
 
 	return nil
+}
+
+var cmdConfigStore = &cobra.Command{
+	Use:   "store",
+	Short: "Store configuration to a file",
+	Args:  cobra.MinimumNArgs(1),
+	RunE:  cmdConfigStoreRunE,
+}
+
+func cmdConfigStoreRunE(cmd *cobra.Command, args []string) error {
+	cfg, err := idf.ReadConfig(args[0])
+	if err != nil {
+		return err
+	}
+
+	if cmd.Flags().Changed("broker") {
+		cfg.Broker, _ = cmd.Flags().GetString("broker")
+	}
+
+	if cmd.Flags().Changed("encoding") {
+		cfg.Encoding, _ = cmd.Flags().GetString("encoding")
+	}
+
+	if cmd.Flags().Changed("address") {
+		cfg.Address, _ = cmd.Flags().GetString("address")
+	}
+
+	if cmd.Flags().Changed("token") {
+		cfg.Token, _ = cmd.Flags().GetString("token")
+	}
+
+	if err := idf.UpdateConfig(cfg); err != nil {
+		return err
+	}
+
+	return cmdConfigShowRunE(cmd, args)
 }
