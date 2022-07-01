@@ -11,11 +11,11 @@ import (
 
 func TestPublish(t *testing.T) {
 	imc := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "test",
-		Token:         "token",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "test",
+		Token:    "token",
 	})
 	err := imc.Connect()
 	require.NoError(t, err)
@@ -37,22 +37,22 @@ func TestPublish(t *testing.T) {
 
 func TestUnauthorized(t *testing.T) {
 	c := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "unauthorized",
-		Token:         "token",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "unauthorized",
+		Token:    "token",
 	})
 
 	err := c.Connect()
 	require.NoError(t, err)
 
 	c2 := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "unauthorized",
-		Token:         "wrongtoken",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "unauthorized",
+		Token:    "wrongtoken",
 	})
 
 	err = c2.Connect()
@@ -61,22 +61,22 @@ func TestUnauthorized(t *testing.T) {
 
 func TestStream(t *testing.T) {
 	c := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "test",
-		Token:         "token",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "test",
+		Token:    "token",
 	})
 
 	err := c.Connect()
 	require.NoError(t, err)
 
 	c2 := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "test2",
-		Token:         "token",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "test2",
+		Token:    "token",
 	})
 
 	err = c2.Connect()
@@ -96,11 +96,11 @@ func TestStream(t *testing.T) {
 
 func TestConnectionHandler(t *testing.T) {
 	c := NewClient(context.Background(), &ClientOptions{
-		BrokerAddress: "tcp://localhost:1883",
-		Encoding:      "mg",
-		CACert:        cert.CaCert,
-		Address:       "test",
-		Token:         "token",
+		Broker:   "tcp://localhost:1883",
+		Encoding: "mg",
+		CACert:   cert.CaCert,
+		Address:  "test",
+		Token:    "token",
 	})
 
 	statuses := []ConnectionStatus{}

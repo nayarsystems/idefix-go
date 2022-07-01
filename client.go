@@ -45,7 +45,7 @@ func NewClient(pctx context.Context, opts *ClientOptions) *Client {
 }
 
 func NewClientFromFile(pctx context.Context, configFile string) (*Client, error) {
-	opts, err := readConfig(configFile)
+	opts, err := ReadConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *Client) Connect() (err error) {
 	c.ps = minips.NewMinips[*Message](c.ctx)
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(c.opts.BrokerAddress)
+	opts.AddBroker(c.opts.Broker)
 	opts.SetCleanSession(true)
 	opts.SetUsername("device")
 	opts.SetPassword("77dev22p1")

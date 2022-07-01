@@ -1,5 +1,7 @@
 package idefixgo
 
+import "github.com/spf13/viper"
+
 type transportMsg struct {
 	Res         string      `json:"r,omitempty" msgpack:"re,omitempty"`
 	To          string      `json:"t" msgpack:"to"`
@@ -34,10 +36,12 @@ type Message struct {
 }
 
 type ClientOptions struct {
-	BrokerAddress string
-	Encoding      string
-	CACert        []byte
-	Address       string
-	Token         string
-	Meta          map[string]interface{}
+	Broker   string                 `json:"broker"`
+	Encoding string                 `json:"encoding"`
+	CACert   []byte                 `json:"cacert,omitempty"`
+	Address  string                 `json:"address"`
+	Token    string                 `json:"token"`
+	Meta     map[string]interface{} `json:"meta,omitempty"`
+
+	vp *viper.Viper
 }
