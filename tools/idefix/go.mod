@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -15,6 +16,7 @@ require (
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/gabstv/go-bsdiff v1.0.5
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -31,7 +33,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	gitlab.com/garagemakers/idefix-go/minips v0.0.2 // indirect
-	gitlab.com/garagemakers/idefix/core/idefix v0.0.11 // indirect
+	gitlab.com/garagemakers/idefix/core/idefix v0.0.11
 	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect

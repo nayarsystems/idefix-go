@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmdLog.PersistentFlags().StringP("device", "d", "", "Device ID")
-	cmdLog.MarkPersistentFlagRequired("device")
-	cmdLog.PersistentFlags().BoolP("wait", "w", false, "Wait for the device if not connected")
-	cmdLog.PersistentFlags().IntP("loglevel", "l", 2, "Filter lower log levels")
+	cmdLog.Flags().StringP("device", "d", "", "Device ID")
+	cmdLog.MarkFlagRequired("device")
+	cmdLog.Flags().BoolP("wait", "w", false, "Wait for the device if not connected")
+	cmdLog.Flags().IntP("loglevel", "l", 2, "Filter lower log levels")
 
 	rootCmd.AddCommand(cmdLog)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	cmdInfo.PersistentFlags().StringP("device", "d", "", "Device ID")
+	cmdInfo.Flags().StringP("device", "d", "", "Device ID")
 	cmdLog.MarkFlagRequired("device")
 
 	rootCmd.AddCommand(cmdInfo)

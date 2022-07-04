@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -23,7 +22,6 @@ func main() {
 	rootCmd.PersistentFlags().StringP("config", "c", "default", "idefix-go config file for connection settings")
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
