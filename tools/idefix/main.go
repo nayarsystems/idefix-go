@@ -12,8 +12,9 @@ var rootctx context.Context
 var cancel context.CancelFunc
 
 var rootCmd = &cobra.Command{
-	Use:   "idefix",
-	Short: "idefix multi-tool",
+	Use:          "idefix",
+	Short:        "idefix multi-tool",
+	SilenceUsage: true,
 }
 
 func main() {

@@ -26,8 +26,8 @@ var cmdConfig = &cobra.Command{
 }
 
 var cmdConfigLoad = &cobra.Command{
-	Use:   "show <file>",
-	Short: "Show and print configuration file",
+	Use:   "show <name>",
+	Short: "Show and print configuration",
 	Args:  cobra.MinimumNArgs(1),
 	RunE:  cmdConfigShowRunE,
 }
@@ -46,8 +46,8 @@ func cmdConfigShowRunE(cmd *cobra.Command, args []string) error {
 }
 
 var cmdConfigStore = &cobra.Command{
-	Use:   "store",
-	Short: "Store configuration to a file",
+	Use:   "store <name>",
+	Short: "Store or modify a configuration",
 	Args:  cobra.MinimumNArgs(1),
 	RunE:  cmdConfigStoreRunE,
 }

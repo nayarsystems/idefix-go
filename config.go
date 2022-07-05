@@ -34,6 +34,7 @@ func ReadConfig(name string) (*ClientOptions, error) {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			c.vp.SetConfigFile(ucd + "/idefix/" + name + ".json")
 		}
+		return c, err
 	}
 
 	if err := c.vp.Unmarshal(c); err != nil {
