@@ -31,7 +31,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 	}
 	level, err := cmd.Flags().GetInt("loglevel")
 	if err != nil {
-		return err
+		level = 2
 	}
 
 	ic, err := getConnectedClient()
@@ -44,6 +44,8 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		log.Fatalln("Cannot open stream:", err)
 	}
+
+	defer s.Close()
 
 	fmt.Printf("-- Streaming %s sys.evt.log --\n", addr)
 	for {
