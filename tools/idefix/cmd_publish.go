@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	idf "gitlab.com/garagemakers/idefix-go"
 )
@@ -42,9 +43,12 @@ func cmdPublishRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start("Publishing on ", args[0])
 	if err := ic.Publish(addr, &idf.Message{To: args[0], Data: amap}); err != nil {
+		spinner.Fail()
 		return fmt.Errorf("Cannot publish the message to the device: %w", err)
 	}
+	spinner.Success()
 
 	return nil
 }
