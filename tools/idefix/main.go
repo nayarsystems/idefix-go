@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	idf "gitlab.com/garagemakers/idefix-go"
@@ -21,6 +22,7 @@ func main() {
 	rootctx, cancel = context.WithCancel(context.Background())
 
 	rootCmd.PersistentFlags().StringP("config", "c", "default", "idefix-go config file for connection settings")
+	rootCmd.PersistentFlags().UintP("timeout", "", 10000, "global timeout in milliseconds")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -44,4 +46,13 @@ func getConnectedClient() (*idf.Client, error) {
 	}
 
 	return client, nil
+}
+
+func getTimeout(cmd *cobra.Command) time.Duration {
+	timeout := time.Second * 10
+	ptimeout, err := cmd.Flags().GetUint("timeout")
+	if err == nil {
+		timeout = time.Duration(ptimeout * 1000000)
+	}
+	return timeout
 }

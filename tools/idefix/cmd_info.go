@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 	idf "gitlab.com/garagemakers/idefix-go"
@@ -33,7 +32,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	info, err := ic.Call(addr, &idf.Message{To: "sys.cmd.info"}, time.Second)
+	info, err := ic.Call(addr, &idf.Message{To: "sys.cmd.info"}, getTimeout(cmd))
 	if err != nil {
 		return fmt.Errorf("Cannot get the device info: %w", err)
 	}
