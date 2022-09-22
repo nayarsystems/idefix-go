@@ -14,7 +14,6 @@ import (
 func init() {
 	cmdCall.Flags().StringP("device", "d", "", "Device ID")
 	cmdLog.MarkFlagRequired("device")
-	cmdCall.Flags().StringP("timeout", "t", "", "Timeout in ms")
 
 	rootCmd.AddCommand(cmdCall)
 }
@@ -26,17 +25,8 @@ var cmdCall = &cobra.Command{
 	RunE:  cmdCallRunE,
 }
 
-func cmdCallRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
-	if err != nil {
-		return err
-	}
-
-	timeout := time.Second * 5
-	ptimeout, err := cmd.Flags().GetUint("timeout")
-	if err == nil {
-		timeout = time.Duration(ptimeout * 1000000)
-	}
+func commandCall(deviceId string, topic string, amap map[string]interface{}, timeout time.Duration) error {
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Calling %s@%s with args: %v", topic, deviceId, amap))
 
 	ic, err := getConnectedClient()
 	if err != nil {
@@ -44,15 +34,7 @@ func cmdCallRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	amap := make(map[string]interface{})
-	if len(args) > 1 {
-		if err := json.Unmarshal([]byte(strings.Join(args[1:], " ")), &amap); err != nil {
-			return err
-		}
-	}
-
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start("Calling ", args[0])
-	ret, err := ic.Call(addr, &idf.Message{To: args[0], Data: amap}, timeout)
+	ret, err := ic.Call(deviceId, &idf.Message{To: topic, Data: amap}, timeout)
 	if err != nil {
 		spinner.Fail()
 		return fmt.Errorf("Cannot publish the message to the device: %w", err)
@@ -68,8 +50,23 @@ func cmdCallRunE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		spinner.Success()
-		fmt.Printf("%s", rj)
+		fmt.Printf("%s\n", rj)
+	}
+	return nil
+}
+
+func cmdCallRunE(cmd *cobra.Command, args []string) error {
+	addr, err := cmd.Flags().GetString("device")
+	if err != nil {
+		return err
 	}
 
-	return nil
+	amap := make(map[string]interface{})
+	if len(args) > 1 {
+		if err := json.Unmarshal([]byte(strings.Join(args[1:], " ")), &amap); err != nil {
+			return err
+		}
+	}
+
+	return commandCall(addr, args[0], amap, getTimeout(cmd))
 }
