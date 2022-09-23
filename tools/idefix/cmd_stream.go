@@ -10,13 +10,13 @@ import (
 )
 
 func init() {
-	cmdLog.Flags().StringP("device", "d", "", "Device ID")
-	cmdLog.MarkFlagRequired("device")
+	cmdLog.Flags().StringP("address", "a", "", "Device address")
+	cmdLog.MarkFlagRequired("address")
 	cmdLog.Flags().BoolP("wait", "w", false, "Wait for the device if not connected")
 	cmdLog.Flags().IntP("loglevel", "l", 2, "Filter lower log levels")
 	rootCmd.AddCommand(cmdLog)
 
-	cmdStream.Flags().StringP("device", "d", "", "Device ID")
+	cmdStream.Flags().StringP("address", "a", "", "Device address")
 	rootCmd.AddCommand(cmdStream)
 }
 
@@ -33,7 +33,7 @@ var cmdStream = &cobra.Command{
 }
 
 func cmdLogRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 }
 
 func cmdStreamRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}

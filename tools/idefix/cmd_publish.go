@@ -11,8 +11,8 @@ import (
 )
 
 func init() {
-	cmdPublish.Flags().StringP("device", "d", "", "Device ID")
-	cmdLog.MarkFlagRequired("device")
+	cmdPublish.Flags().StringP("address", "a", "", "Device address")
+	cmdPublish.MarkFlagRequired("address")
 
 	rootCmd.AddCommand(cmdPublish)
 }
@@ -25,7 +25,7 @@ var cmdPublish = &cobra.Command{
 }
 
 func cmdPublishRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}

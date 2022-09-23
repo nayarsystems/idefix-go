@@ -36,15 +36,15 @@ func init() {
 	cmdUpdateApply.MarkFlagRequired("patch")
 	cmdUpdate.AddCommand(cmdUpdateApply)
 
-	cmdUpdateSendPatch.Flags().StringP("device", "d", "", "Device ID")
+	cmdUpdateSendPatch.Flags().StringP("address", "a", "", "Device address")
 	cmdUpdateSendPatch.Flags().StringP("patch", "p", "", "Patch file")
-	cmdUpdateSendPatch.MarkFlagRequired("device")
+	cmdUpdateSendPatch.MarkFlagRequired("address")
 	cmdUpdateSendPatch.MarkFlagRequired("patch")
 	cmdUpdate.AddCommand(cmdUpdateSendPatch)
 
-	cmdUpdateSendFile.Flags().StringP("device", "d", "", "Device ID")
+	cmdUpdateSendFile.Flags().StringP("address", "a", "", "Device address")
 	cmdUpdateSendFile.Flags().StringP("file", "f", "", "Update file")
-	cmdUpdateSendFile.MarkFlagRequired("device")
+	cmdUpdateSendFile.MarkFlagRequired("address")
 	cmdUpdateSendFile.MarkFlagRequired("file")
 	cmdUpdate.AddCommand(cmdUpdateSendFile)
 
@@ -247,7 +247,7 @@ func remoteExec(ic *idefixgo.Client, addr string, cmd string, timeout time.Durat
 }
 
 func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
@@ -341,7 +341,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 }
 
 func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}

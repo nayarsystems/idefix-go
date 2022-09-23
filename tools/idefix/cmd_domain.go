@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,7 @@ func init() {
 	cmdDomain.AddCommand(cmdDomainCreate)
 
 	cmdDomainAssign.Flags().StringP("name", "n", "", "Domain Name")
-	cmdDomainAssign.Flags().StringP("address", "a", "", "Device Address")
+	cmdDomainAssign.Flags().StringP("address", "a", "", "Device address")
 	cmdDomainAssign.MarkFlagRequired("name")
 	cmdDomainAssign.MarkFlagRequired("address")
 	cmdDomain.AddCommand(cmdDomainAssign)
@@ -25,6 +26,10 @@ func init() {
 	cmdDomainGet.Flags().StringP("name", "n", "", "Domain Name")
 	cmdDomainGet.MarkFlagRequired("name")
 	cmdDomain.AddCommand(cmdDomainGet)
+
+	cmdDomainDelete.Flags().StringP("name", "n", "", "Domain Name")
+	cmdDomainDelete.MarkFlagRequired("name")
+	cmdDomain.AddCommand(cmdDomainDelete)
 
 	cmdDomainUpdate.Flags().StringP("name", "n", "", "Domain Name")
 	cmdDomainUpdate.Flags().StringP("allow", "a", "", "Allow rule")
@@ -47,6 +52,12 @@ var cmdDomainGet = &cobra.Command{
 	Use:   "get",
 	Short: "Get a domain",
 	RunE:  cmdDomainGetRunE,
+}
+
+var cmdDomainDelete = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete a domain",
+	RunE:  cmdDomainDeleteRunE,
 }
 
 var cmdDomainUpdate = &cobra.Command{
@@ -172,4 +183,24 @@ func cmdDomainGetRunE(cmd *cobra.Command, args []string) error {
 	amap["name"] = name
 
 	return commandCall("idefix", "domain.get", amap, getTimeout(cmd))
+}
+
+func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) error {
+	name, err := cmd.Flags().GetString("name")
+	if err != nil {
+		return err
+	}
+
+	amap := make(map[string]interface{})
+	amap["name"] = name
+
+	fmt.Println("You are about to delete the domain:", name)
+	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
+		return nil
+	}
+	if err := commandCall("idefix", "domain.get", amap, getTimeout(cmd)); err != nil {
+		return err
+	}
+
+	return commandCall("idefix", "domain.delete", amap, getTimeout(cmd))
 }

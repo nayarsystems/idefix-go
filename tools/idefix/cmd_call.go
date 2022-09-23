@@ -12,8 +12,8 @@ import (
 )
 
 func init() {
-	cmdCall.Flags().StringP("device", "d", "", "Device ID")
-	cmdLog.MarkFlagRequired("device")
+	cmdCall.Flags().StringP("address", "a", "", "Device address")
+	cmdLog.MarkFlagRequired("address")
 
 	rootCmd.AddCommand(cmdCall)
 }
@@ -42,7 +42,7 @@ func commandCall(deviceId string, topic string, amap map[string]interface{}, tim
 
 	if ret.Err != nil {
 		spinner.Fail()
-		fmt.Println(ret.Err)
+		return ret.Err
 	} else {
 		rj, err := json.MarshalIndent(ret.Data, "", "  ")
 		if err != nil {
@@ -56,7 +56,7 @@ func commandCall(deviceId string, topic string, amap map[string]interface{}, tim
 }
 
 func cmdCallRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}

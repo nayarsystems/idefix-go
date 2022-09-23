@@ -8,20 +8,20 @@ import (
 )
 
 func init() {
-	cmdInfo.Flags().StringP("device", "d", "", "Device ID")
-	cmdLog.MarkFlagRequired("device")
+	cmdInfo.Flags().StringP("address", "a", "", "Device address")
+	cmdLog.MarkFlagRequired("address")
 
 	rootCmd.AddCommand(cmdInfo)
 }
 
 var cmdInfo = &cobra.Command{
 	Use:   "info",
-	Short: "Request Device ID info",
+	Short: "Request device info",
 	RunE:  cmdInfoRunE,
 }
 
 func cmdInfoRunE(cmd *cobra.Command, args []string) error {
-	addr, err := cmd.Flags().GetString("device")
+	addr, err := cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
