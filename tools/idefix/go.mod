@@ -3,9 +3,12 @@ module gitlab.com/garagemakers/idefix-go/tools/idefix
 go 1.18
 
 require (
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	gitlab.com/garagemakers/idefix-go v0.0.5
 )
+
+replace gitlab.com/garagemakers/idefix-go => /home/pho/code/idefix-go
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect

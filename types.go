@@ -1,6 +1,11 @@
 package idefixgo
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+	"time"
+
+	"github.com/spf13/viper"
+)
 
 type transportMsg struct {
 	Res         string      `json:"r,omitempty" msgpack:"re,omitempty"`
@@ -44,4 +49,17 @@ type ClientOptions struct {
 	Meta     map[string]interface{} `json:"meta,omitempty"`
 
 	vp *viper.Viper
+}
+
+type Event struct {
+	Address   string                 `bson:"address" json:"address"`
+	Domain    string                 `bson:"domain" json:"domain"`
+	Timestamp time.Time              `bson:"timestamp" json:"timestamp"`
+	Meta      map[string]interface{} `bson:"meta" json:"meta"`
+	Schema    string                 `bson:"schema" json:"schema"`
+	Payload   interface{}            `bson:"payload" json:"payload"`
+}
+
+func (e *Event) String() string {
+	return fmt.Sprintf("[%s] %s @ %s | %s: %v | %v", e.Timestamp, e.Address, e.Domain, e.Schema, e.Payload, e.Meta)
 }
