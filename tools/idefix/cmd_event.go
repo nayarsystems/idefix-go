@@ -2,18 +2,15 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"gitlab.com/garagemakers/idefix/modules/bevents/blob"
-	//"gitlab.com/garagemakers/idefix/modules/bevents/blob"
+	be "gitlab.com/garagemakers/idefix/libraries/bevents"
 )
 
 func init() {
@@ -84,7 +81,7 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 		meta, _ := cmd.Flags().GetString("meta")
 		err = json.Unmarshal([]byte(meta), &tmeta)
 		if err != nil {
-			return fmt.Errorf("Cannot parse 'meta': %w", err)
+			return fmt.Errorf("cannot parse 'meta': %w", err)
 		}
 	}
 
@@ -108,31 +105,12 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 	limit, _ := cmd.Flags().GetUint("limit")
 	reverse, _ := cmd.Flags().GetBool("reverse")
 	sinceraw, _ := cmd.Flags().GetString("since")
-	schemaFile, _ := cmd.Flags().GetString("schemas")
 	since, err := dateparse.ParseStrict(sinceraw)
 	if err != nil {
-		return fmt.Errorf("Cannot parse 'since': %w", err)
-	}
-	var schemas []blob.EventSchema
-	if schemaFile != "" {
-		data, err := os.ReadFile(schemaFile)
-		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(data, &schemas); err != nil {
-			return err
-		}
-	} else {
-		schemas = []blob.EventSchema{}
+		return fmt.Errorf("cannot parse 'since': %w", err)
 	}
 
-	schemasMap := map[string]*blob.EventSchema{}
-
-	for _, schema := range schemas {
-		id := schema.GetSHA256()
-		idStr := hex.EncodeToString(id[:])
-		schemasMap[idStr] = &schema
-	}
+	schemasMap := map[string]*be.EventSchema{}
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
 		"Query for events from domain %q, limit: %d, skip: %d, since: %v", domain, limit, skip, since))
@@ -149,52 +127,124 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 		format = "pretty"
 	}
 
-	for _, e := range m {
-		if schema, ok := schemasMap[e.Schema]; ok {
-			// TODO: check decoder version in schema
-			// TODO: use a more generic concept of decoder (it could not be a event queue and just an event (?))
-			decoder := blob.CreateEventQueue(schema)
-			// TODO: in a future, payload could be something different to a byte array. Decoder input should be of type interface{}
-			// TODO: avoid msi type when saving interface{} payload to mongo db
-			rawMsi, ok := e.Payload.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("not an msi")
-			}
-			blobI, ok := rawMsi["Data"]
-			if !ok {
-				return fmt.Errorf("no Data in msi")
-			}
-			blobStr, ok := blobI.(string)
-			if !ok {
-				return fmt.Errorf("data is not a string")
-			}
-			raw, err := base64.StdEncoding.DecodeString(blobStr)
-			if err != nil {
-				return fmt.Errorf("blob is not in base64: %v", err)
-			}
-			err = decoder.Decode([]byte(raw))
-			if err != nil {
-				return fmt.Errorf("can't decode event: %v", err)
-			}
-			events, err := decoder.GetEvents()
-			if err != nil {
-				return fmt.Errorf("can't decode event: %v", err)
-			}
-			e.Payload, err = blob.EventsToMsiEvents(events)
-			if err != nil {
-				return fmt.Errorf("can't decode event: %v", err)
+	if false {
+		for _, e := range m {
+			switch format {
+			case "json":
+				je, err := json.Marshal(e)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println(string(je))
+			default:
+				fmt.Printf("%s\n", e.String())
 			}
 		}
-		switch format {
-		case "json":
-			je, err := json.Marshal(e)
+		return nil
+	}
+
+	//domain -> address -> schema -> list of events
+	eventMap := map[string]map[string]map[string][]*be.Event{}
+
+	for _, e := range m {
+		rawMsi, ok := e.Payload.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("not an msi")
+		}
+		blobI, ok := rawMsi["Data"]
+		if !ok {
+			return fmt.Errorf("no Data in msi")
+		}
+		blobStr, ok := blobI.(string)
+		if !ok {
+			return fmt.Errorf("data is not a string")
+		}
+		raw, err := base64.StdEncoding.DecodeString(blobStr)
+		if err != nil {
+			return fmt.Errorf("blob is not in base64: %v", err)
+		}
+
+		var schema *be.EventSchema
+		if schema, ok = schemasMap[e.Schema]; !ok {
+			schemaMsg, err := ic.GetSchema(e.Schema, time.Second)
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
-			fmt.Println(string(je))
-		default:
-			fmt.Printf("%s\n", e.String())
+			schema = &be.EventSchema{}
+			err = schema.UnmarshalJSON([]byte(schemaMsg.Payload))
+			if err != nil {
+				return err
+			}
+		}
+		blobEvents, err := getEventsList(schema, raw)
+		if err != nil {
+			return err
+		}
+		var domainMap map[string]map[string][]*be.Event
+		if domainMap, ok = eventMap[e.Domain]; !ok {
+			domainMap = map[string]map[string][]*be.Event{}
+			eventMap[e.Domain] = domainMap
+		}
+
+		var addressMap map[string][]*be.Event
+		if addressMap, ok = domainMap[e.Address]; !ok {
+			addressMap = map[string][]*be.Event{}
+			domainMap[e.Address] = addressMap
+		}
+
+		var schemaEvents []*be.Event
+		if schemaEvents, ok = addressMap[e.Schema]; !ok {
+			schemaEvents = []*be.Event{}
+		}
+		schemaEvents = append(schemaEvents, blobEvents...)
+		addressMap[e.Schema] = schemaEvents
+	}
+
+	for domain, domainMap := range eventMap {
+		for address, addressMap := range domainMap {
+			for schema, schemaEvents := range addressMap {
+				header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s ~~~~~~~~~", domain, address, schema)
+				headerSeparatorRune := []rune(header)
+				for i := 0; i < len(headerSeparatorRune); i++ {
+					headerSeparatorRune[i] = '~'
+				}
+				headerSeparator := string(headerSeparatorRune)
+				fmt.Println(headerSeparator)
+				fmt.Println(header)
+				fmt.Println(headerSeparator)
+				deltaEvents, err := getDeltaEvents(schemaEvents)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				for _, deltaEvent := range deltaEvents {
+					je, err := json.Marshal(deltaEvent)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+					fmt.Println(string(je))
+				}
+			}
 		}
 	}
 	return nil
+}
+
+func getEventsList(schema *be.EventSchema, raw []byte) ([]*be.Event, error) {
+	decoder := be.CreateEventQueue(schema)
+	err := decoder.Decode([]byte(raw))
+	if err != nil {
+		return nil, fmt.Errorf("can't decode event: %v", err)
+	}
+	events, err := decoder.GetEvents()
+	if err != nil {
+		return nil, fmt.Errorf("can't decode event: %v", err)
+	}
+	return events, err
+}
+
+func getDeltaEvents(events []*be.Event) ([]map[string]interface{}, error) {
+	msiEvents, err := be.GetDeltaMsiEvents(events)
+	return msiEvents, err
 }

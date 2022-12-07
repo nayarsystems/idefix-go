@@ -6,12 +6,12 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	gitlab.com/garagemakers/idefix-go v0.0.5
-	gitlab.com/garagemakers/idefix/modules/bevents v0.0.0-00010101000000-000000000000
+	gitlab.com/garagemakers/idefix/libraries/bevents v0.0.0-20221207175204-5fdc6213ff15
 )
 
 replace gitlab.com/garagemakers/idefix-go => /home/dcentelles/nayarshare/programming/idefix-go
 
-replace gitlab.com/garagemakers/idefix/modules/bevents => /home/dcentelles/nayarshare/programming/idefix/modules/bevents
+replace gitlab.com/garagemakers/idefix/libraries/bevents => /home/dcentelles/nayarshare/programming/idefix/libraries/bevents
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
