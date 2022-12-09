@@ -27,8 +27,14 @@ func (c *Client) Call(remoteAddress string, msg *Message, timeout time.Duration)
 	if err := c.sendMessage(msg); err != nil {
 		return nil, err
 	}
-
-	return sub.WaitOne(timeout)
+	msg, err := sub.WaitOne(timeout)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Err != nil {
+		return msg, msg.Err
+	}
+	return msg, nil
 }
 
 func (c *Client) NewSubscriber(capacity uint, topic ...string) *minips.Subscriber[*Message] {
