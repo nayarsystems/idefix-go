@@ -48,6 +48,11 @@ func init() {
 	cmdUpdateSendFile.MarkFlagRequired("file")
 	cmdUpdate.AddCommand(cmdUpdateSendFile)
 
+	cmdUpdate.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
+	cmdUpdate.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
+	cmdUpdate.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
+	cmdUpdate.PersistentFlags().Bool("check-tr", false, "Check transport link after upgrade")
+
 	rootCmd.AddCommand(cmdUpdate)
 }
 
@@ -351,6 +356,26 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	checkPPP, err := cmd.Flags().GetBool("check-ppp")
+	if err != nil {
+		return err
+	}
+
+	checkTransport, err := cmd.Flags().GetBool("check-tr")
+	if err != nil {
+		return err
+	}
+
+	healthySecs, err := cmd.Flags().GetUint("healthy-secs")
+	if err != nil {
+		return err
+	}
+
+	stabilitySecs, err := cmd.Flags().GetUint("stability-secs")
+	if err != nil {
+		return err
+	}
+
 	updatebytes, err := os.ReadFile(updatefile)
 	if err != nil {
 		return err
@@ -404,7 +429,16 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending update...")
 
-	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.update", Data: map[string]interface{}{"method": "bytes", "dsthash": dsthash, "data": updatebytes}}, time.Hour*24)
+	msg := map[string]interface{}{
+		"method":         "bytes",
+		"dsthash":        dsthash,
+		"data":           updatebytes,
+		"check_ppp":      checkPPP,
+		"check_tr":       checkTransport,
+		"stability_secs": stabilitySecs,
+		"healthy_secs":   healthySecs,
+	}
+	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.update", Data: msg}, time.Hour*24)
 	spinner.Stop()
 
 	if err != nil {
