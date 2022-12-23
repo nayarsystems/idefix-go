@@ -63,3 +63,9 @@ type Event struct {
 func (e *Event) String() string {
 	return fmt.Sprintf("[%s] %s @ %s | %s: %v | %v", e.Timestamp, e.Address, e.Domain, e.Schema, e.Payload, e.Meta)
 }
+
+type Schema struct {
+	Description string `bson:"description" json:"description" msgpack:"description"`
+	Hash        string `bson:"hash" json:"hash" msgpack:"hash"`
+	Payload     string `bson:"payload" json:"payload" msgpack:"payload"`
+}

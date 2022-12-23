@@ -6,7 +6,12 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	gitlab.com/garagemakers/idefix-go v0.0.6-0.20221019161214-0b04e91e9731
+	gitlab.com/garagemakers/idefix/libraries/bevents v0.0.0-20221207175204-5fdc6213ff15
 )
+
+replace gitlab.com/garagemakers/idefix-go => /home/dcentelles/nayarshare/programming/idefix-go
+
+replace gitlab.com/garagemakers/idefix/libraries/bevents => /home/dcentelles/nayarshare/programming/idefix/libraries/bevents
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
@@ -19,7 +24,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	gitlab.com/garagemakers/idefix/libraries/buffer v0.0.12 // indirect
+	gitlab.com/garagemakers/idefix/libraries/buffer v0.0.14 // indirect
 	golang.org/x/term v0.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

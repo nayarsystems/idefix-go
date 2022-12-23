@@ -49,3 +49,27 @@ func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, s
 
 	return m, nil
 }
+
+func (c *Client) GetSchema(hash string, timeout time.Duration) (*Schema, error) {
+	amap := make(map[string]interface{})
+	amap["hash"] = hash
+	amap["nopayload"] = false
+
+	ret, err := c.Call("idefix", &Message{To: "schemas.get", Data: amap}, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	if ret.Err != nil {
+		return nil, ret.Err
+	}
+
+	b, err := json.Marshal(ret.Data)
+	if err != nil {
+		return nil, err
+	}
+	m := &Schema{}
+	_ = json.Unmarshal(b, &m)
+
+	return m, nil
+}
