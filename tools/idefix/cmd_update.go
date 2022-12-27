@@ -23,6 +23,7 @@ func init() {
 	cmdUpdateCreate.Flags().StringP("source", "s", "", "Source")
 	cmdUpdateCreate.Flags().StringP("destination", "d", "", "Destination")
 	cmdUpdateCreate.Flags().StringP("output", "o", "", "Output")
+	cmdUpdateCreate.Flags().BoolP("rollback", "r", false, "Also include a patch for rollback")
 	cmdUpdateCreate.MarkFlagRequired("source")
 	cmdUpdateCreate.MarkFlagRequired("destination")
 	cmdUpdate.AddCommand(cmdUpdateCreate)
@@ -36,22 +37,22 @@ func init() {
 	cmdUpdateApply.MarkFlagRequired("patch")
 	cmdUpdate.AddCommand(cmdUpdateApply)
 
-	cmdUpdateSendPatch.Flags().StringP("address", "a", "", "Device address")
 	cmdUpdateSendPatch.Flags().StringP("patch", "p", "", "Patch file")
-	cmdUpdateSendPatch.MarkFlagRequired("address")
 	cmdUpdateSendPatch.MarkFlagRequired("patch")
-	cmdUpdate.AddCommand(cmdUpdateSendPatch)
+	cmdUpdateSend.AddCommand(cmdUpdateSendPatch)
 
-	cmdUpdateSendFile.Flags().StringP("address", "a", "", "Device address")
 	cmdUpdateSendFile.Flags().StringP("file", "f", "", "Update file")
-	cmdUpdateSendFile.MarkFlagRequired("address")
 	cmdUpdateSendFile.MarkFlagRequired("file")
-	cmdUpdate.AddCommand(cmdUpdateSendFile)
+	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
-	cmdUpdate.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
-	cmdUpdate.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
-	cmdUpdate.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
-	cmdUpdate.PersistentFlags().Bool("check-tr", false, "Check transport link after upgrade")
+	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
+	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
+	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
+	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
+	cmdUpdateSend.PersistentFlags().Bool("check-tr", false, "Check transport link after upgrade")
+	cmdUpdateSend.PersistentFlags().Uint("stop-countdown", 10, "Stop countdown before stopping idefix in seconds")
+	cmdUpdateSend.PersistentFlags().Uint("halt-timeout", 10, "Halt timeout in seconds")
+	cmdUpdate.AddCommand(cmdUpdateSend)
 
 	rootCmd.AddCommand(cmdUpdate)
 }
@@ -73,15 +74,20 @@ var cmdUpdateApply = &cobra.Command{
 	RunE:  cmdUpdateApplyRunE,
 }
 
+var cmdUpdateSend = &cobra.Command{
+	Use:   "send",
+	Short: "Send an update to a remote device",
+}
+
 var cmdUpdateSendPatch = &cobra.Command{
-	Use:   "send-patch",
-	Short: "Send a patch to a remote device",
+	Use:   "patch",
+	Short: "Send a patch",
 	RunE:  cmdUpdateSendPatchRunE,
 }
 
 var cmdUpdateSendFile = &cobra.Command{
-	Use:   "send-file",
-	Short: "Send file to update a remote device",
+	Use:   "file",
+	Short: "Send a file",
 	RunE:  cmdUpdateSendFileRunE,
 }
 
@@ -108,6 +114,10 @@ func createPatch(oldpath string, newpath string) ([]byte, string, string, error)
 }
 
 func cmdUpdateCreateRunE(cmd *cobra.Command, args []string) error {
+	createRollbackPatch, err := cmd.Flags().GetBool("rollback")
+	if err != nil {
+		return err
+	}
 	src, err := cmd.Flags().GetString("source")
 	if err != nil {
 		return err
@@ -116,6 +126,8 @@ func cmdUpdateCreateRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Creating patch...")
 
 	patchbytes, srchash, dsthash, err := createPatch(src, dst)
 	if err != nil {
@@ -127,6 +139,26 @@ func cmdUpdateCreateRunE(cmd *cobra.Command, args []string) error {
 		"srchash:hex": srchash,
 		"dsthash:hex": dsthash,
 	}
+	patchhash := sha256.Sum256(patchbytes)
+	patchhashStr := hex.EncodeToString(patchhash[:])
+	tp := pterm.TableData{
+		{"Patch", ""},
+		{"Src hash", srchash},
+		{"Dst hash", dsthash},
+		{"Patch hash", patchhashStr},
+	}
+	if createRollbackPatch {
+		rpatchbytes, _, _, err := createPatch(dst, src)
+		if err != nil {
+			return err
+		}
+		rpatchbyteshash := sha256.Sum256(rpatchbytes)
+		rpatchbyteshashStr := hex.EncodeToString(rpatchbyteshash[:])
+		patch["rdata"] = rpatchbytes
+		tp = append(tp, []string{"Rollback patch hash", rpatchbyteshashStr})
+	}
+	spinner.Stop()
+	pterm.DefaultTable.WithHasHeader().WithData(tp).Render()
 
 	normalize.EncodeTypes(patch, &normalize.EncodeTypesOpts{BytesToB64: true, Compress: true})
 
@@ -145,6 +177,7 @@ func cmdUpdateCreateRunE(cmd *cobra.Command, args []string) error {
 
 		ioutil.WriteFile(out, j, 0644)
 	}
+	pterm.Success.Println("Patch created!")
 
 	return nil
 }
@@ -287,6 +320,42 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var hasRollback bool
+	rdata, err := ei.N(patchmap).M("rdata").Bytes()
+	if err == nil {
+		hasRollback = true
+	}
+
+	checkPPP, err := cmd.Flags().GetBool("check-ppp")
+	if err != nil {
+		return err
+	}
+
+	checkTransport, err := cmd.Flags().GetBool("check-tr")
+	if err != nil {
+		return err
+	}
+
+	healthySecs, err := cmd.Flags().GetUint("healthy-secs")
+	if err != nil {
+		return err
+	}
+
+	stabilitySecs, err := cmd.Flags().GetUint("stability-secs")
+	if err != nil {
+		return err
+	}
+
+	stopToutSecs, err := cmd.Flags().GetUint("stop-countdown")
+	if err != nil {
+		return err
+	}
+
+	haltToutSecs, err := cmd.Flags().GetUint("halt-timeout")
+	if err != nil {
+		return err
+	}
+
 	ic, err := getConnectedClient()
 	if err != nil {
 		return fmt.Errorf("Cannot connect to the server: %w", err)
@@ -330,7 +399,22 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending update...")
 
-	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.patch", Data: map[string]interface{}{"method": "bytes", "srchash": srchash, "dsthash": dsthash, "data": data}}, time.Hour*24)
+	patchMsg := map[string]interface{}{
+		"method":         "bytes",
+		"srchash":        srchash,
+		"dsthash":        dsthash,
+		"data":           data,
+		"check_ppp":      checkPPP,
+		"check_tr":       checkTransport,
+		"stability_secs": stabilitySecs,
+		"healthy_secs":   healthySecs,
+		"stop_countdown": stopToutSecs,
+		"halt_timeout":   haltToutSecs,
+	}
+	if hasRollback {
+		patchMsg["rdata"] = rdata
+	}
+	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.patch", Data: patchMsg}, time.Hour*24)
 	spinner.Stop()
 
 	if err != nil {
@@ -372,6 +456,16 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	stabilitySecs, err := cmd.Flags().GetUint("stability-secs")
+	if err != nil {
+		return err
+	}
+
+	stopToutSecs, err := cmd.Flags().GetUint("stop-countdown")
+	if err != nil {
+		return err
+	}
+
+	haltToutSecs, err := cmd.Flags().GetUint("halt-timeout")
 	if err != nil {
 		return err
 	}
@@ -437,6 +531,8 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		"check_tr":       checkTransport,
 		"stability_secs": stabilitySecs,
 		"healthy_secs":   healthySecs,
+		"stop_countdown": stopToutSecs,
+		"halt_timeout":   haltToutSecs,
 	}
 	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.update", Data: msg}, time.Hour*24)
 	spinner.Stop()
