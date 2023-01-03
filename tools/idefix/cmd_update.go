@@ -230,7 +230,7 @@ func cmdUpdateApplyRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if !bytes.Equal(srchash[:], psrchash) {
-		return fmt.Errorf("Source hash is %s, Expected: %s", hex.EncodeToString(psrchash[:]), hex.EncodeToString(srchash[:]))
+		return fmt.Errorf("source hash is %s, Expected: %s", hex.EncodeToString(psrchash[:]), hex.EncodeToString(srchash[:]))
 	}
 
 	newbytes, err := bspatch.Bytes(srcbytes, pdata)
@@ -241,7 +241,7 @@ func cmdUpdateApplyRunE(cmd *cobra.Command, args []string) error {
 	dsthash := sha256.Sum256(newbytes)
 
 	if !bytes.Equal(pdsthash, dsthash[:]) {
-		return fmt.Errorf("Patched file hash is %s, Expected: %s", hex.EncodeToString(dsthash[:]), hex.EncodeToString(pdsthash[:]))
+		return fmt.Errorf("patched file hash is %s, Expected: %s", hex.EncodeToString(dsthash[:]), hex.EncodeToString(pdsthash[:]))
 	}
 
 	if !cmd.Flags().Changed("output") && !cmd.Flags().Changed("inplace") {
@@ -282,6 +282,49 @@ func remoteExec(ic *idefixgo.Client, addr string, cmd string, timeout time.Durat
 	}
 
 	return m.Data, err
+}
+
+type updateParams struct {
+	checkPPP       bool
+	checkTransport bool
+	healthySecs    uint
+	stabilitySecs  uint
+	stopToutSecs   uint
+	haltToutSecs   uint
+}
+
+func getUpdateParams(cmd *cobra.Command) (p *updateParams, err error) {
+	p = &updateParams{}
+	p.checkPPP, err = cmd.Flags().GetBool("check-ppp")
+	if err != nil {
+		return
+	}
+
+	p.checkTransport, err = cmd.Flags().GetBool("check-tr")
+	if err != nil {
+		return
+	}
+
+	p.healthySecs, err = cmd.Flags().GetUint("healthy-secs")
+	if err != nil {
+		return
+	}
+
+	p.stabilitySecs, err = cmd.Flags().GetUint("stability-secs")
+	if err != nil {
+		return
+	}
+
+	p.stopToutSecs, err = cmd.Flags().GetUint("stop-countdown")
+	if err != nil {
+		return
+	}
+
+	p.haltToutSecs, err = cmd.Flags().GetUint("halt-timeout")
+	if err != nil {
+		return
+	}
+	return
 }
 
 func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
@@ -326,44 +369,19 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		hasRollback = true
 	}
 
-	checkPPP, err := cmd.Flags().GetBool("check-ppp")
-	if err != nil {
-		return err
-	}
-
-	checkTransport, err := cmd.Flags().GetBool("check-tr")
-	if err != nil {
-		return err
-	}
-
-	healthySecs, err := cmd.Flags().GetUint("healthy-secs")
-	if err != nil {
-		return err
-	}
-
-	stabilitySecs, err := cmd.Flags().GetUint("stability-secs")
-	if err != nil {
-		return err
-	}
-
-	stopToutSecs, err := cmd.Flags().GetUint("stop-countdown")
-	if err != nil {
-		return err
-	}
-
-	haltToutSecs, err := cmd.Flags().GetUint("halt-timeout")
+	p, err := getUpdateParams(cmd)
 	if err != nil {
 		return err
 	}
 
 	ic, err := getConnectedClient()
 	if err != nil {
-		return fmt.Errorf("Cannot connect to the server: %w", err)
+		return fmt.Errorf("cannot connect to the server: %w", err)
 	}
 
 	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info"}, time.Second*10)
 	if err != nil {
-		return fmt.Errorf("Cannot get device info: %w", err)
+		return fmt.Errorf("cannot get device info: %w", err)
 	}
 	address, err := ei.N(ret.Data).M("Address").String()
 	if err != nil {
@@ -384,7 +402,9 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		{"Source Hash", hex.EncodeToString(srchash)},
 		{"Destination Hash", hex.EncodeToString(dsthash)},
 	}).Render()
+
 	fmt.Println()
+
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device", ""},
 		{"Address", address},
@@ -393,6 +413,19 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	}).Render()
 
 	fmt.Println()
+
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Update params", "", ""},
+		{"Stability time (s)", fmt.Sprintf("%v", p.stabilitySecs)},
+		{"Healthy time (s)", fmt.Sprintf("%v", p.healthySecs)},
+		{"Check ppp link", fmt.Sprintf("%v", p.checkPPP)},
+		{"Check transport link", fmt.Sprintf("%v", p.checkTransport)},
+		{"Stop countdown (s)", fmt.Sprintf("%v", p.stopToutSecs)},
+		{"Halt timeout (s)", fmt.Sprintf("%v", p.haltToutSecs)},
+	}).Render()
+
+	fmt.Println()
+
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
 	}
@@ -404,12 +437,12 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		"srchash":        srchash,
 		"dsthash":        dsthash,
 		"data":           data,
-		"check_ppp":      checkPPP,
-		"check_tr":       checkTransport,
-		"stability_secs": stabilitySecs,
-		"healthy_secs":   healthySecs,
-		"stop_countdown": stopToutSecs,
-		"halt_timeout":   haltToutSecs,
+		"check_ppp":      p.checkPPP,
+		"check_tr":       p.checkTransport,
+		"stability_secs": p.stabilitySecs,
+		"healthy_secs":   p.healthySecs,
+		"stop_countdown": p.stopToutSecs,
+		"halt_timeout":   p.haltToutSecs,
 	}
 	if hasRollback {
 		patchMsg["rdata"] = rdata
@@ -440,32 +473,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	checkPPP, err := cmd.Flags().GetBool("check-ppp")
-	if err != nil {
-		return err
-	}
-
-	checkTransport, err := cmd.Flags().GetBool("check-tr")
-	if err != nil {
-		return err
-	}
-
-	healthySecs, err := cmd.Flags().GetUint("healthy-secs")
-	if err != nil {
-		return err
-	}
-
-	stabilitySecs, err := cmd.Flags().GetUint("stability-secs")
-	if err != nil {
-		return err
-	}
-
-	stopToutSecs, err := cmd.Flags().GetUint("stop-countdown")
-	if err != nil {
-		return err
-	}
-
-	haltToutSecs, err := cmd.Flags().GetUint("halt-timeout")
+	p, err := getUpdateParams(cmd)
 	if err != nil {
 		return err
 	}
@@ -517,6 +525,19 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	}).Render()
 
 	fmt.Println()
+
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Update params", "", ""},
+		{"Stability time (s)", fmt.Sprintf("%v", p.stabilitySecs)},
+		{"Healthy time (s)", fmt.Sprintf("%v", p.healthySecs)},
+		{"Check ppp link", fmt.Sprintf("%v", p.checkPPP)},
+		{"Check transport link", fmt.Sprintf("%v", p.checkTransport)},
+		{"Stop countdown (s)", fmt.Sprintf("%v", p.stopToutSecs)},
+		{"Halt timeout (s)", fmt.Sprintf("%v", p.haltToutSecs)},
+	}).Render()
+
+	fmt.Println()
+
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
 	}
@@ -527,12 +548,12 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		"method":         "bytes",
 		"dsthash":        dsthash,
 		"data":           updatebytes,
-		"check_ppp":      checkPPP,
-		"check_tr":       checkTransport,
-		"stability_secs": stabilitySecs,
-		"healthy_secs":   healthySecs,
-		"stop_countdown": stopToutSecs,
-		"halt_timeout":   haltToutSecs,
+		"check_ppp":      p.checkPPP,
+		"check_tr":       p.checkTransport,
+		"stability_secs": p.stabilitySecs,
+		"healthy_secs":   p.healthySecs,
+		"stop_countdown": p.stopToutSecs,
+		"halt_timeout":   p.haltToutSecs,
 	}
 	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.update", Data: msg}, time.Hour*24)
 	spinner.Stop()
