@@ -126,7 +126,6 @@ func cmdUpdateCreateRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Creating patch...")
 
 	patchbytes, srchash, dsthash, err := createPatch(src, dst)
@@ -378,20 +377,14 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot connect to the server: %w", err)
 	}
-
-	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info"}, time.Second*10)
+	msg := map[string]interface{}{
+		"report": false,
+	}
+	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info", Data: msg}, time.Second*10)
 	if err != nil {
 		return fmt.Errorf("cannot get device info: %w", err)
 	}
-	address, err := ei.N(ret.Data).M("Address").String()
-	if err != nil {
-		return err
-	}
-	bootcnt, err := ei.N(ret.Data).M("BootCnt").Int()
-	if err != nil {
-		return err
-	}
-	version, err := ei.N(ret.Data).M("Version").String()
+	address, version, bootcnt, err := getDevInfoFromMsg(ret.Data)
 	if err != nil {
 		return err
 	}
@@ -499,19 +492,14 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info"}, time.Second)
+	msg := map[string]interface{}{
+		"report": false,
+	}
+	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info", Data: msg}, time.Second)
 	if err != nil {
 		return err
 	}
-	address, err := ei.N(ret.Data).M("Address").String()
-	if err != nil {
-		return err
-	}
-	bootcnt, err := ei.N(ret.Data).M("BootCnt").Int()
-	if err != nil {
-		return err
-	}
-	version, err := ei.N(ret.Data).M("Version").String()
+	address, version, bootcnt, err := getDevInfoFromMsg(ret.Data)
 	if err != nil {
 		return err
 	}
@@ -544,7 +532,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending update...")
 
-	msg := map[string]interface{}{
+	msg = map[string]interface{}{
 		"method":         "bytes",
 		"dsthash":        dsthash,
 		"data":           updatebytes,
@@ -568,4 +556,25 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	pterm.Success.Println("Update completed! Device should reboot now...")
 	return nil
+}
+
+func getDevInfoFromMsg(data interface{}) (address, version string, bootCnt int, err error) {
+	var devInfo map[string]interface{}
+	devInfo, err = ei.N(data).M("devInfo").MapStr()
+	if err != nil {
+		return
+	}
+	address, err = ei.N(devInfo).M("address").String()
+	if err != nil {
+		return
+	}
+	bootCnt, err = ei.N(devInfo).M("bootCnt").Int()
+	if err != nil {
+		return
+	}
+	version, err = ei.N(devInfo).M("version").String()
+	if err != nil {
+		return
+	}
+	return
 }
