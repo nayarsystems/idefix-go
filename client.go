@@ -115,8 +115,9 @@ func (c *Client) Connect() (err error) {
 }
 
 func (c *Client) Disconnect() {
-	c.cancelFunc()
 	c.setState(Disconnected)
+	c.cancelFunc()
+	c.client.Disconnect(200)
 }
 
 func (c *Client) Context() context.Context {
