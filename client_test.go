@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nayarsystems/idefix/core/cert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/garagemakers/idefix/core/cert"
 )
 
 func TestPublish(t *testing.T) {

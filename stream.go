@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/garagemakers/idefix-go/minips"
+	"github.com/nayarsystems/idefix-go/minips"
 )
 
 type Stream struct {

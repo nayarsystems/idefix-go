@@ -1,4 +1,4 @@
-module gitlab.com/garagemakers/idefix-go/minips
+module github.com/nayarsystems/idefix-go/minips
 
 go 1.18
 

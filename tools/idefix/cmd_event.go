@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
+	be "github.com/nayarsystems/idefix/libraries/bevents"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	be "gitlab.com/garagemakers/idefix/libraries/bevents"
 )
 
 func init() {

@@ -1,4 +1,4 @@
-module gitlab.com/garagemakers/idefix-go
+module github.com/nayarsystems/idefix-go
 
 go 1.18
 
@@ -6,9 +6,9 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/stretchr/testify v1.7.4
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	gitlab.com/garagemakers/idefix-go/minips v0.0.2
-	gitlab.com/garagemakers/idefix/core/cert v0.0.0-20220610083502-8dd9faf3adf2
-	gitlab.com/garagemakers/idefix/core/idefix v0.0.9
+	github.com/nayarsystems/idefix-go/minips v0.0.2
+	github.com/nayarsystems/idefix/core/cert v0.0.2
+	github.com/nayarsystems/idefix/core/idefix v0.0.22
 )
 
 require (

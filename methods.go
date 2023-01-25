@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/garagemakers/idefix-go/minips"
+	"github.com/nayarsystems/idefix-go/minips"
 )
 
 func (c *Client) Publish(remoteAddress string, msg *Message) error {

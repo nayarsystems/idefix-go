@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	idf "github.com/nayarsystems/idefix-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	idf "gitlab.com/garagemakers/idefix-go"
 )
 
 func init() {

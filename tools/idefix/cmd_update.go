@@ -13,10 +13,10 @@ import (
 	"github.com/gabstv/go-bsdiff/pkg/bsdiff"
 	"github.com/gabstv/go-bsdiff/pkg/bspatch"
 	"github.com/jaracil/ei"
+	idefixgo "github.com/nayarsystems/idefix-go"
+	"github.com/nayarsystems/idefix/core/idefix/normalize"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	idefixgo "gitlab.com/garagemakers/idefix-go"
-	"gitlab.com/garagemakers/idefix/core/idefix/normalize"
 )
 
 func init() {

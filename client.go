@@ -10,7 +10,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"gitlab.com/garagemakers/idefix-go/minips"
+	"github.com/nayarsystems/idefix-go/minips"
 )
 
 type ConnectionStatus int64

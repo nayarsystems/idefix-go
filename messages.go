@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/nayarsystems/idefix/core/idefix/normalize"
 	"github.com/vmihailenco/msgpack/v5"
-	"gitlab.com/garagemakers/idefix/core/idefix/normalize"
 )
 
 func (c *Client) sendMessage(tm *Message) (err error) {

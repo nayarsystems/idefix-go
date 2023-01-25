@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
+	idf "github.com/nayarsystems/idefix-go"
 	"github.com/spf13/cobra"
-	idf "gitlab.com/garagemakers/idefix-go"
 )
 
 var rootctx context.Context
