@@ -25,7 +25,7 @@ func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[stri
 
 func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, skip uint, reverse bool, timeout time.Duration) ([]Event, error) {
 	amap := make(map[string]interface{})
-	amap["name"] = domain
+	amap["domain"] = domain
 	amap["since"] = since
 	amap["limit"] = limit
 	amap["skip"] = skip
