@@ -4,11 +4,11 @@ go 1.18
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.1
-	github.com/stretchr/testify v1.7.4
-	github.com/vmihailenco/msgpack/v5 v5.3.5
-	github.com/nayarsystems/idefix-go/minips v0.0.2
+	github.com/nayarsystems/idefix-go/minips v0.0.3
 	github.com/nayarsystems/idefix/core/cert v0.0.2
 	github.com/nayarsystems/idefix/core/idefix v0.0.22
+	github.com/stretchr/testify v1.8.0
+	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
 require (
@@ -16,6 +16,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/nayarsystems/idefix/libraries/buffer v0.0.15 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
@@ -23,7 +24,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
