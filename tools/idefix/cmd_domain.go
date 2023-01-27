@@ -99,7 +99,7 @@ func cmdDomainAssignRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 	amap["address"] = address
 
 	return commandCall("idefix", "domain.assign", amap, getTimeout(cmd))
@@ -121,7 +121,7 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	amap["name"] = name
+	amap["domain"] = name
 
 	sallow, err := cmd.Flags().GetString("allow")
 	if err != nil {
@@ -180,7 +180,7 @@ func cmdDomainGetRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 
 	return commandCall("idefix", "domain.get", amap, getTimeout(cmd))
 }
@@ -192,7 +192,7 @@ func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 
 	fmt.Println("You are about to delete the domain:", name)
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
