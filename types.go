@@ -7,16 +7,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type transportMsg struct {
-	Res         string      `json:"r,omitempty" msgpack:"re,omitempty"`
-	To          string      `json:"t" msgpack:"to"`
-	Err         error       `json:"e,omitempty" msgpack:"er,omitempty"`
-	Data        interface{} `json:"d,omitempty" msgpack:"dt,omitempty"`
-	SrcSession  string
-	SrcAddress  string
-	SrcEncoding string
-}
-
 type loginMsg struct {
 	Address  string                 `json:"address" msgpack:"address"`
 	Encoding string                 `json:"encoding" msgpack:"encoding"`
@@ -34,10 +24,10 @@ const MqttIdefixPrefix = "ifx"
 ///
 
 type Message struct {
-	To       string      `json:"to" msgpack:"to"`
-	Response string      `json:"re" msgpack:"re"`
-	Data     interface{} `json:"dt" msgpack:"dt"`
-	Err      error       `json:"er" msgpack:"er"`
+	Response string      `json:"r,omitempty" msgpack:"re,omitempty"`
+	To       string      `json:"t" msgpack:"to"`
+	Err      error       `json:"e,omitempty" msgpack:"er,omitempty"`
+	Data     interface{} `json:"d,omitempty" msgpack:"dt,omitempty"`
 }
 
 type ClientOptions struct {
@@ -52,16 +42,21 @@ type ClientOptions struct {
 }
 
 type Event struct {
-	Address   string                 `bson:"address" json:"address"`
-	Domain    string                 `bson:"domain" json:"domain"`
-	Timestamp time.Time              `bson:"timestamp" json:"timestamp"`
-	Meta      map[string]interface{} `bson:"meta" json:"meta"`
-	Schema    string                 `bson:"schema" json:"schema"`
-	Payload   interface{}            `bson:"payload" json:"payload"`
+	Address   string                 `bson:"address" json:"address" msgpack:"address"`
+	Domain    string                 `bson:"domain" json:"domain" msgpack:"domain"`
+	Timestamp time.Time              `bson:"timestamp" json:"timestamp" msgpack:"timestamp"`
+	Meta      map[string]interface{} `bson:"meta" json:"meta" msgpack:"meta"`
+	Schema    string                 `bson:"schema" json:"schema" msgpack:"schema"`
+	Payload   interface{}            `bson:"payload" json:"payload" msgpack:"payload"`
 }
 
 func (e *Event) String() string {
 	return fmt.Sprintf("[%s] %s @ %s | %s: %v | %v", e.Timestamp, e.Address, e.Domain, e.Schema, e.Payload, e.Meta)
+}
+
+type GetEventResponse struct {
+	Events         []Event `json:"events" msgpack:"events"`
+	ContinuationID string  `json:"cid" msgpack:"cid"`
 }
 
 type Schema struct {

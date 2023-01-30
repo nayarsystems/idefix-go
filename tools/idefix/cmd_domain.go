@@ -9,34 +9,34 @@ import (
 )
 
 func init() {
-	cmdDomainCreate.Flags().StringP("name", "n", "", "Domain Name")
-	cmdDomainCreate.Flags().StringP("allow", "a", "", "Allow rule")
-	cmdDomainCreate.Flags().StringP("deny", "d", "", "Deny rule")
-	cmdDomainCreate.Flags().StringP("env", "e", "", "Environment Map")
-	cmdDomainCreate.Flags().StringArrayP("admin", "", []string{}, "Admin Address (Can be set multiple times)")
-	cmdDomainCreate.MarkFlagRequired("name")
+	cmdDomainCreate.Flags().StringP("domain", "n", "", "Domain Name")
+	cmdDomainCreate.Flags().String("allow", "", "Allow rule")
+	cmdDomainCreate.Flags().String("deny", "", "Deny rule")
+	cmdDomainCreate.Flags().String("env", "", "Environment map")
+	cmdDomainCreate.Flags().StringArray("admin", []string{}, "Admin address (can be set multiple times for multiple admins)")
+	cmdDomainCreate.MarkFlagRequired("domain")
 	cmdDomain.AddCommand(cmdDomainCreate)
 
-	cmdDomainAssign.Flags().StringP("name", "n", "", "Domain Name")
+	cmdDomainAssign.Flags().StringP("domain", "n", "", "Domain Name")
 	cmdDomainAssign.Flags().StringP("address", "a", "", "Device address")
-	cmdDomainAssign.MarkFlagRequired("name")
+	cmdDomainAssign.MarkFlagRequired("domain")
 	cmdDomainAssign.MarkFlagRequired("address")
 	cmdDomain.AddCommand(cmdDomainAssign)
 
-	cmdDomainGet.Flags().StringP("name", "n", "", "Domain Name")
-	cmdDomainGet.MarkFlagRequired("name")
+	cmdDomainGet.Flags().StringP("domain", "n", "", "Domain Name")
+	cmdDomainGet.MarkFlagRequired("domain")
 	cmdDomain.AddCommand(cmdDomainGet)
 
-	cmdDomainDelete.Flags().StringP("name", "n", "", "Domain Name")
-	cmdDomainDelete.MarkFlagRequired("name")
+	cmdDomainDelete.Flags().StringP("domain", "n", "", "Domain Name")
+	cmdDomainDelete.MarkFlagRequired("domain")
 	cmdDomain.AddCommand(cmdDomainDelete)
 
-	cmdDomainUpdate.Flags().StringP("name", "n", "", "Domain Name")
-	cmdDomainUpdate.Flags().StringP("allow", "a", "", "Allow rule")
-	cmdDomainUpdate.Flags().StringP("deny", "d", "", "Deny rule")
-	cmdDomainUpdate.Flags().StringP("env", "e", "", "Environment Map")
-	cmdDomainUpdate.Flags().StringArrayP("admin", "", []string{}, "Admin Address (Can be set multiple times)")
-	cmdDomainUpdate.MarkFlagRequired("name")
+	cmdDomainUpdate.Flags().StringP("domain", "d", "", "Domain Name")
+	cmdDomainUpdate.Flags().String("allow", "", "Allow rule")
+	cmdDomainUpdate.Flags().String("deny", "", "Deny rule")
+	cmdDomainUpdate.Flags().String("env", "", "Environment Map")
+	cmdDomainUpdate.Flags().StringArray("admin", []string{}, "Admin Address (Can be set multiple times)")
+	cmdDomainUpdate.MarkFlagRequired("domain")
 	cmdDomain.AddCommand(cmdDomainUpdate)
 
 	rootCmd.AddCommand(cmdDomain)
@@ -88,7 +88,7 @@ func cmdDomainCreateRunE(cmd *cobra.Command, args []string) error {
 }
 
 func cmdDomainAssignRunE(cmd *cobra.Command, args []string) error {
-	name, err := cmd.Flags().GetString("name")
+	name, err := cmd.Flags().GetString("domain")
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func cmdDomainAssignRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 	amap["address"] = address
 
 	return commandCall("idefix", "domain.assign", amap, getTimeout(cmd))
@@ -117,11 +117,11 @@ func cmdDomainUpdateRunE(cmd *cobra.Command, args []string) error {
 func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 	amap := make(map[string]interface{})
 
-	name, err := cmd.Flags().GetString("name")
+	name, err := cmd.Flags().GetString("domain")
 	if err != nil {
 		return nil, err
 	}
-	amap["name"] = name
+	amap["domain"] = name
 
 	sallow, err := cmd.Flags().GetString("allow")
 	if err != nil {
@@ -174,25 +174,25 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 }
 
 func cmdDomainGetRunE(cmd *cobra.Command, args []string) error {
-	name, err := cmd.Flags().GetString("name")
+	name, err := cmd.Flags().GetString("domain")
 	if err != nil {
 		return err
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 
 	return commandCall("idefix", "domain.get", amap, getTimeout(cmd))
 }
 
 func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) error {
-	name, err := cmd.Flags().GetString("name")
+	name, err := cmd.Flags().GetString("domain")
 	if err != nil {
 		return err
 	}
 
 	amap := make(map[string]interface{})
-	amap["name"] = name
+	amap["domain"] = name
 
 	fmt.Println("You are about to delete the domain:", name)
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {

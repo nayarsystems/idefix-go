@@ -86,7 +86,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	flags := topicChuncks[3]
 	payload := msg.Payload()
 
-	var tm transportMsg
+	var tm Message
 	var unmarshalErr error
 	var unmarshaled bool
 
@@ -141,7 +141,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 		}
 	}
 
-	if n := c.ps.Publish(tm.To, &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err}); n == 0 {
+	if n := c.ps.Publish(tm.To, &tm); n == 0 {
 		fmt.Println("Lost message:", tm.To)
 	}
 }

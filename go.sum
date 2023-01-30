@@ -146,6 +146,8 @@ github.com/nayarsystems/idefix-go/minips v0.0.3 h1:Ct8m70zsGSfEUQmAKfFPSaL6Z9Zgg
 github.com/nayarsystems/idefix-go/minips v0.0.3/go.mod h1:gPm7a4MTYBwdtc2VSeCeHr4b3iORqyjoyGXfcqIoUVI=
 github.com/nayarsystems/idefix/core/cert v0.0.2 h1:4EUg3SFa+U6mgNFgAJjIx+mC48t+JV2/9fCh9mwO8A8=
 github.com/nayarsystems/idefix/core/cert v0.0.2/go.mod h1:GrS/IUvzP4KL0Rbf2ArWJ4geyKKf9ILhseisllN89rQ=
+github.com/nayarsystems/idefix/core/idefix v0.0.22 h1:OsAbl5IyHFCSx711MErYApAjHoUkznyxPZ++ccpefIs=
+github.com/nayarsystems/idefix/core/idefix v0.0.22/go.mod h1:8DBQzZlcD3oc4dZjlPB6Ol2dYgXSsycCzdiNlSw3D70=
 github.com/nayarsystems/idefix/libraries/buffer v0.0.15 h1:dXLqWLvXVRjM+jgKD0B2pFAxdWZNOf/RHNF0O6habRo=
 github.com/nayarsystems/idefix/libraries/buffer v0.0.15/go.mod h1:HHNkeXm+iWtMPPVyB19viv/EQtXVpP22BzNnxFVK7Is=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
