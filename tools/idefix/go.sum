@@ -181,6 +181,10 @@ github.com/mattn/go-runewidth v0.0.14 h1:+xnbZSEeDbOIg5/mE6JF0w6n9duR1l3/WmbinWV
 github.com/mattn/go-runewidth v0.0.14/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
+github.com/nayarsystems/bstates v0.0.2 h1:lF0pBtjl7lhHvwObHMDgl1w7LUVQ8MnzGqs6dz8Hlww=
+github.com/nayarsystems/bstates v0.0.2/go.mod h1:CKvNfRXiaUwm5Cyj6pdub5T0UPxzQzg4VuZ1vl51bYo=
+github.com/nayarsystems/buffer v0.0.2 h1:i/mB41U8RIzotEfyLjec2PgBfqC42G43QZYHEyM2TD0=
+github.com/nayarsystems/buffer v0.0.2/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
 github.com/nayarsystems/idefix-go v0.0.7 h1:tS0RMGXaxfXalZmH48mCyfZA8xHHXZcmrj7vqIQCU8Y=
 github.com/nayarsystems/idefix-go v0.0.7/go.mod h1:NhfBw9hQ4tf40f0VkPoeGWnsgEieaKQB5v3Yzu8xfew=
 github.com/nayarsystems/idefix-go/minips v0.0.3 h1:Ct8m70zsGSfEUQmAKfFPSaL6Z9Zgg4sjVatFfrtlG5A=
@@ -188,8 +192,6 @@ github.com/nayarsystems/idefix-go/minips v0.0.3/go.mod h1:gPm7a4MTYBwdtc2VSeCeHr
 github.com/nayarsystems/idefix/core/cert v0.0.2 h1:4EUg3SFa+U6mgNFgAJjIx+mC48t+JV2/9fCh9mwO8A8=
 github.com/nayarsystems/idefix/core/idefix v0.0.22 h1:OsAbl5IyHFCSx711MErYApAjHoUkznyxPZ++ccpefIs=
 github.com/nayarsystems/idefix/core/idefix v0.0.22/go.mod h1:8DBQzZlcD3oc4dZjlPB6Ol2dYgXSsycCzdiNlSw3D70=
-github.com/nayarsystems/idefix/libraries/bevents v0.0.4 h1:JA6HNkMH8nwTLT6cJtdElF00SBgNp3ZPd43glfBI0jA=
-github.com/nayarsystems/idefix/libraries/bevents v0.0.4/go.mod h1:Z4CHUlfo54N8oqhIwkUzPukDFXstwJwiISAZXHGhERQ=
 github.com/nayarsystems/idefix/libraries/buffer v0.0.15 h1:dXLqWLvXVRjM+jgKD0B2pFAxdWZNOf/RHNF0O6habRo=
 github.com/nayarsystems/idefix/libraries/buffer v0.0.15/go.mod h1:HHNkeXm+iWtMPPVyB19viv/EQtXVpP22BzNnxFVK7Is=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=

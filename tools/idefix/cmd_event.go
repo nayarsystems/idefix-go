@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	be "github.com/nayarsystems/idefix/libraries/bevents"
+	be "github.com/nayarsystems/bstates"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -110,7 +110,7 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot parse 'since': %w", err)
 	}
 
-	schemasMap := map[string]*be.EventSchema{}
+	schemasMap := map[string]*be.StateSchema{}
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
 		"Query for events from domain %q, limit: %d, skip: %d, since: %v", domain, limit, skip, since))
@@ -143,8 +143,8 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	//domain -> address -> schema -> list of events
-	eventMap := map[string]map[string]map[string][]*be.Event{}
+	//domain -> address -> schema -> list of States
+	stateMap := map[string]map[string]map[string][]*be.State{}
 
 	for _, e := range m {
 		rawMsi, ok := e.Payload.(map[string]interface{})
@@ -164,45 +164,45 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("blob is not in base64: %v", err)
 		}
 
-		var schema *be.EventSchema
+		var schema *be.StateSchema
 		if schema, ok = schemasMap[e.Schema]; !ok {
 			schemaMsg, err := ic.GetSchema(e.Schema, time.Second)
 			if err != nil {
 				return err
 			}
-			schema = &be.EventSchema{}
+			schema = &be.StateSchema{}
 			err = schema.UnmarshalJSON([]byte(schemaMsg.Payload))
 			if err != nil {
 				return err
 			}
 		}
-		blobEvents, err := getEventsList(schema, raw)
+		states, err := getStatesList(schema, raw)
 		if err != nil {
 			return err
 		}
-		var domainMap map[string]map[string][]*be.Event
-		if domainMap, ok = eventMap[e.Domain]; !ok {
-			domainMap = map[string]map[string][]*be.Event{}
-			eventMap[e.Domain] = domainMap
+		var domainMap map[string]map[string][]*be.State
+		if domainMap, ok = stateMap[e.Domain]; !ok {
+			domainMap = map[string]map[string][]*be.State{}
+			stateMap[e.Domain] = domainMap
 		}
 
-		var addressMap map[string][]*be.Event
+		var addressMap map[string][]*be.State
 		if addressMap, ok = domainMap[e.Address]; !ok {
-			addressMap = map[string][]*be.Event{}
+			addressMap = map[string][]*be.State{}
 			domainMap[e.Address] = addressMap
 		}
 
-		var schemaEvents []*be.Event
-		if schemaEvents, ok = addressMap[e.Schema]; !ok {
-			schemaEvents = []*be.Event{}
+		var schemaStates []*be.State
+		if schemaStates, ok = addressMap[e.Schema]; !ok {
+			schemaStates = []*be.State{}
 		}
-		schemaEvents = append(schemaEvents, blobEvents...)
-		addressMap[e.Schema] = schemaEvents
+		schemaStates = append(schemaStates, states...)
+		addressMap[e.Schema] = schemaStates
 	}
 
-	for domain, domainMap := range eventMap {
+	for domain, domainMap := range stateMap {
 		for address, addressMap := range domainMap {
-			for schema, schemaEvents := range addressMap {
+			for schema, schemaStates := range addressMap {
 				header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s ~~~~~~~~~", domain, address, schema)
 				headerSeparatorRune := []rune(header)
 				for i := 0; i < len(headerSeparatorRune); i++ {
@@ -212,13 +212,13 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 				fmt.Println(headerSeparator)
 				fmt.Println(header)
 				fmt.Println(headerSeparator)
-				deltaEvents, err := getDeltaEvents(schemaEvents)
+				events, err := getDeltaStates(schemaStates)
 				if err != nil {
 					fmt.Println(err)
 					continue
 				}
-				for _, deltaEvent := range deltaEvents {
-					je, err := json.Marshal(deltaEvent)
+				for _, event := range events {
+					je, err := json.Marshal(event)
 					if err != nil {
 						fmt.Println(err)
 						continue
@@ -231,20 +231,20 @@ func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getEventsList(schema *be.EventSchema, raw []byte) ([]*be.Event, error) {
-	decoder := be.CreateEventQueue(schema)
+func getStatesList(schema *be.StateSchema, raw []byte) ([]*be.State, error) {
+	decoder := be.CreateStateQueue(schema)
 	err := decoder.Decode([]byte(raw))
 	if err != nil {
 		return nil, fmt.Errorf("can't decode event: %v", err)
 	}
-	events, err := decoder.GetEvents()
+	states, err := decoder.GetStates()
 	if err != nil {
 		return nil, fmt.Errorf("can't decode event: %v", err)
 	}
-	return events, err
+	return states, err
 }
 
-func getDeltaEvents(events []*be.Event) ([]map[string]interface{}, error) {
-	msiEvents, err := be.GetDeltaMsiEvents(events)
+func getDeltaStates(events []*be.State) ([]map[string]interface{}, error) {
+	msiEvents, err := be.GetDeltaMsiStates(events)
 	return msiEvents, err
 }

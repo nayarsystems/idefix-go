@@ -6,9 +6,9 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/gabstv/go-bsdiff v1.0.5
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
+	github.com/nayarsystems/bstates v0.0.2
 	github.com/nayarsystems/idefix-go v0.0.7
 	github.com/nayarsystems/idefix/core/idefix v0.0.22
-	github.com/nayarsystems/idefix/libraries/bevents v0.0.4
 	github.com/pterm/pterm v0.12.54
 	github.com/spf13/cobra v1.6.1
 )
@@ -28,6 +28,7 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/nayarsystems/buffer v0.0.2 // indirect
 	github.com/nayarsystems/idefix-go/minips v0.0.3 // indirect
 	github.com/nayarsystems/idefix/libraries/buffer v0.0.15 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
