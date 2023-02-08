@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, timeout time.Duration) error {
+func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, uuid string, timeout time.Duration) error {
 	amap := make(map[string]interface{})
 	amap["payload"] = payload
 	amap["schema"] = hashSchema
 	amap["meta"] = meta
+	amap["uuid"] = uuid
 
 	ret, err := c.Call("idefix", &Message{To: "events.create", Data: amap}, timeout)
 	if err != nil {

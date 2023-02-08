@@ -42,6 +42,7 @@ type ClientOptions struct {
 }
 
 type Event struct {
+	UUID      string                 `bson:"uuid" json:"uuid" msgpack:"uuid"`
 	Address   string                 `bson:"address" json:"address" msgpack:"address"`
 	Domain    string                 `bson:"domain" json:"domain" msgpack:"domain"`
 	Timestamp time.Time              `bson:"timestamp" json:"timestamp" msgpack:"timestamp"`
