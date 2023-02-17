@@ -13,6 +13,7 @@ import (
 )
 
 func init() {
+	cmdEventCreate.Flags().StringP("uid", "u", "-", "UID")
 	cmdEventCreate.Flags().StringP("schema", "s", "raw", "Payload Schema")
 	cmdEventCreate.Flags().StringP("meta", "m", "", "Metadata added to the event in JSON dictionary style")
 	cmdEvent.AddCommand(cmdEventCreate)
@@ -56,6 +57,7 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 	defer ic.Disconnect()
 
 	payload := strings.Join(args, " ")
+	uid, _ := cmd.Flags().GetString("uid")
 	schema, err := cmd.Flags().GetString("schema")
 
 	// Try to guess a schema
@@ -83,7 +85,7 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = ic.SendEvent(payload, schema, tmeta, time.Second)
+	err = ic.SendEvent(payload, schema, tmeta, uid, time.Second)
 	if err != nil {
 		return err
 	}

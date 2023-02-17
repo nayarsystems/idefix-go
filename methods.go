@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	ie "github.com/nayarsystems/idefix-go/errors"
 	"github.com/nayarsystems/idefix-go/minips"
 )
 
@@ -18,8 +19,12 @@ func (c *Client) Answer(origmsg *Message, msg *Message) error {
 }
 
 func (c *Client) Call(remoteAddress string, msg *Message, timeout time.Duration) (*Message, error) {
+	var err error
 	msg.To = fmt.Sprintf("%s.%s", remoteAddress, msg.To)
-	msg.Response, _ = randSessionID()
+	msg.Response, err = randSessionID()
+	if err != nil {
+		return nil, err
+	}
 
 	sub := c.ps.NewSubscriber(1, msg.Response)
 	defer sub.Close()
@@ -27,9 +32,9 @@ func (c *Client) Call(remoteAddress string, msg *Message, timeout time.Duration)
 	if err := c.sendMessage(msg); err != nil {
 		return nil, err
 	}
-	msg, err := sub.WaitOne(timeout)
+	msg, err = sub.WaitOne(timeout)
 	if err != nil {
-		return nil, err
+		return nil, ie.ErrTimeout
 	}
 	if msg.Err != nil {
 		return msg, msg.Err
