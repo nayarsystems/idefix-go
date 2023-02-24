@@ -60,7 +60,21 @@ func (ie IdefixError) Error() string {
 }
 
 func (ie IdefixError) Is(e error) bool {
-	return ie.Error() == e.Error()
+	var ep *IdefixError
+	switch et := e.(type) {
+	case IdefixError:
+		ep = &et
+	case *IdefixError:
+		ep = et
+	default:
+		var err error
+		ep, err = Parse(e.Error())
+		if err != nil {
+			return false
+		}
+	}
+
+	return ie.Code == ep.Code
 }
 
 func (ie IdefixError) With(extra string) IdefixError {
