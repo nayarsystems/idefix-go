@@ -128,8 +128,8 @@ func (mp *Minips[T]) unregisterChannelSafe(topic string, ch chan T) {
 }
 
 func (mp *Minips[T]) unregisterChannelFromAll(ch chan T) {
-	mp.m.RLock()
-	defer mp.m.RUnlock()
+	mp.m.Lock()
+	defer mp.m.Unlock()
 
 	for topic, chans := range mp.topics {
 		for _, ch2 := range chans {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,23 +8,30 @@ import (
 
 	"github.com/araddon/dateparse"
 	be "github.com/nayarsystems/bstates"
-	"github.com/pterm/pterm"
+	"github.com/nayarsystems/idefix/libraries/eval"
 	"github.com/spf13/cobra"
 )
 
 func init() {
+	cmdEventCreate.Flags().StringP("uid", "u", "-", "UID")
 	cmdEventCreate.Flags().StringP("schema", "s", "raw", "Payload Schema")
 	cmdEventCreate.Flags().StringP("meta", "m", "", "Metadata added to the event in JSON dictionary style")
 	cmdEvent.AddCommand(cmdEventCreate)
 
-	cmdEventGet.Flags().StringP("since", "", "1970", "Query events that happened since this timestamp")
-	cmdEventGet.Flags().UintP("limit", "", 100, "Limit the number of query results")
-	cmdEventGet.Flags().UintP("skip", "", 0, "Skip elements from the query results")
-	cmdEventGet.Flags().StringP("format", "", "json", "Format to show results: [pretty, json]")
-	cmdEventGet.Flags().BoolP("all", "", false, "Query all the items")
-	cmdEventGet.Flags().BoolP("reverse", "", false, "Show newer results first")
-	cmdEventGet.Flags().StringP("schemas", "", "", "file containing the schema used to decode payload data. Payload will be shown using its raw format if its schema is not found in this file")
+	cmdEventGet.PersistentFlags().String("since", "1970", "Query events that happened since this timestamp")
+	cmdEventGet.PersistentFlags().Uint("limit", 100, "Limit the number of query results")
+	cmdEventGet.PersistentFlags().String("cid", "", "Use a continuationID to get the following results of a previous request")
+	cmdEventGet.PersistentFlags().Bool("all", false, "Query all the items")
+	cmdEventGet.PersistentFlags().String("timeout", "20s", "If there are no events, wait until some arrive")
+	cmdEventGet.PersistentFlags().StringP("address", "a", "", "Filter by the indicated address. Default: get evets from all address in the specified domain")
+	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")
 	cmdEvent.AddCommand(cmdEventGet)
+
+	cmdEventGetRaw.Flags().String("format", "json", "Format to show results: [pretty, json]")
+	cmdEventGet.AddCommand(cmdEventGetRaw)
+
+	cmdEventGetBevents.Flags().String("ts-field", "", "force use of a timestamp field (used when multiple timestamp field are present in the same state). If no field is forced the first found will be used")
+	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)
 }
@@ -37,9 +43,21 @@ var cmdEvent = &cobra.Command{
 }
 
 var cmdEventGet = &cobra.Command{
-	Use:   "get <domain>",
+	Use:   "get <raw|bstates>",
 	Short: "Get events from a domain",
-	RunE:  cmdEventGetRunE,
+}
+
+var cmdEventGetRaw = &cobra.Command{
+	Use:   "raw <domain>",
+	Short: "Get all events from a domain. The events will be shown in raw format",
+	RunE:  cmdEventGetRawRunE,
+	Args:  cobra.ExactArgs(1),
+}
+
+var cmdEventGetBevents = &cobra.Command{
+	Use:   "bstates <domain>",
+	Short: "Get bstates based events from a domain.",
+	RunE:  cmdEventGetBstatesRunE,
 	Args:  cobra.ExactArgs(1),
 }
 
@@ -58,6 +76,7 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 	defer ic.Disconnect()
 
 	payload := strings.Join(args, " ")
+	uid, _ := cmd.Flags().GetString("uid")
 	schema, err := cmd.Flags().GetString("schema")
 
 	// Try to guess a schema
@@ -85,149 +104,11 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = ic.SendEvent(payload, schema, tmeta, time.Second)
+	err = ic.SendEvent(payload, schema, tmeta, uid, time.Second)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func cmdEventGetRunE(cmd *cobra.Command, args []string) error {
-	ic, err := getConnectedClient()
-	if err != nil {
-		return err
-	}
-	defer ic.Disconnect()
-
-	domain := args[0]
-	skip, _ := cmd.Flags().GetUint("skip")
-	limit, _ := cmd.Flags().GetUint("limit")
-	reverse, _ := cmd.Flags().GetBool("reverse")
-	sinceraw, _ := cmd.Flags().GetString("since")
-	since, err := dateparse.ParseStrict(sinceraw)
-	if err != nil {
-		return fmt.Errorf("cannot parse 'since': %w", err)
-	}
-
-	schemasMap := map[string]*be.StateSchema{}
-
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
-		"Query for events from domain %q, limit: %d, skip: %d, since: %v", domain, limit, skip, since))
-
-	m, err := ic.GetEventsByDomain(domain, since, limit, skip, reverse, time.Second)
-	if err != nil {
-		spinner.Fail()
-		return err
-	}
-	spinner.Success()
-
-	format, err := cmd.Flags().GetString("format")
-	if err != nil {
-		format = "pretty"
-	}
-
-	if false {
-		for _, e := range m {
-			switch format {
-			case "json":
-				je, err := json.Marshal(e)
-				if err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println(string(je))
-			default:
-				fmt.Printf("%s\n", e.String())
-			}
-		}
-		return nil
-	}
-
-	//domain -> address -> schema -> list of States
-	stateMap := map[string]map[string]map[string][]*be.State{}
-
-	for _, e := range m {
-		rawMsi, ok := e.Payload.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("not an msi")
-		}
-		blobI, ok := rawMsi["Data"]
-		if !ok {
-			return fmt.Errorf("no Data in msi")
-		}
-		blobStr, ok := blobI.(string)
-		if !ok {
-			return fmt.Errorf("data is not a string")
-		}
-		raw, err := base64.StdEncoding.DecodeString(blobStr)
-		if err != nil {
-			return fmt.Errorf("blob is not in base64: %v", err)
-		}
-
-		var schema *be.StateSchema
-		if schema, ok = schemasMap[e.Schema]; !ok {
-			schemaMsg, err := ic.GetSchema(e.Schema, time.Second)
-			if err != nil {
-				return err
-			}
-			schema = &be.StateSchema{}
-			err = schema.UnmarshalJSON([]byte(schemaMsg.Payload))
-			if err != nil {
-				return err
-			}
-		}
-		states, err := getStatesList(schema, raw)
-		if err != nil {
-			return err
-		}
-		var domainMap map[string]map[string][]*be.State
-		if domainMap, ok = stateMap[e.Domain]; !ok {
-			domainMap = map[string]map[string][]*be.State{}
-			stateMap[e.Domain] = domainMap
-		}
-
-		var addressMap map[string][]*be.State
-		if addressMap, ok = domainMap[e.Address]; !ok {
-			addressMap = map[string][]*be.State{}
-			domainMap[e.Address] = addressMap
-		}
-
-		var schemaStates []*be.State
-		if schemaStates, ok = addressMap[e.Schema]; !ok {
-			schemaStates = []*be.State{}
-		}
-		schemaStates = append(schemaStates, states...)
-		addressMap[e.Schema] = schemaStates
-	}
-
-	for domain, domainMap := range stateMap {
-		for address, addressMap := range domainMap {
-			for schema, schemaStates := range addressMap {
-				header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s ~~~~~~~~~", domain, address, schema)
-				headerSeparatorRune := []rune(header)
-				for i := 0; i < len(headerSeparatorRune); i++ {
-					headerSeparatorRune[i] = '~'
-				}
-				headerSeparator := string(headerSeparatorRune)
-				fmt.Println(headerSeparator)
-				fmt.Println(header)
-				fmt.Println(headerSeparator)
-				events, err := getDeltaStates(schemaStates)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				for _, event := range events {
-					je, err := json.Marshal(event)
-					if err != nil {
-						fmt.Println(err)
-						continue
-					}
-					fmt.Println(string(je))
-				}
-			}
-		}
-	}
 	return nil
 }
 
@@ -247,4 +128,36 @@ func getStatesList(schema *be.StateSchema, raw []byte) ([]*be.State, error) {
 func getDeltaStates(events []*be.State) ([]map[string]interface{}, error) {
 	msiEvents, err := be.GetDeltaMsiStates(events)
 	return msiEvents, err
+}
+
+type getEventsBaseParams struct {
+	domain        string
+	limit         uint
+	cid           string
+	timeout       time.Duration
+	since         time.Time
+	addressFilter string
+	metaFilter    eval.CompiledExpr
+}
+
+func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*getEventsBaseParams, error) {
+	params := &getEventsBaseParams{}
+	params.domain = args[0]
+	params.limit, _ = cmd.Flags().GetUint("limit")
+	params.cid, _ = cmd.Flags().GetString("cid")
+	timeoutraw, _ := cmd.Flags().GetString("timeout")
+	params.timeout, _ = time.ParseDuration(timeoutraw)
+	sinceraw, _ := cmd.Flags().GetString("since")
+	var err error
+	params.since, err = dateparse.ParseStrict(sinceraw)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse 'since': %w", err)
+	}
+	params.addressFilter, _ = cmd.Flags().GetString("address")
+	metaFilterExpr, _ := cmd.Flags().GetString("meta-filter")
+	params.metaFilter, err = eval.CompileExpr(metaFilterExpr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse 'meta-filter': %w", err)
+	}
+	return params, nil
 }

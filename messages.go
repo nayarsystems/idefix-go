@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	. "github.com/nayarsystems/idefix-go/errors"
 	"github.com/nayarsystems/idefix/core/idefix/normalize"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -44,11 +44,11 @@ func (c *Client) sendMessage(tm *Message) (err error) {
 	}
 
 	if marshalErr != nil {
-		return ErrMarshall
+		return ErrMarshal
 	}
 
 	if !marshaled {
-		return fmt.Errorf("unsupported encoding")
+		return ErrMarshal.With("unsupported encoding")
 	}
 
 	var compressed bool
@@ -70,7 +70,10 @@ func (c *Client) sendMessage(tm *Message) (err error) {
 
 	msg := c.client.Publish(c.publishTopic(flags), 1, false, data)
 	msg.Wait()
-	return msg.Error()
+	if msg.Error() != nil {
+		return ErrInternal.With(msg.Error().Error())
+	}
+	return nil
 }
 
 func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
@@ -86,7 +89,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	flags := topicChuncks[3]
 	payload := msg.Payload()
 
-	var tm transportMsg
+	var tm Message
 	var unmarshalErr error
 	var unmarshaled bool
 
@@ -98,7 +101,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 			gzr.Close()
 		}
 		if err != nil {
-			fmt.Printf("can't decompress gzip: %v\n", err)
+			// fmt.Printf("can't decompress gzip: %v\n", err)
 			return
 		}
 	}
@@ -114,12 +117,12 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	if unmarshalErr != nil {
-		fmt.Printf("unmarshal error decoding message: %v\n", unmarshalErr)
+		// fmt.Printf("unmarshal error decoding message: %v\n", unmarshalErr)
 		return
 	}
 
 	if !unmarshaled {
-		fmt.Println("unmarshal error: codec not found ")
+		// fmt.Println("unmarshal error: codec not found ")
 		return
 	}
 
@@ -136,12 +139,12 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	if msiData, ok := tm.Data.(map[string]interface{}); ok {
 		err := normalize.DecodeTypes(msiData)
 		if err != nil {
-			// fmt.Printf(im.ctx, "error decoding message types %s")
+			// fmt.Println("error decoding mqtt message", err)
 			return
 		}
 	}
 
-	if n := c.ps.Publish(tm.To, &Message{Response: tm.Res, To: tm.To, Data: tm.Data, Err: tm.Err}); n == 0 {
-		fmt.Println("Lost message:", tm.To)
+	if n := c.ps.Publish(tm.To, &tm); n == 0 {
+		// fmt.Printf("mqtt message published but there is no receivers: %#v\n", tm)
 	}
 }

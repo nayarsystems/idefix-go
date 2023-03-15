@@ -10,6 +10,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	ie "github.com/nayarsystems/idefix-go/errors"
 	"github.com/nayarsystems/idefix-go/minips"
 )
 
@@ -60,7 +61,7 @@ func NewClientFromFile(pctx context.Context, configFile string) (*Client, error)
 
 func (c *Client) Connect() (err error) {
 	if c.connectionState != Disconnected {
-		return fmt.Errorf("already connected")
+		return ie.ErrAlreadyExists
 	}
 
 	c.ctx, c.cancelFunc = context.WithCancel(c.pctx)
@@ -97,13 +98,13 @@ func (c *Client) Connect() (err error) {
 	token := c.client.Connect()
 	token.Wait()
 	if token.Error() != nil {
-		return token.Error()
+		return ie.ErrInternal.With(token.Error().Error())
 	}
 
 	token = c.client.Subscribe(fmt.Sprintf("%s/%s/r/+", c.prefix, c.sessionID), 1, nil)
 	token.Wait()
 	if token.Error() != nil {
-		return token.Error()
+		return ie.ErrInternal.With(token.Error().Error())
 	}
 
 	if err := c.login(); err != nil {
@@ -178,7 +179,7 @@ func randSessionID() (string, error) {
 	b := make([]byte, 8)
 	_, err := rand.Read(b)
 	if err != nil {
-		return "", fmt.Errorf("can't create connection ID: %w", err)
+		return "", ie.ErrInternal.Withf("can't create connection ID: %w", err)
 	}
 	return hex.EncodeToString(b), nil
 }

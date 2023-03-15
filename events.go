@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, timeout time.Duration) error {
+func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, uuid string, timeout time.Duration) error {
 	amap := make(map[string]interface{})
 	amap["payload"] = payload
 	amap["schema"] = hashSchema
 	amap["meta"] = meta
+	amap["uuid"] = uuid
 
 	ret, err := c.Call("idefix", &Message{To: "events.create", Data: amap}, timeout)
 	if err != nil {
@@ -23,15 +24,22 @@ func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[stri
 	return nil
 }
 
-func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, skip uint, reverse bool, timeout time.Duration) ([]Event, error) {
+func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, cid string, timeout time.Duration) (*GetEventResponse, error) {
 	amap := make(map[string]interface{})
 	amap["domain"] = domain
 	amap["since"] = since
 	amap["limit"] = limit
-	amap["skip"] = skip
-	amap["reverse"] = reverse
+	amap["cid"] = cid
 
-	ret, err := c.Call("idefix", &Message{To: "events.get", Data: amap}, timeout)
+	if timeout > 0 {
+		if timeout > time.Second*30 {
+			timeout = time.Second * 30
+		}
+
+		amap["timeout"] = timeout
+	}
+
+	ret, err := c.Call("idefix", &Message{To: "events.get", Data: amap}, timeout+time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -44,16 +52,16 @@ func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, s
 	if err != nil {
 		return nil, err
 	}
-	m := []Event{}
+	m := GetEventResponse{}
 	_ = json.Unmarshal(b, &m)
 
-	return m, nil
+	return &m, nil
 }
 
 func (c *Client) GetSchema(hash string, timeout time.Duration) (*Schema, error) {
 	amap := make(map[string]interface{})
 	amap["hash"] = hash
-	amap["nopayload"] = false
+	amap["check"] = false
 
 	ret, err := c.Call("idefix", &Message{To: "schemas.get", Data: amap}, timeout)
 	if err != nil {
