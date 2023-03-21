@@ -14,7 +14,8 @@ import (
 	"github.com/gabstv/go-bsdiff/pkg/bspatch"
 	"github.com/jaracil/ei"
 	idefixgo "github.com/nayarsystems/idefix-go"
-	"github.com/nayarsystems/idefix/core/idefix/normalize"
+	m "github.com/nayarsystems/idefix-go/messages"
+	"github.com/nayarsystems/idefix-go/normalize"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -268,7 +269,7 @@ func cmdUpdateApplyRunE(cmd *cobra.Command, args []string) error {
 }
 
 func remoteExec(ic *idefixgo.Client, addr string, cmd string, timeout time.Duration) (interface{}, error) {
-	m, err := ic.Call(addr, &idefixgo.Message{To: "os.cmd.exec", Data: map[string]interface{}{
+	m, err := ic.Call(addr, &m.Message{To: "os.cmd.exec", Data: map[string]interface{}{
 		"command": cmd,
 	}}, timeout)
 
@@ -380,7 +381,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	msg := map[string]interface{}{
 		"report": false,
 	}
-	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info", Data: msg}, time.Second*10)
+	ret, err := ic.Call(addr, &m.Message{To: "sys.cmd.info", Data: msg}, time.Second*10)
 	if err != nil {
 		return fmt.Errorf("cannot get device info: %w", err)
 	}
@@ -440,15 +441,15 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	if hasRollback {
 		patchMsg["rdata"] = rdata
 	}
-	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.patch", Data: patchMsg}, time.Hour*24)
+	ret, err = ic.Call(addr, &m.Message{To: "updater.cmd.patch", Data: patchMsg}, time.Hour*24)
 	spinner.Stop()
 
 	if err != nil {
 		return err
 	}
 
-	if ret.Err != nil {
-		return ret.Err
+	if ret.Err != "" {
+		return fmt.Errorf(ret.Err)
 	}
 
 	pterm.Success.Println("Patch completed! Device should reboot now...")
@@ -495,7 +496,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	msg := map[string]interface{}{
 		"report": false,
 	}
-	ret, err := ic.Call(addr, &idefixgo.Message{To: "sys.cmd.info", Data: msg}, time.Second)
+	ret, err := ic.Call(addr, &m.Message{To: "sys.cmd.info", Data: msg}, time.Second)
 	if err != nil {
 		return err
 	}
@@ -543,15 +544,15 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		"stop_countdown": p.stopToutSecs,
 		"halt_timeout":   p.haltToutSecs,
 	}
-	ret, err = ic.Call(addr, &idefixgo.Message{To: "updater.cmd.update", Data: msg}, time.Hour*24)
+	ret, err = ic.Call(addr, &m.Message{To: "updater.cmd.update", Data: msg}, time.Hour*24)
 	spinner.Stop()
 
 	if err != nil {
 		return err
 	}
 
-	if ret.Err != nil {
-		return ret.Err
+	if ret.Err != "" {
+		return fmt.Errorf(ret.Err)
 	}
 
 	pterm.Success.Println("Update completed! Device should reboot now...")

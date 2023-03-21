@@ -1,83 +1,56 @@
 package idefixgo
 
 import (
-	"encoding/json"
+	"fmt"
+	m "github.com/nayarsystems/idefix-go/messages"
 	"time"
 )
 
-func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, uuid string, timeout time.Duration) error {
-	amap := make(map[string]interface{})
-	amap["payload"] = payload
-	amap["schema"] = hashSchema
-	amap["meta"] = meta
-	amap["uuid"] = uuid
-
-	ret, err := c.Call("idefix", &Message{To: "events.create", Data: amap}, timeout)
+func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, uid string, timeout time.Duration) error {
+	msg := m.EventMsg{
+		Type:    fmt.Sprintf(`application/vnd.nayar.bstates; id="%s"`, hashSchema),
+		Payload: payload,
+		Meta:    meta,
+		UID:     uid,
+	}
+	err := c.Call2("idefix", &m.Message{To: "events.create", Data: msg}, nil, timeout)
 	if err != nil {
 		return err
 	}
-
-	if ret.Err != nil {
-		return ret.Err
-	}
-
 	return nil
 }
 
-func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, cid string, timeout time.Duration) (*GetEventResponse, error) {
-	amap := make(map[string]interface{})
-	amap["domain"] = domain
-	amap["since"] = since
-	amap["limit"] = limit
-	amap["cid"] = cid
-
+func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, cid string, timeout time.Duration) (*m.EventsGetResponseMsg, error) {
+	msg := m.EventsGetMsg{
+		Domain:         domain,
+		Since:          since,
+		Limit:          limit,
+		ContinuationID: cid,
+	}
 	if timeout > 0 {
 		if timeout > time.Second*30 {
 			timeout = time.Second * 30
 		}
 
-		amap["timeout"] = timeout
+		msg.Timeout = timeout
 	}
-
-	ret, err := c.Call("idefix", &Message{To: "events.get", Data: amap}, timeout+time.Second)
+	resp := &m.EventsGetResponseMsg{}
+	err := c.Call2("idefix", &m.Message{To: "events.get", Data: msg}, resp, timeout+time.Second)
 	if err != nil {
 		return nil, err
 	}
-
-	if ret.Err != nil {
-		return nil, ret.Err
-	}
-
-	b, err := json.Marshal(ret.Data)
-	if err != nil {
-		return nil, err
-	}
-	m := GetEventResponse{}
-	_ = json.Unmarshal(b, &m)
-
-	return &m, nil
+	return resp, nil
 }
 
-func (c *Client) GetSchema(hash string, timeout time.Duration) (*Schema, error) {
-	amap := make(map[string]interface{})
-	amap["hash"] = hash
-	amap["check"] = false
-
-	ret, err := c.Call("idefix", &Message{To: "schemas.get", Data: amap}, timeout)
+func (c *Client) GetSchema(hash string, timeout time.Duration) (*m.SchemaGetResponseMsg, error) {
+	msg := m.SchemaGetMsg{
+		Hash:  hash,
+		Check: false,
+	}
+	resp := &m.SchemaGetResponseMsg{}
+	err := c.Call2("idefix", &m.Message{To: "schemas.get", Data: msg}, resp, timeout)
 	if err != nil {
 		return nil, err
 	}
-
-	if ret.Err != nil {
-		return nil, ret.Err
-	}
-
-	b, err := json.Marshal(ret.Data)
-	if err != nil {
-		return nil, err
-	}
-	m := &Schema{}
-	_ = json.Unmarshal(b, &m)
-
-	return m, nil
+	return resp, nil
 }

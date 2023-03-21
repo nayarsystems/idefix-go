@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix/core/cert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,10 +24,10 @@ func TestPublish(t *testing.T) {
 	s := imc.NewSubscriber(10, "asdf")
 	defer s.Close()
 
-	err = imc.Publish("test", &Message{
-		To:       "asdf",
-		Data:     map[string]interface{}{"testing": true},
-		Response: "replyhere",
+	err = imc.Publish("test", &m.Message{
+		To:   "asdf",
+		Data: map[string]interface{}{"testing": true},
+		Res:  "replyhere",
 	})
 
 	require.NoError(t, err)
@@ -86,7 +87,7 @@ func TestStream(t *testing.T) {
 	require.NoError(t, err)
 	defer s.Close()
 
-	err = c2.Publish("5c9719505534d914", &Message{To: "asdf", Data: "test"})
+	err = c2.Publish("5c9719505534d914", &m.Message{To: "asdf", Data: "test"})
 	require.NoError(t, err)
 
 	e := <-s.Channel()

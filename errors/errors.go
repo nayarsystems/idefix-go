@@ -82,6 +82,11 @@ func (ie IdefixError) With(extra string) IdefixError {
 	return ie
 }
 
+func (ie IdefixError) WithErr(err error) IdefixError {
+	ie.Extra = err.Error()
+	return ie
+}
+
 func (ie IdefixError) Withf(format string, a ...any) IdefixError {
 	ie.Extra = fmt.Sprintf(format, a...)
 	return ie

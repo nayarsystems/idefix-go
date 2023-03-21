@@ -90,7 +90,7 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) != 1 {
-		return fmt.Errorf("Stream only supports one topic")
+		return fmt.Errorf("stream only supports one topic")
 	}
 
 	ic, err := getConnectedClient()

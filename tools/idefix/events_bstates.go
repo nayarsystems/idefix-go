@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/jaracil/ei"
 	be "github.com/nayarsystems/bstates"
+	"github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix/libraries/eval"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 				return err
 			}
 		}
-		schemaId, err := parseTypeSchema(e.Type)
+		schemaId, err := messages.BstatesParseSchemaIdFromType(e.Type)
 		if err != nil {
 			continue
 		}
@@ -66,14 +66,20 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			fmt.Println("no 'Data' field found")
 			continue
 		}
-		blobStr, ok := blobI.(string)
-		if !ok {
-			fmt.Println("'Data' is not a string")
-			continue
+		var blob []byte
+		err = nil
+		switch v := blobI.(type) {
+		case []byte:
+			blob = v
+		case string:
+			var derr error
+			blob, derr = base64.StdEncoding.DecodeString(v)
+			err = fmt.Errorf("'Data' is a string but is not valid base64: %v", derr)
+		default:
+			err = fmt.Errorf("can't get a buffer from 'Data' field")
 		}
-		raw, err := base64.StdEncoding.DecodeString(blobStr)
 		if err != nil {
-			fmt.Printf("'Data' is not in base64: %v\n", err)
+			fmt.Printf("%v\n", err)
 			continue
 		}
 		var schema *be.StateSchema
@@ -117,7 +123,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		metaHashRaw := sha256.Sum256(metaRaw)
 		metaHash := base64.StdEncoding.EncodeToString(metaHashRaw[:])
 
-		states, err := getStatesList(schema, raw)
+		states, err := getStatesList(schema, blob)
 		if err != nil {
 			fmt.Printf("can't get states list: %v\n", err)
 			continue
@@ -203,18 +209,6 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("CID:", m.ContinuationID)
 	return nil
-}
-
-// application/vnd.nayar.bstates; id=oEM5eJzBBGbyT9CLrSKrQwdnP2C+CVM8JHjfA0g3MAB=
-func parseTypeSchema(evtype string) (string, error) {
-	r := regexp.MustCompile(`^application/vnd.nayar.bstates; id=([a-zA-Z0-9+/=]+)|"([a-zA-Z0-9+/=]+)"$`)
-
-	matches := r.FindStringSubmatch(evtype)
-	if matches == nil {
-		return "", fmt.Errorf("no bstates type")
-	}
-
-	return matches[1] + matches[2], nil
 }
 
 func evalMeta(meta map[string]interface{}, expr eval.CompiledExpr) (bool, error) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
 )
 
@@ -16,5 +17,5 @@ var cmdEnvironment = &cobra.Command{
 }
 
 func cmdEnvironmentRunE(cmd *cobra.Command, args []string) error {
-	return commandCall("idefix", "env.get", map[string]interface{}{}, getTimeout(cmd))
+	return commandCall(m.IdefixCmdPrefix, m.CmdEnvGet, map[string]interface{}{}, getTimeout(cmd))
 }

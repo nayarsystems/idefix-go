@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -79,49 +80,48 @@ var cmdDomainCreate = &cobra.Command{
 }
 
 func cmdDomainCreateRunE(cmd *cobra.Command, args []string) error {
-	amap, err := parseDomainFlags(cmd)
+	domain, err := parseDomainFlags(cmd)
 	if err != nil {
 		return err
 	}
-
-	return commandCall("idefix", "domain.create", amap, getTimeout(cmd))
+	msg := &m.DomainCreateMsg{
+		DomainInfo: *domain,
+	}
+	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainCreate, msg, getTimeout(cmd))
 }
 
-func cmdDomainAssignRunE(cmd *cobra.Command, args []string) error {
-	name, err := cmd.Flags().GetString("domain")
+func cmdDomainAssignRunE(cmd *cobra.Command, args []string) (err error) {
+	msg := &m.DomainAssignMsg{}
+	msg.Domain, err = cmd.Flags().GetString("domain")
 	if err != nil {
 		return err
 	}
 
-	address, err := cmd.Flags().GetString("address")
+	msg.Address, err = cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
 
-	amap := make(map[string]interface{})
-	amap["domain"] = name
-	amap["address"] = address
-
-	return commandCall("idefix", "domain.assign", amap, getTimeout(cmd))
+	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainAssign, msg, getTimeout(cmd))
 }
 
 func cmdDomainUpdateRunE(cmd *cobra.Command, args []string) error {
-	amap, err := parseDomainFlags(cmd)
+	domain, err := parseDomainFlags(cmd)
 	if err != nil {
 		return err
 	}
-
-	return commandCall("idefix", "domain.update", amap, getTimeout(cmd))
+	msg := &m.DomainUpdateMsg{
+		DomainInfo: *domain,
+	}
+	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainUpdate, msg, getTimeout(cmd))
 }
 
-func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
-	amap := make(map[string]interface{})
-
-	name, err := cmd.Flags().GetString("domain")
+func parseDomainFlags(cmd *cobra.Command) (domain *m.DomainInfo, err error) {
+	domain = &m.DomainInfo{}
+	domain.Domain, err = cmd.Flags().GetString("domain")
 	if err != nil {
 		return nil, err
 	}
-	amap["domain"] = name
 
 	sallow, err := cmd.Flags().GetString("allow")
 	if err != nil {
@@ -131,9 +131,9 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 		dummy := make(map[string]interface{})
 		err = json.Unmarshal([]byte(sallow), &dummy)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot parse allow rule: %w", err)
+			return nil, fmt.Errorf("cannot parse allow rule: %w", err)
 		}
-		amap["allow"] = sallow
+		domain.Allow = sallow
 	}
 
 	sdeny, err := cmd.Flags().GetString("deny")
@@ -144,9 +144,9 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 		dummy := make(map[string]interface{})
 		err = json.Unmarshal([]byte(sdeny), &dummy)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot parse deny rule: %w", err)
+			return nil, fmt.Errorf("cannot parse deny rule: %w", err)
 		}
-		amap["deny"] = sdeny
+		domain.Deny = sdeny
 	}
 
 	env := make(map[string]interface{})
@@ -157,9 +157,9 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 	if cmd.Flags().Changed("env") {
 		err = json.Unmarshal([]byte(senv), &env)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot parse environment: %w", err)
+			return nil, fmt.Errorf("cannot parse environment: %w", err)
 		}
-		amap["env"] = env
+		domain.Env = env
 	}
 
 	admins, err := cmd.Flags().GetStringArray("admin")
@@ -167,40 +167,34 @@ func parseDomainFlags(cmd *cobra.Command) (map[string]interface{}, error) {
 		return nil, err
 	}
 	if cmd.Flags().Changed("admin") {
-		amap["admins"] = admins
+		domain.Admins = admins
 	}
 
-	return amap, nil
+	return domain, nil
 }
 
-func cmdDomainGetRunE(cmd *cobra.Command, args []string) error {
+func cmdDomainGetRunE(cmd *cobra.Command, args []string) (err error) {
+	msg := &m.DomainGetMsg{}
+	msg.Domain, err = cmd.Flags().GetString("domain")
+	if err != nil {
+		return err
+	}
+	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainGet, msg, getTimeout(cmd))
+}
+
+func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) (err error) {
+	msg := &m.DomainDeleteMsg{}
 	name, err := cmd.Flags().GetString("domain")
 	if err != nil {
 		return err
 	}
-
-	amap := make(map[string]interface{})
-	amap["domain"] = name
-
-	return commandCall("idefix", "domain.get", amap, getTimeout(cmd))
-}
-
-func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) error {
-	name, err := cmd.Flags().GetString("domain")
-	if err != nil {
-		return err
-	}
-
-	amap := make(map[string]interface{})
-	amap["domain"] = name
-
 	fmt.Println("You are about to delete the domain:", name)
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
 	}
-	if err := commandCall("idefix", "domain.get", amap, getTimeout(cmd)); err != nil {
+	if err := commandCall2(m.IdefixCmdPrefix, m.CmdDomainGet, msg, getTimeout(cmd)); err != nil {
 		return err
 	}
 
-	return commandCall("idefix", "domain.delete", amap, getTimeout(cmd))
+	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainDelete, msg, getTimeout(cmd))
 }

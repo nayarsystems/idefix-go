@@ -11,6 +11,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	ie "github.com/nayarsystems/idefix-go/errors"
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix-go/minips"
 )
 
@@ -28,7 +29,7 @@ type Client struct {
 	ctx                     context.Context
 	cancelFunc              context.CancelFunc
 	opts                    *ClientOptions
-	ps                      *minips.Minips[*Message]
+	ps                      *minips.Minips[*m.Message]
 	client                  mqtt.Client
 	prefix                  string
 	sessionID               string
@@ -66,8 +67,8 @@ func (c *Client) Connect() (err error) {
 
 	c.ctx, c.cancelFunc = context.WithCancel(c.pctx)
 
-	c.prefix = MqttIdefixPrefix
-	c.ps = minips.NewMinips[*Message](c.ctx)
+	c.prefix = m.MqttIdefixPrefix
+	c.ps = minips.NewMinips[*m.Message](c.ctx)
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(c.opts.Broker)
@@ -150,7 +151,7 @@ func (c *Client) publishTopic(flags string) string {
 }
 
 func (c *Client) login() (err error) {
-	lm := loginMsg{
+	lm := m.LoginMsg{
 		Address:  c.opts.Address,
 		Token:    c.opts.Token,
 		Encoding: c.opts.Encoding,
@@ -158,7 +159,7 @@ func (c *Client) login() (err error) {
 		Time:     time.Now().UnixMilli(),
 	}
 
-	tm := &Message{
+	tm := &m.Message{
 		To:   "login",
 		Data: lm,
 	}
@@ -168,8 +169,8 @@ func (c *Client) login() (err error) {
 		return err
 	}
 
-	if m.Err != nil {
-		return m.Err
+	if m.Err != "" {
+		return fmt.Errorf(m.Err)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix-go/minips"
 )
 
@@ -13,7 +14,7 @@ type Stream struct {
 	cancel  context.CancelFunc
 	timeout time.Duration
 	c       *Client
-	sub     *minips.Subscriber[*Message]
+	sub     *minips.Subscriber[*m.Message]
 	topic   string
 	address string
 }
@@ -33,7 +34,7 @@ func (c *Client) NewStream(address string, topic string, capacity uint, timeout 
 
 	s.ctx, s.cancel = context.WithCancel(c.ctx)
 
-	_, err := s.c.Call(address, &Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
+	_, err := s.c.Call(address, &m.Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (s *Stream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
+			_, err := s.c.Call(s.address, &m.Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
 			if err != nil {
 				return
 			}
@@ -72,13 +73,13 @@ func (s *Stream) keepalive() {
 	}
 }
 
-func (s *Stream) Channel() <-chan *Message {
+func (s *Stream) Channel() <-chan *m.Message {
 	return s.sub.Channel()
 }
 
 func (s *Stream) Close() error {
 	defer s.cancel()
-	_, err := s.c.Call(s.address, &Message{To: s.closeTopic()}, s.timeout)
+	_, err := s.c.Call(s.address, &m.Message{To: s.closeTopic()}, s.timeout)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	idf "github.com/nayarsystems/idefix-go"
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -34,15 +34,50 @@ func commandCall(deviceId string, topic string, amap map[string]interface{}, tim
 	}
 	defer ic.Disconnect()
 
-	ret, err := ic.Call(deviceId, &idf.Message{To: topic, Data: amap}, timeout)
+	ret, err := ic.Call(deviceId, &m.Message{To: topic, Data: amap}, timeout)
 	if err != nil {
 		spinner.Fail()
-		return fmt.Errorf("Cannot publish the message to the device: %w", err)
+		return fmt.Errorf("cannot publish the message to the device: %w", err)
 	}
 
-	if ret.Err != nil {
+	if ret.Err != "" {
 		spinner.Fail()
-		return ret.Err
+		return fmt.Errorf(ret.Err)
+	} else {
+		rj, err := json.MarshalIndent(ret.Data, "", "  ")
+		if err != nil {
+			spinner.Fail()
+			return err
+		}
+		spinner.Success()
+		fmt.Printf("%s\n", rj)
+	}
+	return nil
+}
+
+func commandCall2(deviceId string, topic string, msg any, timeout time.Duration) error {
+	amap, err := m.ToMsi(msg)
+	if err != nil {
+		return err
+	}
+
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Calling %s@%s with args: %v", topic, deviceId, amap))
+
+	ic, err := getConnectedClient()
+	if err != nil {
+		return err
+	}
+	defer ic.Disconnect()
+
+	ret, err := ic.Call(deviceId, &m.Message{To: topic, Data: amap}, timeout)
+	if err != nil {
+		spinner.Fail()
+		return fmt.Errorf("cannot publish the message to the device: %w", err)
+	}
+
+	if ret.Err != "" {
+		spinner.Fail()
+		return fmt.Errorf(ret.Err)
 	} else {
 		rj, err := json.MarshalIndent(ret.Data, "", "  ")
 		if err != nil {

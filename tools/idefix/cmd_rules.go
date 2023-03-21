@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
 )
 
@@ -39,20 +40,19 @@ var cmdRulesUpdate = &cobra.Command{
 }
 
 func cmdRulesGetRunE(cmd *cobra.Command, args []string) (err error) {
-	amap := make(map[string]interface{})
+	msg := m.RulesGetMsg{}
+	msg.Address, err = cmd.Flags().GetString("address")
 
-	amap["address"], err = cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
 
-	return commandCall("idefix", "lrules.get", amap, getTimeout(cmd))
+	return commandCall2(m.IdefixCmdPrefix, m.CmdAddressRulesGet, msg, getTimeout(cmd))
 }
 
 func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
-	amap := make(map[string]interface{})
-
-	amap["address"], err = cmd.Flags().GetString("address")
+	msg := m.RulesUpdateMsg{}
+	msg.Address, err = cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
@@ -65,9 +65,9 @@ func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		dummy := make(map[string]interface{})
 		err = json.Unmarshal([]byte(sallow), &dummy)
 		if err != nil {
-			return fmt.Errorf("Cannot parse allow rule: %w", err)
+			return fmt.Errorf("cannot parse allow rule: %w", err)
 		}
-		amap["allow"] = sallow
+		msg.Allow = sallow
 	}
 
 	sdeny, err := cmd.Flags().GetString("deny")
@@ -78,10 +78,10 @@ func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		dummy := make(map[string]interface{})
 		err = json.Unmarshal([]byte(sdeny), &dummy)
 		if err != nil {
-			return fmt.Errorf("Cannot parse deny rule: %w", err)
+			return fmt.Errorf("cannot parse deny rule: %w", err)
 		}
-		amap["deny"] = sdeny
+		msg.Deny = sdeny
 	}
 
-	return commandCall("idefix", "lrules.update", amap, getTimeout(cmd))
+	return commandCall2(m.IdefixCmdPrefix, m.CmdAddressRulesUpdate, msg, getTimeout(cmd))
 }

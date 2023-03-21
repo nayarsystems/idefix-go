@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	. "github.com/nayarsystems/idefix-go/errors"
-	"github.com/nayarsystems/idefix/core/idefix/normalize"
+	e "github.com/nayarsystems/idefix-go/errors"
+	m "github.com/nayarsystems/idefix-go/messages"
+	"github.com/nayarsystems/idefix-go/normalize"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (c *Client) sendMessage(tm *Message) (err error) {
+func (c *Client) sendMessage(tm *m.Message) (err error) {
 	var flags string
 	var marshaled bool
 	var marshalErr error
@@ -44,11 +45,11 @@ func (c *Client) sendMessage(tm *Message) (err error) {
 	}
 
 	if marshalErr != nil {
-		return ErrMarshal
+		return e.ErrMarshal
 	}
 
 	if !marshaled {
-		return ErrMarshal.With("unsupported encoding")
+		return e.ErrMarshal.With("unsupported encoding")
 	}
 
 	var compressed bool
@@ -71,7 +72,7 @@ func (c *Client) sendMessage(tm *Message) (err error) {
 	msg := c.client.Publish(c.publishTopic(flags), 1, false, data)
 	msg.Wait()
 	if msg.Error() != nil {
-		return ErrInternal.With(msg.Error().Error())
+		return e.ErrInternal.With(msg.Error().Error())
 	}
 	return nil
 }
@@ -89,7 +90,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	flags := topicChuncks[3]
 	payload := msg.Payload()
 
-	var tm Message
+	var tm m.Message
 	var unmarshalErr error
 	var unmarshaled bool
 

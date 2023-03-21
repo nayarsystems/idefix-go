@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	idf "github.com/nayarsystems/idefix-go"
+	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
 )
 
@@ -45,25 +45,17 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	msg := map[string]interface{}{
-		"report":    report,
-		"instances": reportFilter,
+	msg := &m.InfoReqMsg{
+		Report:          report,
+		ReportInstances: reportFilter,
 	}
-	info, err := ic.Call(addr, &idf.Message{To: "sys.cmd.info", Data: msg}, getTimeout(cmd))
+	var info map[string]any
+	err = ic.Call2(addr, &m.Message{To: "sys.cmd.info", Data: msg}, &info, getTimeout(cmd))
 	if err != nil {
 		return fmt.Errorf("cannot get the device info: %w", err)
 	}
 
-	if info.Err != nil {
-		return fmt.Errorf("unexpected response: %v", info.Err)
-	}
-
-	data, ok := info.Data.(map[string]any)
-	if !ok {
-		return fmt.Errorf("unexpected response: %v", info.Data)
-	}
-
-	printMsi(data)
+	printMsi(info)
 
 	return nil
 }
