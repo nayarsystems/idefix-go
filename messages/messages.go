@@ -177,6 +177,7 @@ type DomainGetTreeMsg struct {
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
+// TODO: transform to struct
 type DomainGetTreeResponseMsg []string
 
 type DomainCountAddressesMsg struct {
