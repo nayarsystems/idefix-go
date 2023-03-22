@@ -28,23 +28,9 @@ type MsiParser interface {
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
 func ToMsi(input any) (msi, error) {
-	msiableType := reflect.TypeOf((*Msiable)(nil)).Elem()
-	inputValue := reflect.ValueOf(input)
-	inputType := inputValue.Type()
-	if inputType.Implements(msiableType) {
-		rvalues := inputValue.MethodByName("ToMsi").Call([]reflect.Value{})
-		if len(rvalues) != 2 {
-			return nil, fmt.Errorf("fix me: ToMsi must return 2 values")
-		}
-		e := rvalues[1].Interface()
-		if e != nil {
-			return nil, e.(error)
-		}
-		v := rvalues[0].Interface()
-		if v != nil {
-			return v.(msi), nil
-		}
-		return nil, nil
+	inputMsiable, ok := input.(Msiable)
+	if ok {
+		return inputMsiable.ToMsi()
 	}
 	output := msi{}
 	err := mapstructure.Decode(input, &output)
@@ -56,24 +42,13 @@ func ParseMsi(input any, output any) error {
 	if !IsMsi(input) {
 		return fmt.Errorf("input is not a map")
 	}
-	msiParserType := reflect.TypeOf((*MsiParser)(nil)).Elem()
 	outputValue := reflect.ValueOf(output)
-
 	if outputValue.Kind() != reflect.Pointer || outputValue.IsNil() {
 		return fmt.Errorf("output not a pointer")
 	}
-	outputType := outputValue.Type()
-
-	if outputType.Implements(msiParserType) {
-		rvalues := outputValue.MethodByName("ParseMsi").Call([]reflect.Value{reflect.ValueOf(input)})
-		if len(rvalues) != 1 {
-			return fmt.Errorf("fix me: ParseMsi must returns a value of type error")
-		}
-		ret := rvalues[0].Interface()
-		if ret != nil {
-			return ret.(error)
-		}
-		return nil
+	outputMsiParser, ok := output.(MsiParser)
+	if ok {
+		return outputMsiParser.ParseMsi(input)
 	}
 	return mapstructure.Decode(input, output)
 }
