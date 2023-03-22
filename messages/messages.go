@@ -79,6 +79,11 @@ type SchemaMsg struct {
 	Payload     string `bson:"payload,omitempty" json:"payload,omitempty" msgpack:"payload,omitempty" mapstructure:"payload,omitempty"`
 }
 
+type SchemaResponseMsg struct {
+	SchemaMsg `bson:",inline" mapstructure:",squash"`
+	Hash      string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
+}
+
 type SchemaGetMsg struct {
 	Hash  string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
 	Check bool   `bson:"check,omitempty" json:"check,omitempty" msgpack:"check,omitempty" mapstructure:"check,omitempty"`
