@@ -25,18 +25,25 @@ type InfoReqMsg struct {
 	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
 }
 
-/************/
-/*   Rules  */
-/************/
+/********************/
+/*      Address     */
+/********************/
 
-type RulesGetMsg struct {
+type AddressTokenResetMsg struct {
+	// Address to query
 	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
-type RulesUpdateMsg struct {
+type AddressRulesGetMsg struct {
+	// Address to query
 	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
-	Allow   string `bson:"allow" json:"allow" msgpack:"allow" mapstructure:"allow,omitempty"`
-	Deny    string `bson:"deny" json:"deny" msgpack:"deny" mapstructure:"deny,omitempty"`
+}
+
+type AddressRulesUpdateMsg struct {
+	// Address to query
+	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	AddressRules `bson:",inline" mapstructure:",squash"`
 }
 
 /************/
@@ -44,10 +51,17 @@ type RulesUpdateMsg struct {
 /************/
 
 type EventMsg struct {
-	UID     string                 `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
-	Meta    map[string]interface{} `bson:"meta" json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
-	Type    string                 `bson:"type" json:"type" msgpack:"type" mapstructure:"type,omitempty"`
-	Payload interface{}            `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty"`
+	// UID must be provided by the client, and must be a unique identifier
+	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
+
+	// Meta can hold any client provided data related to this event
+	Meta map[string]interface{} `bson:"meta" json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
+
+	// Type parameter holds a mimetype or similar identifier of the payload
+	Type string `bson:"type" json:"type" msgpack:"type" mapstructure:"type,omitempty"`
+
+	// Payload is the raw data of the event
+	Payload interface{} `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty"`
 }
 
 type EventResponseMsg struct {
@@ -56,18 +70,34 @@ type EventResponseMsg struct {
 }
 
 type EventsGetMsg struct {
-	UID            string        `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
-	Domain         string        `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
-	Address        string        `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
-	Since          time.Time     `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
-	Limit          uint          `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
-	Timeout        time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
-	ContinuationID string        `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
+	// UID of the event
+	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
+
+	// Domain name to get all events from
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+
+	// Address of the event creator
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Timestamp to search since, in golang's time.ParseDuration format
+	Since time.Time `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
+
+	// Limit the number of results returned
+	Limit uint `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
+
+	// Timeout sets the long-polling duration in golang's time.ParseDuration format
+	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
+
+	// ContinuationID lets you get following results after your last request
+	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
 }
 
 type EventsGetResponseMsg struct {
-	Events         []*Event `json:"events" msgpack:"events"`
-	ContinuationID string   `json:"cid" msgpack:"cid"`
+	// Array of events
+	Events []*Event `json:"events" msgpack:"events"`
+
+	// ContinuationID lets you get following results after your last request
+	ContinuationID string `json:"cid" msgpack:"cid"`
 }
 
 /********************/
@@ -75,8 +105,11 @@ type EventsGetResponseMsg struct {
 /********************/
 
 type SchemaMsg struct {
+	// A human readable description of the schema
 	Description string `bson:"description" json:"description" msgpack:"description" mapstructure:"description,omitempty"`
-	Payload     string `bson:"payload,omitempty" json:"payload,omitempty" msgpack:"payload,omitempty" mapstructure:"payload,omitempty"`
+
+	// Schema content
+	Payload string `bson:"payload,omitempty" json:"payload,omitempty" msgpack:"payload,omitempty" mapstructure:"payload,omitempty"`
 }
 
 type SchemaResponseMsg struct {
@@ -85,13 +118,18 @@ type SchemaResponseMsg struct {
 }
 
 type SchemaGetMsg struct {
-	Hash  string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
-	Check bool   `bson:"check,omitempty" json:"check,omitempty" msgpack:"check,omitempty" mapstructure:"check,omitempty"`
+	// Hash of the schema requested
+	Hash string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
+
+	// Check if the schema is available, but do not return its content
+	Check bool `bson:"check,omitempty" json:"check,omitempty" msgpack:"check,omitempty" mapstructure:"check,omitempty"`
 }
 
 type SchemaGetResponseMsg struct {
 	SchemaMsg `bson:",inline" mapstructure:",squash"`
-	Hash      string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
+
+	// Hash of the schema requested
+	Hash string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
 }
 
 /*************/
@@ -99,18 +137,22 @@ type SchemaGetResponseMsg struct {
 /*************/
 
 type DomainGetMsg struct {
+	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
 type DomainDeleteMsg struct {
+	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
 type DomainCreateMsg struct {
+	// Domain name
 	DomainInfo `bson:",inline" mapstructure:",squash"`
 }
 
 type DomainCreateResponseMsg struct {
+	// Domain name
 	Domain `bson:",inline" mapstructure:",squash"`
 }
 
@@ -123,15 +165,22 @@ type DomainUpdateResponseMsg struct {
 }
 
 type DomainAssignMsg struct {
-	Domain  string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+
+	// Address to assign
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
 type DomainGetTreeMsg struct {
+	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
+type DomainGetTreeResponseMsg []string
+
 type DomainCountAddressesMsg struct {
+	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
