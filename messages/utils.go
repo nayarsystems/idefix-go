@@ -23,7 +23,7 @@ type Msiable interface {
 
 // A type struct can implement the MsiParser interfaces to offer an alternative implementation to ParseMsi()
 type MsiParser interface {
-	ParseMsi(input any) error
+	ParseMsi(msi any) error
 }
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
@@ -38,10 +38,7 @@ func ToMsi(input any) (msi, error) {
 }
 
 // Fills a struct (given by reference) or msi from a msi. It uses mapstructure by default.
-func ParseMsi(input any, output any) error {
-	if !IsMsi(input) {
-		return fmt.Errorf("input is not a map")
-	}
+func ParseMsi(input msi, output any) error {
 	outputValue := reflect.ValueOf(output)
 	if outputValue.Kind() != reflect.Pointer || outputValue.IsNil() {
 		return fmt.Errorf("output not a pointer")
@@ -51,6 +48,21 @@ func ParseMsi(input any, output any) error {
 		return outputMsiParser.ParseMsi(input)
 	}
 	return mapstructure.Decode(input, output)
+}
+
+func ParseMsg(input any, output any) error {
+	inputMsi, err := MsiCast(input)
+	if err != nil {
+		return err
+	}
+	return ParseMsi(inputMsi, output)
+}
+
+func MsiCast(input any) (msi, error) {
+	if inputMsi, ok := input.(msi); ok {
+		return inputMsi, nil
+	}
+	return nil, fmt.Errorf("%v (%T) is not a msi", input, input)
 }
 
 // Gets the schema Id from a bstates based event's type field.
