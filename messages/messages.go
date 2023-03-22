@@ -21,7 +21,7 @@ type LoginMsg struct {
 /************/
 
 type InfoReqMsg struct {
-	Report          bool     `bson:"report" json:"report" msgpack:"report" mapstructure:"report,omitempty"`
+	Report          bool     `bson:"report" json:"report" msgpack:"report" mapstructure:"report"`
 	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
 }
 
