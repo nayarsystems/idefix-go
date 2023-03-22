@@ -40,7 +40,7 @@ var cmdRulesUpdate = &cobra.Command{
 }
 
 func cmdRulesGetRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := m.RulesGetMsg{}
+	msg := m.AddressRulesGetMsg{}
 	msg.Address, err = cmd.Flags().GetString("address")
 
 	if err != nil {
@@ -51,7 +51,7 @@ func cmdRulesGetRunE(cmd *cobra.Command, args []string) (err error) {
 }
 
 func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := m.RulesUpdateMsg{}
+	msg := m.AddressRulesUpdateMsg{}
 	msg.Address, err = cmd.Flags().GetString("address")
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return fmt.Errorf("cannot parse allow rule: %w", err)
 		}
-		msg.Allow = sallow
+		msg.Allow = m.MongoRulesExpression(sallow)
 	}
 
 	sdeny, err := cmd.Flags().GetString("deny")
@@ -80,7 +80,7 @@ func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return fmt.Errorf("cannot parse deny rule: %w", err)
 		}
-		msg.Deny = sdeny
+		msg.Deny = m.MongoRulesExpression(sdeny)
 	}
 
 	return commandCall2(m.IdefixCmdPrefix, m.CmdAddressRulesUpdate, msg, getTimeout(cmd))
