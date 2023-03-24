@@ -23,7 +23,7 @@ type Msiable interface {
 
 // A type struct can implement the MsiParser interfaces to offer an alternative implementation to ParseMsi()
 type MsiParser interface {
-	ParseMsi(msi any) error
+	ParseMsi(msi msi) error
 }
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
@@ -32,6 +32,11 @@ func ToMsi(input any) (msi, error) {
 	if ok {
 		return inputMsiable.ToMsi()
 	}
+	return ToMsiGeneric(input)
+}
+
+// Outputs a msi from struct or msi. It uses mapstructure by default.
+func ToMsiGeneric(input any) (msi, error) {
 	output := msi{}
 	err := mapstructure.Decode(input, &output)
 	return output, err
@@ -47,6 +52,10 @@ func ParseMsi(input msi, output any) error {
 	if ok {
 		return outputMsiParser.ParseMsi(input)
 	}
+	return ParseMsiGeneric(input, output)
+}
+
+func ParseMsiGeneric(input msi, output any) error {
 	return mapstructure.Decode(input, output)
 }
 

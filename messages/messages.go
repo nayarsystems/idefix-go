@@ -1,7 +1,10 @@
 package messages
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/jaracil/ei"
 )
 
 /************/
@@ -90,6 +93,38 @@ type EventsGetMsg struct {
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
+}
+
+func (m *EventsGetMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m)
+	if err != nil {
+		return nil, err
+	}
+	// replace timeout field by its string format
+	data["timeout"] = m.Timeout.String()
+	return data, err
+}
+
+func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
+	toutraw, err := ei.N(input).M("timeout").Raw()
+	var tout time.Duration
+	if err == nil {
+		toutStr, isStr := toutraw.(string)
+		if !isStr {
+			return fmt.Errorf("'timeout' field mut be a string formatted duration")
+		}
+		tout, err = time.ParseDuration(toutStr)
+		if err != nil {
+			return fmt.Errorf("can't parse 'timeout' field: %v", err)
+		}
+		delete(input, "timeout")
+	}
+	err = ParseMsiGeneric(input, m)
+	if err != nil {
+		return err
+	}
+	m.Timeout = tout
+	return nil
 }
 
 type EventsGetResponseMsg struct {
