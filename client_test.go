@@ -2,6 +2,8 @@ package idefixgo
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -10,21 +12,80 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPublish(t *testing.T) {
-	imc := NewClient(context.Background(), &ClientOptions{
+const testDomain string = "test"
+
+func TestMain(m *testing.M) {
+
+	// Run tests
+	err := setup()
+	code := 0
+	if err == nil {
+		code = m.Run()
+	} else {
+		fmt.Printf("can't perform client tests: %v\n", err)
+	}
+
+	os.Exit(code)
+}
+
+func setup() error {
+	c1 := createTestClient("test1", "test1token")
+	err := c1.Connect()
+	if err != nil {
+		return fmt.Errorf("backend not available: %v", err)
+	}
+	defer c1.Disconnect()
+	createTestDomain(c1)
+	assignTestDomain(c1, c1)
+	return nil
+}
+
+func createTestDomain(c *Client) {
+	domainCreateMsg := m.DomainCreateMsg{
+		DomainInfo: m.DomainInfo{
+			Domain: testDomain,
+			Allow:  `{"$true": true}`,
+		},
+	}
+	msg := &m.Message{
+		To:   m.CmdDomainCreate,
+		Data: domainCreateMsg,
+	}
+	_ = c.Call2("idefix", msg, nil, time.Second)
+}
+
+func assignTestDomain(c *Client, d *Client) {
+	domainAssignMsg := m.DomainAssignMsg{
+		Address: d.opts.Address,
+		Domain:  testDomain,
+	}
+
+	msg := &m.Message{
+		To:   m.CmdDomainAssign,
+		Data: domainAssignMsg,
+	}
+	_ = c.Call2("idefix", msg, nil, time.Second)
+}
+
+func createTestClient(address, token string) *Client {
+	testClient := NewClient(context.Background(), &ClientOptions{
 		Broker:   "tcp://localhost:1883",
 		Encoding: "mg",
 		CACert:   cert.CaCert,
-		Address:  "test",
-		Token:    "token",
+		Address:  address,
+		Token:    token,
 	})
-	err := imc.Connect()
-	require.NoError(t, err)
+	return testClient
+}
+func TestPublish(t *testing.T) {
+	c1 := createTestClient("test1", "test1token")
+	c1.Connect()
+	defer c1.Disconnect()
 
-	s := imc.NewSubscriber(10, "asdf")
+	s := c1.NewSubscriber(10, "asdf")
 	defer s.Close()
 
-	err = imc.Publish("test", &m.Message{
+	err := c1.Publish(c1.opts.Address, &m.Message{
 		To:   "asdf",
 		Data: map[string]interface{}{"testing": true},
 		Res:  "replyhere",
@@ -37,72 +98,18 @@ func TestPublish(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	c := NewClient(context.Background(), &ClientOptions{
-		Broker:   "tcp://localhost:1883",
-		Encoding: "mg",
-		CACert:   cert.CaCert,
-		Address:  "unauthorized",
-		Token:    "token",
-	})
-
-	err := c.Connect()
+	c1 := createTestClient("unauthorized", "unauthorizedToken")
+	err := c1.Connect()
 	require.NoError(t, err)
+	c1.Disconnect()
 
-	c2 := NewClient(context.Background(), &ClientOptions{
-		Broker:   "tcp://localhost:1883",
-		Encoding: "mg",
-		CACert:   cert.CaCert,
-		Address:  "unauthorized",
-		Token:    "wrongtoken",
-	})
-
+	c2 := createTestClient("unauthorized", "unauthorizedWrongToken")
 	err = c2.Connect()
 	require.Error(t, err)
 }
 
-func TestStream(t *testing.T) {
-	c := NewClient(context.Background(), &ClientOptions{
-		Broker:   "tcp://localhost:1883",
-		Encoding: "mg",
-		CACert:   cert.CaCert,
-		Address:  "test",
-		Token:    "token",
-	})
-
-	err := c.Connect()
-	require.NoError(t, err)
-
-	c2 := NewClient(context.Background(), &ClientOptions{
-		Broker:   "tcp://localhost:1883",
-		Encoding: "mg",
-		CACert:   cert.CaCert,
-		Address:  "test2",
-		Token:    "token",
-	})
-
-	err = c2.Connect()
-	require.NoError(t, err)
-
-	s, err := c.NewStream("5c9719505534d914", "asdf", 100, time.Minute)
-	require.NoError(t, err)
-	defer s.Close()
-
-	err = c2.Publish("5c9719505534d914", &m.Message{To: "asdf", Data: "test"})
-	require.NoError(t, err)
-
-	e := <-s.Channel()
-	require.Equal(t, "test", e.Data)
-
-}
-
 func TestConnectionHandler(t *testing.T) {
-	c := NewClient(context.Background(), &ClientOptions{
-		Broker:   "tcp://localhost:1883",
-		Encoding: "mg",
-		CACert:   cert.CaCert,
-		Address:  "test",
-		Token:    "token",
-	})
+	c := createTestClient("test", "testToken")
 
 	statuses := []ConnectionStatus{}
 

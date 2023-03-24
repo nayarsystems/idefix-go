@@ -180,7 +180,7 @@ func randSessionID() (string, error) {
 	b := make([]byte, 8)
 	_, err := rand.Read(b)
 	if err != nil {
-		return "", ie.ErrInternal.Withf("can't create connection ID: %w", err)
+		return "", ie.ErrInternal.Withf("can't create connection ID: %v", err)
 	}
 	return hex.EncodeToString(b), nil
 }
