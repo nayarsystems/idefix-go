@@ -93,7 +93,7 @@ func (ie IdefixError) Withf(format string, a ...any) IdefixError {
 }
 
 func Parse(e string) (*IdefixError, error) {
-	r := regexp.MustCompile(`^\[([-]?[0-9]+)\] ([^()]*)(?:[ ]\((.+)\))?$`)
+	r := regexp.MustCompile(`^\[([-]?[0-9]+)\] ([^()]*)(?s:[ ]\((.+)\))?$`)
 	ret := r.FindStringSubmatch(e)
 
 	if len(ret) < 3 {
