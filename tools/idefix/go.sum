@@ -187,8 +187,12 @@ github.com/mattn/go-runewidth v0.0.14 h1:+xnbZSEeDbOIg5/mE6JF0w6n9duR1l3/WmbinWV
 github.com/mattn/go-runewidth v0.0.14/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
+github.com/nayarsystems/bstates v0.1.2 h1:p8xrjCC0SfftNGQfgSzgh2CkNWei284+/GGTgYSWR3U=
+github.com/nayarsystems/bstates v0.1.2/go.mod h1:CKvNfRXiaUwm5Cyj6pdub5T0UPxzQzg4VuZ1vl51bYo=
 github.com/nayarsystems/buffer v0.0.2 h1:i/mB41U8RIzotEfyLjec2PgBfqC42G43QZYHEyM2TD0=
 github.com/nayarsystems/buffer v0.0.2/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
+github.com/nayarsystems/idefix-go v0.0.15 h1:gbKAgu7ifYI8bSgcTxerIxUjPijoQ/FFKXaPhhVg8Hk=
+github.com/nayarsystems/idefix-go v0.0.15/go.mod h1:ePWn0EwQ8TzXHNzU78SzSVZhhLvR2XSYbdCztJskPmc=
 github.com/nayarsystems/idefix-go/minips v0.0.4 h1:pb0gfH3T921iW+AvatLQ93Ot+P/qBMlMN5620cVNXaM=
 github.com/nayarsystems/idefix-go/minips v0.0.4/go.mod h1:AkH3hDvXIn2HHdUNBJW9Rm8biMSn6vC2X1sbNivBZac=
 github.com/nayarsystems/idefix/core/cert v0.0.2 h1:4EUg3SFa+U6mgNFgAJjIx+mC48t+JV2/9fCh9mwO8A8=

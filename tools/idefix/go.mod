@@ -6,13 +6,13 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/nayarsystems/bstates v0.1.2
-	github.com/nayarsystems/idefix-go v0.0.14
+	github.com/nayarsystems/idefix-go v0.0.15
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 )
 
-replace github.com/nayarsystems/idefix-go => /home/dcentelles/nayarshare/programming/idefix-go/
+// replace github.com/nayarsystems/idefix-go => /home/dcentelles/nayarshare/programming/idefix-go/
 
-replace github.com/nayarsystems/bstates => /home/dcentelles/nayarshare/programming/bstates/
+// replace github.com/nayarsystems/bstates => /home/dcentelles/nayarshare/programming/bstates/
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
