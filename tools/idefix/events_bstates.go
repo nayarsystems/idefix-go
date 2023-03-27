@@ -56,32 +56,45 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			continue
 		}
-		rawMsi, ok := e.Payload.(map[string]interface{})
-		if !ok {
-			fmt.Println("wrong payload format")
-			continue
-		}
-		blobI, ok := rawMsi["Data"]
-		if !ok {
-			fmt.Println("no 'Data' field found")
-			continue
-		}
 		var blob []byte
 		err = nil
-		switch v := blobI.(type) {
-		case []byte:
-			blob = v
-		case string:
+		rawMsi, ok := e.Payload.(map[string]interface{})
+		if ok {
+			blobI, ok := rawMsi["Data"]
+			if !ok {
+				fmt.Println("no 'Data' field found")
+				continue
+			}
+
+			switch v := blobI.(type) {
+			case []byte:
+				blob = v
+			case string:
+				var derr error
+				blob, derr = base64.StdEncoding.DecodeString(v)
+				if derr != nil {
+					err = fmt.Errorf("'Data' is a string but is not valid base64: %v", derr)
+				}
+			default:
+				err = fmt.Errorf("can't get a buffer from 'Data' field")
+			}
+			if err != nil {
+				fmt.Printf("%v\n", err)
+				continue
+			}
+		} else {
+			b64Str, ok := e.Payload.(string)
+			if !ok {
+				fmt.Println("wrong payload format")
+			}
 			var derr error
-			blob, derr = base64.StdEncoding.DecodeString(v)
-			err = fmt.Errorf("'Data' is a string but is not valid base64: %v", derr)
-		default:
-			err = fmt.Errorf("can't get a buffer from 'Data' field")
+			blob, derr = base64.StdEncoding.DecodeString(b64Str)
+			if derr != nil {
+				fmt.Printf("payload is a string but is not a valid base64: %v", derr)
+				continue
+			}
 		}
-		if err != nil {
-			fmt.Printf("%v\n", err)
-			continue
-		}
+
 		var schema *be.StateSchema
 		if schema, ok = schemasMap[schemaId]; !ok {
 			schemaMsg, err := ic.GetSchema(schemaId, time.Second)
@@ -95,6 +108,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 				fmt.Printf("can't parse schema '%s': %v\n", schemaId, err)
 				continue
 			}
+			schemasMap[schemaId] = schema
 		}
 
 		var domainMap map[string]map[string]map[string]*StatesSource
