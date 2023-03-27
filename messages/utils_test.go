@@ -2,6 +2,7 @@ package messages
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
@@ -89,7 +90,7 @@ type testTypeMsiParser struct {
 	Field0 string `mapstructure:"field0"`
 }
 
-func (tt *testTypeMsiParser) ParseMsi(input any) error {
+func (tt *testTypeMsiParser) ParseMsi(input msi) error {
 	mapstructure.Decode(input, tt)
 	tt.Field0 += " (modified)"
 	return nil
@@ -116,4 +117,9 @@ func Test_ParseMsi_ToMsi(t *testing.T) {
 	err := ParseMsi(in, &tt)
 	require.NoError(t, err)
 	require.Equal(t, in, tt)
+}
+
+type WithTimeAndDurations struct {
+	Since   time.Time     `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
+	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
 }

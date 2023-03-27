@@ -3,6 +3,8 @@ package messages
 import (
 	"fmt"
 	"time"
+
+	"github.com/jaracil/ei"
 )
 
 /********************/
@@ -42,8 +44,34 @@ type DomainInfo struct {
 
 type Domain struct {
 	DomainInfo `bson:",inline" mapstructure:",squash"`
-	Creation   time.Time `bson:"creation" json:"creation" msgpack:"creation" mapstructure:"creation,omitempty"`
-	LastUpdate time.Time `bson:"lastUpdate" json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"lastUpdate,omitempty"`
+	Creation   time.Time `bson:"creation" json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
+	LastUpdate time.Time `bson:"lastUpdate" json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty"`
+}
+
+func (m *Domain) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m)
+	if err != nil {
+		return nil, err
+	}
+	data["creation"] = TimeToString(m.Creation)
+	data["lastUpdate"] = TimeToString(m.LastUpdate)
+	return data, err
+}
+
+func (m *Domain) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m)
+	if err != nil {
+		return err
+	}
+	m.LastUpdate, err = ei.N(input).M("lastUpdate").Time()
+	if err != nil {
+		return err
+	}
+	m.Creation, err = ei.N(input).M("creation").Time()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /************/
@@ -54,7 +82,26 @@ type Event struct {
 	EventMsg  `bson:",inline" mapstructure:",squash"`
 	Domain    string    `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 	Address   string    `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
-	Timestamp time.Time `bson:"timestamp" json:"timestamp" msgpack:"timestamp" mapstructure:"timestamp,omitempty"`
+	Timestamp time.Time `bson:"timestamp" json:"timestamp" msgpack:"timestamp" mapstructure:"-,omitempty"`
+}
+
+func (m *Event) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m)
+	if err != nil {
+		return nil, err
+	}
+	// replace timeout field by its string format
+	data["timestamp"] = TimeToString(m.Timestamp)
+	return data, err
+}
+
+func (m *Event) ParseMsi(input msi) (err error) {
+	m.Timestamp, _ = ei.N(input).M("timestamp").Time()
+	err = ParseMsiGeneric(input, m)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (e *Event) String() string {
@@ -76,4 +123,25 @@ type SchemaInfo struct {
 type Schema struct {
 	SchemaInfo   `bson:",inline" mapstructure:",squash"`
 	CreationTime time.Time `bson:"creationTime" json:"creationTime" msgpack:"creationTime"`
+}
+
+func (m *Schema) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m)
+	if err != nil {
+		return nil, err
+	}
+	data["creationTime"] = TimeToString(m.CreationTime)
+	return data, err
+}
+
+func (m *Schema) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m)
+	if err != nil {
+		return err
+	}
+	m.CreationTime, err = ei.N(input).M("creationTime").Time()
+	if err != nil {
+		return err
+	}
+	return nil
 }

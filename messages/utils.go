@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -67,6 +68,17 @@ func ParseMsg(input any, output any) error {
 	return ParseMsi(inputMsi, output)
 }
 
+// TODO: investigate the use of mapstructure hooks to minimize custom Msiable/MsiParser
+// cfg := mapstructure.DecoderConfig{
+// 	Result:     output,
+// 	DecodeHook: mapstructure.StringToTimeHookFunc(time.RFC1123),
+// }
+// decoder, err := mapstructure.NewDecoder(&cfg)
+// if err != nil {
+// 	return err
+// }
+// return decoder.Decode(input)
+
 func MsiCast(input any) (msi, error) {
 	if inputMsi, ok := input.(msi); ok {
 		return inputMsi, nil
@@ -94,4 +106,8 @@ func BstatesParseSchemaIdFromType(evtype string) (string, error) {
 func IsMsi(input any) bool {
 	_, ok := input.(msi)
 	return ok
+}
+
+func TimeToString(t time.Time) string {
+	return t.Format(time.RFC3339)
 }

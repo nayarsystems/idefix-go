@@ -82,14 +82,14 @@ type EventsGetMsg struct {
 	// Address of the event creator
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 
-	// Timestamp to search since, in golang's time.ParseDuration format
-	Since time.Time `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
+	// Timestamp to search since
+	Since time.Time `json:"since" msgpack:"since" mapstructure:"-,omitempty"`
 
 	// Limit the number of results returned
 	Limit uint `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
 
-	// Timeout sets the long-polling duration in golang's time.ParseDuration format
-	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
+	// Timeout sets the long-polling duration
+	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"-,omitempty"`
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
@@ -102,10 +102,13 @@ func (m *EventsGetMsg) ToMsi() (data msi, err error) {
 	}
 	// replace timeout field by its string format
 	data["timeout"] = m.Timeout.String()
+	data["since"] = m.Since.Format(time.RFC3339)
+
 	return data, err
 }
 
 func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
+	m.Since, _ = ei.N(input).M("since").Time()
 	toutraw, err := ei.N(input).M("timeout").Raw()
 	var tout time.Duration
 	if err == nil {
@@ -133,6 +136,42 @@ type EventsGetResponseMsg struct {
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid"`
+}
+
+func (m *EventsGetResponseMsg) ToMsi() (data msi, err error) {
+	data = msi{
+		"cid": m.ContinuationID,
+	}
+	events := []msi{}
+	for _, ev := range m.Events {
+		evraw, err := ev.ToMsi()
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, evraw)
+	}
+	data["events"] = events
+	return data, err
+}
+
+func (m *EventsGetResponseMsg) ParseMsi(input msi) (err error) {
+	m.ContinuationID, err = ei.N(input).M("cid").String()
+	if err != nil {
+		return err
+	}
+	revents, err := ei.N(input).M("events").Slice()
+	if err != nil {
+		return err
+	}
+	for _, rev := range revents {
+		ev := &Event{}
+		err = ParseMsg(rev, ev)
+		if err != nil {
+			return err
+		}
+		m.Events = append(m.Events, ev)
+	}
+	return nil
 }
 
 /********************/
