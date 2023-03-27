@@ -13,7 +13,7 @@ func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[stri
 		Meta:    meta,
 		UID:     uid,
 	}
-	err := c.Call2("idefix", &m.Message{To: "events.create", Data: msg}, nil, timeout)
+	err := c.Call2("idefix", &m.Message{To: "events.create", Data: &msg}, nil, timeout)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, c
 		msg.Timeout = timeout
 	}
 	resp := &m.EventsGetResponseMsg{}
-	err := c.Call2("idefix", &m.Message{To: "events.get", Data: msg}, resp, timeout+time.Second)
+	err := c.Call2("idefix", &m.Message{To: "events.get", Data: &msg}, resp, timeout+time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *Client) GetSchema(hash string, timeout time.Duration) (*m.SchemaGetResp
 		Check: false,
 	}
 	resp := &m.SchemaGetResponseMsg{}
-	err := c.Call2("idefix", &m.Message{To: "schemas.get", Data: msg}, resp, timeout)
+	err := c.Call2("idefix", &m.Message{To: "schemas.get", Data: &msg}, resp, timeout)
 	if err != nil {
 		return nil, err
 	}
