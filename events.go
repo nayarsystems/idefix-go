@@ -2,9 +2,23 @@ package idefixgo
 
 import (
 	"fmt"
-	m "github.com/nayarsystems/idefix-go/messages"
 	"time"
+
+	m "github.com/nayarsystems/idefix-go/messages"
+	"github.com/nayarsystems/idefix/libraries/eval"
 )
+
+type GetEventsBaseParams struct {
+	Domain        string
+	Limit         uint
+	Cid           string
+	Timeout       time.Duration
+	Since         time.Time
+	AddressFilter string
+	MetaFilter    eval.CompiledExpr
+	Continue      bool
+	Csvdir        string
+}
 
 func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[string]interface{}, uid string, timeout time.Duration) error {
 	msg := m.EventMsg{

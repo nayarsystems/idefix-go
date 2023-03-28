@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	be "github.com/nayarsystems/bstates"
+	idf "github.com/nayarsystems/idefix-go"
 	"github.com/nayarsystems/idefix/libraries/eval"
 	"github.com/spf13/cobra"
 )
@@ -25,6 +25,8 @@ func init() {
 	cmdEventGet.PersistentFlags().String("timeout", "20s", "If there are no events, wait until some arrive")
 	cmdEventGet.PersistentFlags().StringP("address", "a", "", "Filter by the indicated address. Default: get evets from all address in the specified domain")
 	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")
+	cmdEventGet.PersistentFlags().String("csvdir", "", "directory path used to export all events in csv format (if specified)")
+	cmdEventGet.PersistentFlags().Bool("continue", false, "perform requests until no events pending")
 	cmdEvent.AddCommand(cmdEventGet)
 
 	cmdEventGetRaw.Flags().String("format", "json", "Format to show results: [pretty, json]")
@@ -114,50 +116,24 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getStatesList(schema *be.StateSchema, raw []byte) ([]*be.State, error) {
-	decoder := be.CreateStateQueue(schema)
-	err := decoder.Decode([]byte(raw))
-	if err != nil {
-		return nil, fmt.Errorf("can't decode event: %v", err)
-	}
-	states, err := decoder.GetStates()
-	if err != nil {
-		return nil, fmt.Errorf("can't decode event: %v", err)
-	}
-	return states, err
-}
-
-func getDeltaStates(events []*be.State) ([]map[string]interface{}, error) {
-	msiEvents, err := be.GetDeltaMsiStates(events)
-	return msiEvents, err
-}
-
-type getEventsBaseParams struct {
-	domain        string
-	limit         uint
-	cid           string
-	timeout       time.Duration
-	since         time.Time
-	addressFilter string
-	metaFilter    eval.CompiledExpr
-}
-
-func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*getEventsBaseParams, error) {
-	params := &getEventsBaseParams{}
-	params.domain = args[0]
-	params.limit, _ = cmd.Flags().GetUint("limit")
-	params.cid, _ = cmd.Flags().GetString("cid")
+func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*idf.GetEventsBaseParams, error) {
+	params := &idf.GetEventsBaseParams{}
+	params.Domain = args[0]
+	params.Limit, _ = cmd.Flags().GetUint("limit")
+	params.Cid, _ = cmd.Flags().GetString("cid")
 	timeoutraw, _ := cmd.Flags().GetString("timeout")
-	params.timeout, _ = time.ParseDuration(timeoutraw)
+	params.Timeout, _ = time.ParseDuration(timeoutraw)
 	sinceraw, _ := cmd.Flags().GetString("since")
+	params.Continue, _ = cmd.Flags().GetBool("continue")
+	params.Csvdir, _ = cmd.Flags().GetString("csvdir")
 	var err error
-	params.since, err = dateparse.ParseStrict(sinceraw)
+	params.Since, err = dateparse.ParseStrict(sinceraw)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 'since': %w", err)
 	}
-	params.addressFilter, _ = cmd.Flags().GetString("address")
+	params.AddressFilter, _ = cmd.Flags().GetString("address")
 	metaFilterExpr, _ := cmd.Flags().GetString("meta-filter")
-	params.metaFilter, err = eval.CompileExpr(metaFilterExpr)
+	params.MetaFilter, err = eval.CompileExpr(metaFilterExpr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 'meta-filter': %w", err)
 	}

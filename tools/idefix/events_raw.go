@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	idf "github.com/nayarsystems/idefix-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -15,14 +16,14 @@ func cmdEventGetRawRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	var p *getEventsBaseParams
+	var p *idf.GetEventsBaseParams
 	if p, err = parseGetEventsBaseParams(cmd, args); err != nil {
 		return err
 	}
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
-		"Query for raw events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.domain, p.limit, p.cid, p.since, p.timeout))
+		"Query for raw events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
 
-	m, err := ic.GetEventsByDomain(p.domain, p.since, p.limit, p.cid, p.timeout)
+	m, err := ic.GetEventsByDomain(p.Domain, p.Since, p.Limit, p.Cid, p.Timeout)
 	if err != nil {
 		spinner.Fail()
 		return err
