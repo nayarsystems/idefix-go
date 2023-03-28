@@ -27,6 +27,8 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	forceTsField, _ := cmd.Flags().GetString("ts-field")
+	rawTsFieldYearOffset, _ := cmd.Flags().GetUint("ts-field-offset")
+	rawTsFieldFactor, _ := cmd.Flags().GetFloat32("ts-field-factor")
 	schemasMap := map[string]*be.StateSchema{}
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
 		"Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.domain, p.limit, p.cid, p.since, p.timeout))
@@ -170,6 +172,18 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 				}
 			}
 		}
+		if tsFieldName == "" && forceTsField != "" {
+			// Let's check if forceTsField is a raw numeric field
+			rawFields := schema.GetFields()
+			for _, f := range rawFields {
+				if f.Name == forceTsField {
+					tsFieldName = f.Name
+					stateSource.TimestampFieldYearOffset = int(rawTsFieldYearOffset)
+					stateSource.TimestampFieldFactor = rawTsFieldFactor
+					break
+				}
+			}
+		}
 		stateSource.TimestampField = tsFieldName
 	}
 
@@ -198,19 +212,12 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 							continue
 						}
 						if statesSource.TimestampField != "" {
-							tsmsI, err := statesSource.States[i].Get(statesSource.TimestampField)
+							ts, err := getTimestampValue(statesSource, i)
 							if err != nil {
-								fmt.Printf("fix me: cannot get '%s' value: %v\n", statesSource.TimestampField, err)
+								fmt.Printf("fix me: %v", err)
 								fmt.Println(string(je))
 								continue
 							}
-							tsms, err := ei.N(tsmsI).Int64()
-							if err != nil {
-								fmt.Printf("fix me: cannot get '%s' value: %v\n", statesSource.TimestampField, err)
-								fmt.Println(string(je))
-								continue
-							}
-							ts := time.UnixMilli(tsms)
 							fmt.Printf("%v: %s\n", ts, string(je))
 						} else {
 							fmt.Println(string(je))
@@ -223,6 +230,25 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("CID:", m.ContinuationID)
 	return nil
+}
+
+func getTimestampValue(ss *StatesSource, i int) (time.Time, error) {
+	tsmsI, err := ss.States[i].Get(ss.TimestampField)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("fix me: cannot get '%s' value: %v", ss.TimestampField, err)
+	}
+	tsms, err := ei.N(tsmsI).Float64()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("fix me: cannot get '%s' value: %v", ss.TimestampField, err)
+	}
+	if ss.TimestampFieldYearOffset == 0 {
+		return time.UnixMilli(int64(tsms)), nil
+	}
+	offsetDate := time.Date(int(ss.TimestampFieldYearOffset), time.January, 1, 0, 0, 0, 0, time.UTC)
+	offsetDateUnixMs := offsetDate.UnixMilli()
+	// convert to millis using given factor
+	unixTsMs := uint64(offsetDateUnixMs + int64(tsms*float64(ss.TimestampFieldFactor)))
+	return time.UnixMilli(int64(unixTsMs)), nil
 }
 
 func evalMeta(meta map[string]interface{}, expr eval.CompiledExpr) (bool, error) {
@@ -242,8 +268,10 @@ func evalMeta(meta map[string]interface{}, expr eval.CompiledExpr) (bool, error)
 }
 
 type StatesSource struct {
-	Meta           map[string]interface{}
-	MetaRaw        string
-	TimestampField string
-	States         []*be.State
+	Meta                     map[string]interface{}
+	MetaRaw                  string
+	TimestampField           string
+	TimestampFieldYearOffset int
+	TimestampFieldFactor     float32
+	States                   []*be.State
 }

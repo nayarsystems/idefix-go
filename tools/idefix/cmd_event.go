@@ -31,6 +31,8 @@ func init() {
 	cmdEventGet.AddCommand(cmdEventGetRaw)
 
 	cmdEventGetBevents.Flags().String("ts-field", "", "force use of a timestamp field (used when multiple timestamp field are present in the same state). If no field is forced the first found will be used")
+	cmdEventGetBevents.Flags().Uint("ts-field-offset", 1970, "use this year offset when the ts-field specified is a raw numeric field")
+	cmdEventGetBevents.Flags().Float32("ts-field-factor", 1, "use this factor to get milleseconds from the ts-field when it's a raw numeric")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)
