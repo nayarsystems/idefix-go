@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	idf "github.com/nayarsystems/idefix-go"
 	"github.com/nayarsystems/idefix/libraries/eval"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +34,7 @@ func init() {
 	cmdEventGetBevents.Flags().String("ts-field", "", "force use of a timestamp field (used when multiple timestamp field are present in the same state). If no field is forced the first found will be used")
 	cmdEventGetBevents.Flags().Uint("ts-field-offset", 1970, "use this year offset when the ts-field specified is a raw numeric field")
 	cmdEventGetBevents.Flags().Float32("ts-field-factor", 1, "use this factor to get milleseconds from the ts-field when it's a raw numeric")
+	cmdEventGetBevents.Flags().Bool("benchmark", false, "perform size efficiency bechmark after getting bstates")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)
@@ -116,8 +116,20 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*idf.GetEventsBaseParams, error) {
-	params := &idf.GetEventsBaseParams{}
+type GetEventsBaseParams struct {
+	Domain        string
+	Limit         uint
+	Cid           string
+	Timeout       time.Duration
+	Since         time.Time
+	AddressFilter string
+	MetaFilter    eval.CompiledExpr
+	Continue      bool
+	Csvdir        string
+}
+
+func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBaseParams, error) {
+	params := &GetEventsBaseParams{}
 	params.Domain = args[0]
 	params.Limit, _ = cmd.Flags().GetUint("limit")
 	params.Cid, _ = cmd.Flags().GetString("cid")

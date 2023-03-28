@@ -14,7 +14,13 @@ import (
 )
 
 type GetBstatesParams struct {
-	*GetEventsBaseParams
+	Domain               string
+	Since                time.Time
+	Limit                uint
+	Cid                  string
+	AddressFilter        string
+	MetaFilter           eval.CompiledExpr
+	Timeout              time.Duration
 	ForceTsField         string
 	RawTsFieldYearOffset uint
 	RawTsFieldFactor     float32
@@ -39,7 +45,16 @@ type BstatesSource struct {
 // domain -> address -> schema -> meta-hash -> source of states
 type GetBstatesResult = map[string]map[string]map[string]map[string]*BstatesSource
 
-func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (cid string, err error) {
+// Params:
+// ic: idefix client;
+// p: call parameters;
+// stateMap: state map to fill;
+//
+// Returns:
+// number of states read;
+// CID;
+// error;
+func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (gotnum uint, cid string, err error) {
 	m, err := ic.GetEventsByDomain(p.Domain, p.Since, p.Limit, p.Cid, p.Timeout)
 	if err != nil {
 		return
@@ -183,48 +198,104 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (cid
 			return
 		}
 		stateSource.States = append(stateSource.States, states...)
+		gotnum += uint(len(states))
 	}
 	return
-	// for domain, domainMap := range stateMap {
-	// 	for address, addressMap := range domainMap {
-	// 		for schema, schemaMap := range addressMap {
-	// 			for _, statesSource := range schemaMap {
-	// 				header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s, META: %s~~~~~~~~~", domain, address, schema, statesSource.MetaRaw)
-	// 				headerSeparatorRune := []rune(header)
-	// 				for i := 0; i < len(headerSeparatorRune); i++ {
-	// 					headerSeparatorRune[i] = '~'
-	// 				}
-	// 				headerSeparator := string(headerSeparatorRune)
-	// 				fmt.Println(headerSeparator)
-	// 				fmt.Println(header)
-	// 				fmt.Println(headerSeparator)
-	// 				events, err := getDeltaStates(statesSource.States)
-	// 				if err != nil {
-	// 					fmt.Println(err)
-	// 					continue
-	// 				}
-	// 				for i, event := range events {
-	// 					je, err := json.Marshal(event)
-	// 					if err != nil {
-	// 						fmt.Println(err)
-	// 						continue
-	// 					}
-	// 					if statesSource.timestampField != "" {
-	// 						ts, err := getTimestampValue(statesSource, i)
-	// 						if err != nil {
-	// 							fmt.Printf("fix me: %v", err)
-	// 							fmt.Println(string(je))
-	// 							continue
-	// 						}
-	// 						fmt.Printf("%v: %s\n", ts, string(je))
-	// 					} else {
-	// 						fmt.Println(string(je))
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+}
+
+func BenchmarkBstates(states []*Bstate) {
+	bstates := []*be.State{}
+	for _, s := range states {
+		bstates = append(bstates, s.State)
+	}
+	Benchmark(bstates)
+}
+
+func Benchmark(states []*be.State) {
+	if len(states) == 0 {
+		return
+	}
+	stateSize := states[0].GetByteSize()
+	fmt.Printf("states count: %d\n", len(states))
+	fmt.Printf("state size (B): %d\n", stateSize)
+	fmt.Printf("total states size (B): %d\n", stateSize*len(states))
+
+	pipeline := "t:z"
+	size, err := GetSizeUsingNewPipeline(states, pipeline)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
+
+	pipeline = "z"
+	size, err = GetSizeUsingNewPipeline(states, pipeline)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
+
+	pipeline = ""
+	size, err = GetSizeUsingNewPipeline(states, pipeline)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		return
+	}
+	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
+}
+
+func GetSizeUsingNewPipeline(states []*be.State, pipeline string) (size uint, err error) {
+	schema, err := UpdateSchemaPipeline(states[0].GetSchema(), pipeline)
+	if err != nil {
+		return
+	}
+	// Every input state has a reference to the original schema that was used to encode it.
+	// The same schema is used by the StateQueue since it needs to know the fields structure of every state
+	// to generate a blob (multiple states encoded). The schema contains the pipeline used to encode the StateQueue.
+	// We cannot use the input states to create a new StateQueue (blob) that uses the schema with the pipeline updated
+	// since it would cause an error due to a schema hash mismatch between the input state's schemas and the new StateQueue
+	// (despite having the same field structure).
+	// TODO: bstates lib should allow the updates of a StateQueue using a state that has
+	// compatible fields structure.
+	// So, we need to create new states with the schema with the pipeline updated
+	stateQueue := be.CreateStateQueue(schema)
+	for _, s := range states {
+		rawState, err := s.Encode()
+		if err != nil {
+			return 0, err
+		}
+		newState, err := be.CreateState(schema)
+		if err != nil {
+			return 0, err
+		}
+		newState.Decode(rawState)
+		err = stateQueue.Push(newState)
+		if err != nil {
+			return 0, err
+		}
+	}
+	blob, err := stateQueue.Encode()
+	if err != nil {
+		return 0, err
+	}
+	return uint(len(blob)), nil
+}
+
+func UpdateSchemaPipeline(schema *be.StateSchema, pipeline string) (newSchema *be.StateSchema, err error) {
+	schemaMsi := schema.ToMsi()
+	schemaMsi["encoderPipeline"] = pipeline
+	var newSchemaRaw []byte
+	newSchemaRaw, err = json.Marshal(schemaMsi)
+	if err != nil {
+		return nil, fmt.Errorf("fix me: can't create new schema: %v", err)
+	}
+	newSchema = &be.StateSchema{}
+	err = json.Unmarshal(newSchemaRaw, &newSchema)
+	if err != nil {
+		return nil, fmt.Errorf("fix me: can't decode new schema: %v", err)
+	}
+	return
 }
 
 func getTimestampValue(s *be.State, tsField string, tsYearOffset int, tsFactor float32) (time.Time, error) {

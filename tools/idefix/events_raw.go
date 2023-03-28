@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	idf "github.com/nayarsystems/idefix-go"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +15,7 @@ func cmdEventGetRawRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	var p *idf.GetEventsBaseParams
+	var p *GetEventsBaseParams
 	if p, err = parseGetEventsBaseParams(cmd, args); err != nil {
 		return err
 	}

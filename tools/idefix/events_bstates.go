@@ -17,22 +17,31 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	var bp *idf.GetEventsBaseParams
+	var bp *GetEventsBaseParams
 	if bp, err = parseGetEventsBaseParams(cmd, args); err != nil {
 		return err
 	}
 	p := idf.GetBstatesParams{
-		GetEventsBaseParams: bp,
+		Domain:        bp.Domain,
+		Since:         bp.Since,
+		Limit:         bp.Limit,
+		Cid:           bp.Cid,
+		AddressFilter: bp.AddressFilter,
+		MetaFilter:    bp.MetaFilter,
+		Timeout:       bp.Timeout,
 	}
 	p.ForceTsField, _ = cmd.Flags().GetString("ts-field")
 	p.RawTsFieldYearOffset, _ = cmd.Flags().GetUint("ts-field-offset")
 	p.RawTsFieldFactor, _ = cmd.Flags().GetFloat32("ts-field-factor")
 
+	benchmark, _ := cmd.Flags().GetBool("benchmark")
+
 	keepPolling := true
 	res := idf.GetBstatesResult{}
 	for keepPolling {
 		spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
-		p.Cid, err = idf.GetBstates(ic, &p, res)
+		var sread uint
+		sread, p.Cid, err = idf.GetBstates(ic, &p, res)
 		timeout := false
 		if err != nil {
 			if !ie.ErrTimeout.Is(err) {
@@ -41,7 +50,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			}
 		}
 		spinner.Success()
-		keepPolling = !timeout && p.Continue && p.Cid != ""
+		keepPolling = !timeout && sread == p.Limit && bp.Continue && p.Cid != ""
 	}
 
 	for domain, domainMap := range res {
@@ -66,6 +75,9 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 						}
 						fmt.Printf("%v: %s\n", event.Timestamp, string(je))
 					}
+					if benchmark {
+						idf.BenchmarkBstates(statesSource.States)
+					}
 				}
 			}
 		}
@@ -75,5 +87,10 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	} else {
 		fmt.Println("no events left")
 	}
+
 	return nil
+}
+
+func RunBenchmark() {
+
 }
