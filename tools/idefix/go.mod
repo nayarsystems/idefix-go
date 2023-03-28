@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
-	github.com/nayarsystems/idefix-go v0.0.15
+	github.com/nayarsystems/idefix-go v0.0.16-0.20230328121326-d1847e9cc475
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 )
 
@@ -22,6 +22,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.5 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/nayarsystems/bstates v0.1.3 // indirect
 	github.com/nayarsystems/buffer v0.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
