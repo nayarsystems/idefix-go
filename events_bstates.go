@@ -29,13 +29,19 @@ type GetBstatesParams struct {
 type Bstate struct {
 	Timestamp time.Time
 	State     *be.State
-	Delta     map[string]any
+}
+
+type BstatesBlob struct {
+	UID       string
+	Timestamp time.Time
+	States    []*Bstate
+	Raw       []byte
 }
 
 type BstatesSource struct {
 	Meta    map[string]interface{}
 	MetaRaw string
-	States  []*Bstate
+	Blobs   []*BstatesBlob
 
 	timestampField           string
 	timestampFieldYearOffset int
@@ -191,58 +197,57 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (got
 			}
 		}
 		stateSource.timestampField = tsFieldName
-
-		var states []*Bstate
-		states, err = getStatesList(stateSource, schema, blob)
+		var beBlob *BstatesBlob
+		beBlob, err = createBlobInfo(stateSource, schema, e.UID, e.Timestamp, blob)
 		if err != nil {
 			return
 		}
-		stateSource.States = append(stateSource.States, states...)
-		gotnum += uint(len(states))
+		stateSource.Blobs = append(stateSource.Blobs, beBlob)
+		gotnum += uint(len(beBlob.States))
 	}
 	return
 }
 
-func BenchmarkBstates(states []*Bstate) {
-	bstates := []*be.State{}
-	for _, s := range states {
-		bstates = append(bstates, s.State)
+func BenchmarkBstates(blob *BstatesBlob, bstates []*Bstate) {
+	states := []*be.State{}
+	for _, s := range bstates {
+		states = append(states, s.State)
 	}
-	Benchmark(bstates)
-}
-
-func Benchmark(states []*be.State) {
 	if len(states) == 0 {
 		return
 	}
 	stateSize := states[0].GetByteSize()
 	fmt.Printf("states count: %d\n", len(states))
 	fmt.Printf("state size (B): %d\n", stateSize)
-	fmt.Printf("total states size (B): %d\n", stateSize*len(states))
+	uncompressedSize := stateSize * len(states)
+	fmt.Printf("total states size (B): %d\n", uncompressedSize)
 
-	pipeline := "t:z"
+	fmt.Printf("received blob size (B): %d (%.2f %%)\n", len(blob.Raw), float32(len(blob.Raw))/float32(uncompressedSize)*100)
+
+	// pipeline := ""
+	// size, err := GetSizeUsingNewPipeline(states, pipeline)
+	// if err != nil {
+	// 	fmt.Printf("error: %v\n", err)
+	// 	return
+	// }
+	// fmt.Printf("blob size using pipeline \"%s\": %d (%.2f %%)\n", pipeline, size, float32(size)/float32(uncompressedSize)*100)
+
+	pipeline := "z"
 	size, err := GetSizeUsingNewPipeline(states, pipeline)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
 	}
-	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
+	fmt.Printf("blob size using pipeline \"%s\": %d (%.2f %%)\n", pipeline, size, float32(size)/float32(uncompressedSize)*100)
 
-	pipeline = "z"
+	pipeline = "t:z"
 	size, err = GetSizeUsingNewPipeline(states, pipeline)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
 	}
-	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
+	fmt.Printf("blob size using pipeline \"%s\": %d (%.2f %%)\n", pipeline, size, float32(size)/float32(uncompressedSize)*100)
 
-	pipeline = ""
-	size, err = GetSizeUsingNewPipeline(states, pipeline)
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		return
-	}
-	fmt.Printf("blob size using pipeline \"%s\": %d\n", pipeline, size)
 }
 
 func GetSizeUsingNewPipeline(states []*be.State, pipeline string) (size uint, err error) {
@@ -333,7 +338,16 @@ func evalMeta(meta map[string]interface{}, expr eval.CompiledExpr) (bool, error)
 	return false, nil
 }
 
-func getStatesList(source *BstatesSource, schema *be.StateSchema, raw []byte) (res []*Bstate, err error) {
+func GetDeltaStates(in []*Bstate) ([]map[string]interface{}, error) {
+	var states []*be.State
+	for _, bs := range in {
+		states = append(states, bs.State)
+	}
+	msiEvents, err := be.GetDeltaMsiStates(states)
+	return msiEvents, err
+}
+
+func createBlobInfo(source *BstatesSource, schema *be.StateSchema, uid string, ts time.Time, raw []byte) (res *BstatesBlob, err error) {
 	decoder := be.CreateStateQueue(schema)
 	err = decoder.Decode([]byte(raw))
 	if err != nil {
@@ -343,14 +357,14 @@ func getStatesList(source *BstatesSource, schema *be.StateSchema, raw []byte) (r
 	if err != nil {
 		return nil, fmt.Errorf("can't decode event: %v", err)
 	}
-	dstates, err := getDeltaStates(states)
-	if err != nil {
-		return nil, fmt.Errorf("can't get deltas: %v", err)
+	res = &BstatesBlob{
+		Timestamp: ts,
+		UID:       uid,
+		Raw:       raw,
 	}
-	for i, s := range states {
+	for _, s := range states {
 		bstate := &Bstate{
 			State: s,
-			Delta: dstates[i],
 		}
 		if source.timestampField != "" {
 			ts, err := getTimestampValue(s, source.timestampField, source.timestampFieldYearOffset, source.timestampFieldFactor)
@@ -359,14 +373,9 @@ func getStatesList(source *BstatesSource, schema *be.StateSchema, raw []byte) (r
 			}
 			bstate.Timestamp = ts
 		}
-		res = append(res, bstate)
+		res.States = append(res.States, bstate)
 	}
 	return res, err
-}
-
-func getDeltaStates(events []*be.State) ([]map[string]interface{}, error) {
-	msiEvents, err := be.GetDeltaMsiStates(events)
-	return msiEvents, err
 }
 
 var schemasMap = map[string]*be.StateSchema{}
