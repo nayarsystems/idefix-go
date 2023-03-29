@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
-	github.com/nayarsystems/idefix-go v0.0.16-0.20230328173947-a70816d5f3c1
+	github.com/nayarsystems/idefix-go v0.0.16-0.20230329193815-240ba2d38a74
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 )
 

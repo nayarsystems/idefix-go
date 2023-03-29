@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	idf "github.com/nayarsystems/idefix-go"
 	ie "github.com/nayarsystems/idefix-go/errors"
@@ -33,7 +34,11 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	p.ForceTsField, _ = cmd.Flags().GetString("ts-field")
 	p.RawTsFieldYearOffset, _ = cmd.Flags().GetUint("ts-field-offset")
 	p.RawTsFieldFactor, _ = cmd.Flags().GetFloat32("ts-field-factor")
-
+	fieldNameRegexStr, _ := cmd.Flags().GetString("field-match")
+	fieldNameRegex, err := regexp.Compile(fieldNameRegexStr)
+	if err != nil {
+		return err
+	}
 	benchmark, _ := cmd.Flags().GetBool("benchmark")
 
 	keepPolling := true
@@ -58,25 +63,58 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			for schema, schemaMap := range addressMap {
 				for _, statesSource := range schemaMap {
 					header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s, META: %s~~~~~~~~~", domain, address, schema, statesSource.MetaRaw)
-					headerSeparatorRune := []rune(header)
-					for i := 0; i < len(headerSeparatorRune); i++ {
-						headerSeparatorRune[i] = '~'
+					printHeader(header)
+					var states []*idf.Bstate
+					var blobStarts []int
+					var blobEnds []int
+					for _, blob := range statesSource.Blobs {
+						blobStarts = append(blobStarts, len(states))
+						blobEnds = append(blobEnds, len(states)+len(blob.States))
+						states = append(states, blob.States...)
 					}
-					headerSeparator := string(headerSeparatorRune)
-					fmt.Println(headerSeparator)
-					fmt.Println(header)
-					fmt.Println(headerSeparator)
-
-					for _, event := range statesSource.States {
-						je, err := json.Marshal(event.Delta)
-						if err != nil {
-							fmt.Println(err)
-							continue
+					var deltas []map[string]interface{}
+					deltas, err = idf.GetDeltaStates(states)
+					if err != nil {
+						fmt.Println("fix me: " + err.Error())
+						continue
+					}
+					if fieldNameRegexStr != ".*" {
+						for i := len(deltas) - 1; i >= 0; i-- {
+							d := deltas[i]
+							newD := map[string]interface{}{}
+							for f, v := range d {
+								if fieldNameRegex.MatchString(f) {
+									newD[f] = v
+								}
+							}
+							deltas[i] = newD
 						}
-						fmt.Printf("%v: %s\n", event.Timestamp, string(je))
 					}
-					if benchmark {
-						idf.BenchmarkBstates(statesSource.States)
+
+					for blobIdx, blob := range statesSource.Blobs {
+						blobHeader := fmt.Sprintf("~~~~~~~~~ NEW BLOB: UID = %s, DATE: %v, EVENTS: %d ~~~~~~~~~", blob.UID, blob.Timestamp, len(blob.States))
+						printHeader(blobHeader)
+						blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
+						blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
+						for i, s := range blobDeltas {
+							if len(s) == 0 {
+								fmt.Printf("%v: -------\n", blobStates[i].Timestamp)
+								continue
+							}
+							je, err := json.Marshal(s)
+							if err != nil {
+								fmt.Println(err)
+								continue
+							}
+							fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
+						}
+						if benchmark {
+							//fmt.Printf("\n << BLOB STATS >>\n")
+							fmt.Printf("\n\n")
+							idf.BenchmarkBstates(blob, blobStates)
+							//fmt.Printf("<< BLOB STATS END >>\n\n")
+							fmt.Printf("\n\n")
+						}
 					}
 				}
 			}
@@ -91,6 +129,13 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func RunBenchmark() {
-
+func printHeader(title string) {
+	headerSeparatorRune := []rune(title)
+	for i := 0; i < len(headerSeparatorRune); i++ {
+		headerSeparatorRune[i] = '~'
+	}
+	headerSeparator := string(headerSeparatorRune)
+	fmt.Println(headerSeparator)
+	fmt.Println(title)
+	fmt.Println(headerSeparator)
 }
