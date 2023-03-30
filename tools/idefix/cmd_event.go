@@ -36,6 +36,7 @@ func init() {
 	cmdEventGetBevents.Flags().Float32("ts-field-factor", 1, "Use this factor to get milleseconds from the ts-field when it's a raw numeric")
 	cmdEventGetBevents.Flags().Bool("benchmark", false, "Perform size efficiency bechmark after getting bstates")
 	cmdEventGetBevents.Flags().String("field-match", ".*", "A regex to only show changes on matched fields")
+	cmdEventGetBevents.Flags().Bool("field-align", false, "Try to align all field's values in the same column")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)

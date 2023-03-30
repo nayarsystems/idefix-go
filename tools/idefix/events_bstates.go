@@ -3,8 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
+	"sort"
 
+	"github.com/jedib0t/go-pretty/v6/table"
 	idf "github.com/nayarsystems/idefix-go"
 	ie "github.com/nayarsystems/idefix-go/errors"
 	"github.com/pterm/pterm"
@@ -40,6 +43,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	benchmark, _ := cmd.Flags().GetBool("benchmark")
+	fieldAlign, _ := cmd.Flags().GetBool("field-align")
 
 	keepPolling := true
 	res := idf.GetBstatesResult{}
@@ -78,6 +82,17 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 						fmt.Println("fix me: " + err.Error())
 						continue
 					}
+
+					fieldsDesc := statesSource.Blobs[0].States[0].State.GetSchema().GetFields()
+					dfieldsDesc := statesSource.Blobs[0].States[0].State.GetSchema().GetDecodedFields()
+					fieldNames := []string{}
+					for _, f := range fieldsDesc {
+						fieldNames = append(fieldNames, f.Name)
+					}
+					for _, f := range dfieldsDesc {
+						fieldNames = append(fieldNames, f.Name)
+					}
+					var matchedFields []string
 					if fieldNameRegexStr != ".*" {
 						for i := len(deltas) - 1; i >= 0; i-- {
 							d := deltas[i]
@@ -89,24 +104,50 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 							}
 							deltas[i] = newD
 						}
+						for _, fname := range fieldNames {
+							if fieldNameRegex.MatchString(fname) {
+								matchedFields = append(matchedFields, fname)
+							}
+						}
+					} else {
+						matchedFields = fieldNames
 					}
+					sort.Strings(matchedFields)
 
 					for blobIdx, blob := range statesSource.Blobs {
 						blobHeader := fmt.Sprintf("~~~~~~~~~ NEW BLOB: UID = %s, DATE: %v, EVENTS: %d ~~~~~~~~~", blob.UID, blob.Timestamp, len(blob.States))
 						printHeader(blobHeader)
+
+						t := table.NewWriter()
+						t.SetOutputMirror(os.Stdout)
+						header := table.Row{"TS"}
+						for _, fname := range matchedFields {
+							header = append(header, fname)
+						}
+						t.AppendHeader(header)
+
 						blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
 						blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
-						for i, s := range blobDeltas {
-							if len(s) == 0 {
-								fmt.Printf("%v: -------\n", blobStates[i].Timestamp)
-								continue
+						if fieldAlign {
+							for i, d := range blobDeltas {
+								r, err := getEventRow(matchedFields, blobStates[i], d)
+								if err != nil {
+									fmt.Println(err)
+									continue
+								}
+								t.AppendRow(r)
+								t.AppendSeparator()
 							}
-							je, err := json.Marshal(s)
-							if err != nil {
-								fmt.Println(err)
-								continue
+							t.Render()
+						} else {
+							for i, s := range blobDeltas {
+								je, err := json.Marshal(s)
+								if err != nil {
+									fmt.Println(err)
+									continue
+								}
+								fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
 							}
-							fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
 						}
 						if benchmark {
 							//fmt.Printf("\n << BLOB STATS >>\n")
@@ -127,6 +168,42 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func getEventRow(fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
+	// colvalues := map[string]string{}
+	row = append(row, state.Timestamp)
+	for _, fname := range fieldsNames {
+		dv, ok := delta[fname]
+		if ok {
+			row = append(row, dv)
+		} else {
+			row = append(row, "")
+		}
+	}
+	// 	var fv string
+	// 	dv, ok := delta[fname]
+	// 	if ok {
+	// 		fv = fmt.Sprintf("%v", dv)
+	// 	} else {
+	// 		dv, err = state.State.Get(fname)
+	// 		if err != nil {
+	// 			return "", err
+	// 		}
+	// 		fieldRune := []rune(fmt.Sprintf("%v", dv))
+	// 		for i := 0; i < len(fieldRune); i++ {
+	// 			fieldRune[i] = ' '
+	// 		}
+	// 		fv = string(fieldRune)
+	// 	}
+	// 	colvalues[fname] = fv
+	// }
+	// for _, fname := range fieldsNames {
+	// 	msg += " | "
+	// 	v := colvalues[fname]
+	// 	msg += fmt.Sprintf("%v", v)
+	// }
+	return
 }
 
 func printHeader(title string) {

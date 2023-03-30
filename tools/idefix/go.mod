@@ -5,8 +5,10 @@ go 1.18
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
+	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/nayarsystems/idefix-go v0.0.16-0.20230329193815-240ba2d38a74
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
+	github.com/onsi/gomega v1.27.6
 )
 
 // replace github.com/nayarsystems/idefix-go => /home/dcentelles/nayarshare/programming/idefix-go/
