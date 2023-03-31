@@ -37,6 +37,7 @@ func init() {
 	cmdEventGetBevents.Flags().Bool("benchmark", false, "Perform size efficiency bechmark after getting bstates")
 	cmdEventGetBevents.Flags().String("field-match", ".*", "A regex to only show changes on matched fields")
 	cmdEventGetBevents.Flags().Bool("field-align", false, "Try to align all field's values in the same column")
+	cmdEventGetBevents.Flags().Bool("field-align-hs", false, "Add row separator (used when field-align is true)")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)

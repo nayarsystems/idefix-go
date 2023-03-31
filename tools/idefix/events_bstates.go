@@ -44,6 +44,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	}
 	benchmark, _ := cmd.Flags().GetBool("benchmark")
 	fieldAlign, _ := cmd.Flags().GetBool("field-align")
+	fieldAlignHs, _ := cmd.Flags().GetBool("field-align-hs")
 
 	keepPolling := true
 	res := idf.GetBstatesResult{}
@@ -130,13 +131,17 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 						blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
 						if fieldAlign {
 							for i, d := range blobDeltas {
-								r, err := getEventRow(matchedFields, blobStates[i], d)
-								if err != nil {
-									fmt.Println(err)
-									continue
+								if len(d) > 0 {
+									r, err := getEventRow(matchedFields, blobStates[i], d)
+									if err != nil {
+										fmt.Println(err)
+										continue
+									}
+									t.AppendRow(r)
+									if fieldAlignHs {
+										t.AppendSeparator()
+									}
 								}
-								t.AppendRow(r)
-								t.AppendSeparator()
 							}
 							t.Render()
 						} else {
