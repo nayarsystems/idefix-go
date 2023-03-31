@@ -45,6 +45,10 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	benchmark, _ := cmd.Flags().GetBool("benchmark")
 	fieldAlign, _ := cmd.Flags().GetBool("field-align")
 	fieldAlignHs, _ := cmd.Flags().GetBool("field-align-hs")
+	csvDir, _ := cmd.Flags().GetString("csvdir")
+	if csvDir != "" {
+		return fmt.Errorf("not implemented")
+	}
 
 	keepPolling := true
 	res := idf.GetBstatesResult{}
@@ -67,8 +71,12 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		for address, addressMap := range domainMap {
 			for schema, schemaMap := range addressMap {
 				for _, statesSource := range schemaMap {
-					header := fmt.Sprintf("~~~~~~~~~ DOMAIN: %s, ADDRESS: %s, SCHEMA: %s, META: %s~~~~~~~~~", domain, address, schema, statesSource.MetaRaw)
-					printHeader(header)
+					sourceHeader := table.NewWriter()
+					sourceHeader.SetOutputMirror(os.Stdout)
+					sourceHeader.AppendHeader(table.Row{"DOMAIN", "ADDRESS", "SCHEMA", "META"})
+					sourceHeader.AppendRow(table.Row{domain, address, schema, statesSource.MetaRaw})
+					sourceHeader.Render()
+
 					var states []*idf.Bstate
 					var blobStarts []int
 					var blobEnds []int
@@ -116,8 +124,11 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 					sort.Strings(matchedFields)
 
 					for blobIdx, blob := range statesSource.Blobs {
-						blobHeader := fmt.Sprintf("~~~~~~~~~ NEW BLOB: UID = %s, DATE: %v, EVENTS: %d ~~~~~~~~~", blob.UID, blob.Timestamp, len(blob.States))
-						printHeader(blobHeader)
+						bh := table.NewWriter()
+						bh.SetOutputMirror(os.Stdout)
+						bh.AppendHeader(table.Row{"BLOB UID", "DATE", "EVENT COUNT"})
+						bh.AppendRow(table.Row{blob.UID, blob.Timestamp, len(blob.States)})
+						bh.Render()
 
 						t := table.NewWriter()
 						t.SetOutputMirror(os.Stdout)
@@ -176,7 +187,6 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 }
 
 func getEventRow(fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
-	// colvalues := map[string]string{}
 	row = append(row, state.Timestamp)
 	for _, fname := range fieldsNames {
 		dv, ok := delta[fname]
@@ -186,38 +196,5 @@ func getEventRow(fieldsNames []string, state *idf.Bstate, delta map[string]inter
 			row = append(row, "")
 		}
 	}
-	// 	var fv string
-	// 	dv, ok := delta[fname]
-	// 	if ok {
-	// 		fv = fmt.Sprintf("%v", dv)
-	// 	} else {
-	// 		dv, err = state.State.Get(fname)
-	// 		if err != nil {
-	// 			return "", err
-	// 		}
-	// 		fieldRune := []rune(fmt.Sprintf("%v", dv))
-	// 		for i := 0; i < len(fieldRune); i++ {
-	// 			fieldRune[i] = ' '
-	// 		}
-	// 		fv = string(fieldRune)
-	// 	}
-	// 	colvalues[fname] = fv
-	// }
-	// for _, fname := range fieldsNames {
-	// 	msg += " | "
-	// 	v := colvalues[fname]
-	// 	msg += fmt.Sprintf("%v", v)
-	// }
 	return
-}
-
-func printHeader(title string) {
-	headerSeparatorRune := []rune(title)
-	for i := 0; i < len(headerSeparatorRune); i++ {
-		headerSeparatorRune[i] = '~'
-	}
-	headerSeparator := string(headerSeparatorRune)
-	fmt.Println(headerSeparator)
-	fmt.Println(title)
-	fmt.Println(headerSeparator)
 }

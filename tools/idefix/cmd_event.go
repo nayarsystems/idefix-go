@@ -24,8 +24,8 @@ func init() {
 	cmdEventGet.PersistentFlags().String("timeout", "20s", "If there are no events, wait until some arrive")
 	cmdEventGet.PersistentFlags().StringP("address", "a", "", "Filter by the indicated address. Default: get evets from all address in the specified domain")
 	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")
-	cmdEventGet.PersistentFlags().String("csvdir", "", "directory path used to export all events in csv format (if specified)")
-	cmdEventGet.PersistentFlags().Bool("continue", false, "perform requests until no events pending")
+	cmdEventGet.PersistentFlags().String("csvdir", "", "Directory path used to export all events in csv format (if specified)")
+	cmdEventGet.PersistentFlags().Bool("continue", false, "Perform requests until no events pending")
 	cmdEvent.AddCommand(cmdEventGet)
 
 	cmdEventGetRaw.Flags().String("format", "json", "Format to show results: [pretty, json]")
@@ -33,8 +33,8 @@ func init() {
 
 	cmdEventGetBevents.Flags().String("ts-field", "", "Force use of a timestamp field (used when multiple timestamp field are present in the same state). If no field is forced the first found will be used")
 	cmdEventGetBevents.Flags().Uint("ts-field-offset", 1970, "Use this year offset when the ts-field specified is a raw numeric field")
-	cmdEventGetBevents.Flags().Float32("ts-field-factor", 1, "Use this factor to get milleseconds from the ts-field when it's a raw numeric")
-	cmdEventGetBevents.Flags().Bool("benchmark", false, "Perform size efficiency bechmark after getting bstates")
+	cmdEventGetBevents.Flags().Float32("ts-field-factor", 1, "Use this factor to get milliseconds from the ts-field when it's a raw numeric")
+	cmdEventGetBevents.Flags().Bool("benchmark", false, "Perform size efficiency benchmark after getting bstates")
 	cmdEventGetBevents.Flags().String("field-match", ".*", "A regex to only show changes on matched fields")
 	cmdEventGetBevents.Flags().Bool("field-align", false, "Try to align all field's values in the same column")
 	cmdEventGetBevents.Flags().Bool("field-align-hs", false, "Add row separator (used when field-align is true)")
