@@ -130,6 +130,18 @@ func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
 	return nil
 }
 
+type EventsGetUIDResponseMsg struct {
+	Event `bson:",inline" mapstructure:",squash"`
+}
+
+func (m *EventsGetUIDResponseMsg) ToMsi() (data msi, err error) {
+	return m.Event.ToMsi()
+}
+
+func (m *EventsGetUIDResponseMsg) ParseMsi(input msi) (err error) {
+	return m.Event.ParseMsi(input)
+}
+
 type EventsGetResponseMsg struct {
 	// Array of events
 	Events []*Event `json:"events" msgpack:"events"`

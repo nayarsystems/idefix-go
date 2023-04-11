@@ -19,24 +19,41 @@ func cmdEventGetRawRunE(cmd *cobra.Command, args []string) error {
 	if p, err = parseGetEventsBaseParams(cmd, args); err != nil {
 		return err
 	}
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
-		"Query for raw events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
-
-	m, err := ic.GetEventsByDomain(p.Domain, p.Since, p.Limit, p.Cid, p.Timeout)
-	if err != nil {
-		spinner.Fail()
-		return err
-	}
-	spinner.Success()
-
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		format = "pretty"
 	}
+	if p.UID == "" {
+		spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
+			"Query for raw events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
 
-	// TODO pretty printing
+		m, err := ic.GetEvents(p.Domain, p.AddressFilter, p.Since, p.Limit, p.Cid, p.Timeout)
+		if err != nil {
+			spinner.Fail()
+			return err
+		}
+		for _, e := range m.Events {
+			switch format {
+			case "json":
+				je, err := json.Marshal(e)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println(string(je))
+			default:
+				fmt.Printf("%s\n", e.String())
+			}
+		}
+		fmt.Println("CID:", m.ContinuationID)
+	} else {
+		spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
+			"Query for raw event: uid: %v, for: %v", p.UID, p.Timeout))
 
-	for _, e := range m.Events {
+		e, err := ic.GetEventByUID(p.UID, p.Timeout)
+		if err != nil {
+			spinner.Fail()
+			return err
+		}
 		switch format {
 		case "json":
 			je, err := json.Marshal(e)
@@ -49,6 +66,5 @@ func cmdEventGetRawRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Println("CID:", m.ContinuationID)
 	return nil
 }

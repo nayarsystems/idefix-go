@@ -14,6 +14,7 @@ import (
 )
 
 type GetBstatesParams struct {
+	UID                  string
 	Domain               string
 	Since                time.Time
 	Limit                uint
@@ -60,17 +61,50 @@ type GetBstatesResult = map[string]map[string]map[string]map[string]*BstatesSour
 // number of states read;
 // CID;
 // error;
-func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (gotnum uint, cid string, err error) {
-	m, err := ic.GetEventsByDomain(p.Domain, p.Since, p.Limit, p.Cid, p.Timeout)
+func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (totalBlobs uint, cid string, err error) {
+	if p.UID != "" {
+		var res *messages.EventsGetUIDResponseMsg
+		res, err = ic.GetEventByUID(p.UID, p.Timeout)
+		if err != nil {
+			return
+		}
+		input := []*messages.Event{
+			&res.Event,
+		}
+		totalBlobs, err = fillStateMap(ic, input, p, stateMap)
+		if totalBlobs == 0 {
+			err = fmt.Errorf("not a bstates based event")
+		}
+		return
+	}
+	for {
+		var nBlobsRead uint
+		nBlobsRead, p.Cid, err = getBstates(ic, p, stateMap)
+		cid = p.Cid
+		totalBlobs += nBlobsRead
+		//fmt.Println("read: ", nBlobsRead, "blobs: ", totalBlobs, "limit: ", p.Limit, "cid: ", cid)
+		if err != nil {
+			return
+		}
+		keepPolling := totalBlobs < p.Limit
+		if !keepPolling {
+			return
+		}
+	}
+}
+
+func getBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (numblobs uint, cid string, err error) {
+	m, err := ic.GetEvents(p.Domain, p.AddressFilter, p.Since, 100, p.Cid, p.Timeout)
 	if err != nil {
 		return
 	}
 	cid = m.ContinuationID
+	numblobs, err = fillStateMap(ic, m.Events, p, stateMap)
+	return
+}
 
-	for _, e := range m.Events {
-		if p.AddressFilter != "" && e.Address != p.AddressFilter {
-			continue
-		}
+func fillStateMap(ic *Client, events []*messages.Event, p *GetBstatesParams, stateMap GetBstatesResult) (numblobs uint, err error) {
+	for _, e := range events {
 		if parseEvent, _ := evalMeta(e.Meta, p.MetaFilter); !parseEvent {
 			continue
 		}
@@ -203,7 +237,10 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (got
 			return
 		}
 		stateSource.Blobs = append(stateSource.Blobs, beBlob)
-		gotnum += uint(len(beBlob.States))
+		numblobs += 1
+		if numblobs == p.Limit {
+			return
+		}
 	}
 	return
 }

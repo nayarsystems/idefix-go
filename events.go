@@ -21,8 +21,9 @@ func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[stri
 	return nil
 }
 
-func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, cid string, timeout time.Duration) (*m.EventsGetResponseMsg, error) {
+func (c *Client) GetEvents(domain, address string, since time.Time, limit uint, cid string, timeout time.Duration) (*m.EventsGetResponseMsg, error) {
 	msg := m.EventsGetMsg{
+		Address:        address,
 		Domain:         domain,
 		Since:          since,
 		Limit:          limit,
@@ -36,6 +37,25 @@ func (c *Client) GetEventsByDomain(domain string, since time.Time, limit uint, c
 		msg.Timeout = timeout
 	}
 	resp := &m.EventsGetResponseMsg{}
+	err := c.Call2("idefix", &m.Message{To: "events.get", Data: &msg}, resp, timeout+time.Second)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *Client) GetEventByUID(uid string, timeout time.Duration) (*m.EventsGetUIDResponseMsg, error) {
+	msg := m.EventsGetMsg{
+		UID: uid,
+	}
+	if timeout > 0 {
+		if timeout > time.Second*30 {
+			timeout = time.Second * 30
+		}
+
+		msg.Timeout = timeout
+	}
+	resp := &m.EventsGetUIDResponseMsg{}
 	err := c.Call2("idefix", &m.Message{To: "events.get", Data: &msg}, resp, timeout+time.Second)
 	if err != nil {
 		return nil, err

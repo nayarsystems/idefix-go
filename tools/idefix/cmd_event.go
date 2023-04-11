@@ -17,6 +17,7 @@ func init() {
 	cmdEventCreate.Flags().StringP("meta", "m", "", "Metadata added to the event in JSON dictionary style")
 	cmdEvent.AddCommand(cmdEventCreate)
 
+	cmdEventGet.PersistentFlags().StringP("uid", "u", "", "UID")
 	cmdEventGet.PersistentFlags().String("since", "1970", "Query events that happened since this timestamp")
 	cmdEventGet.PersistentFlags().Uint("limit", 100, "Limit the number of query results")
 	cmdEventGet.PersistentFlags().String("cid", "", "Use a continuationID to get the following results of a previous request")
@@ -120,6 +121,7 @@ func cmdEventCreateRunE(cmd *cobra.Command, args []string) error {
 }
 
 type GetEventsBaseParams struct {
+	UID           string
 	Domain        string
 	Limit         uint
 	Cid           string
@@ -136,10 +138,14 @@ func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBase
 	params.Domain = args[0]
 	params.Limit, _ = cmd.Flags().GetUint("limit")
 	params.Cid, _ = cmd.Flags().GetString("cid")
+	params.UID, _ = cmd.Flags().GetString("uid")
 	timeoutraw, _ := cmd.Flags().GetString("timeout")
 	params.Timeout, _ = time.ParseDuration(timeoutraw)
 	sinceraw, _ := cmd.Flags().GetString("since")
 	params.Continue, _ = cmd.Flags().GetBool("continue")
+	if params.Continue {
+		params.Limit = 100
+	}
 	params.Csvdir, _ = cmd.Flags().GetString("csvdir")
 	var err error
 	params.Since, err = dateparse.ParseStrict(sinceraw)

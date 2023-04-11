@@ -26,6 +26,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	p := idf.GetBstatesParams{
+		UID:           bp.UID,
 		Domain:        bp.Domain,
 		Since:         bp.Since,
 		Limit:         bp.Limit,
@@ -47,25 +48,25 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	fieldAlignHs, _ := cmd.Flags().GetBool("field-align-hs")
 	csvDir, _ := cmd.Flags().GetString("csvdir")
 	if csvDir != "" {
-		return fmt.Errorf("not implemented")
+		return fmt.Errorf("csvdir: not implemented")
 	}
 
 	keepPolling := true
 	res := idf.GetBstatesResult{}
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
 	for keepPolling {
-		spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
-		var sread uint
-		sread, p.Cid, err = idf.GetBstates(ic, &p, res)
+		_, p.Cid, err = idf.GetBstates(ic, &p, res)
 		timeout := false
 		if err != nil {
-			if !ie.ErrTimeout.Is(err) {
+			timeout = ie.ErrTimeout.Is(err)
+			if !timeout {
 				spinner.Fail()
 				return err
 			}
 		}
-		spinner.Success()
-		keepPolling = !timeout && sread == p.Limit && bp.Continue && p.Cid != ""
+		keepPolling = !timeout && bp.Continue
 	}
+	spinner.Success()
 
 	for domain, domainMap := range res {
 		for address, addressMap := range domainMap {
@@ -177,10 +178,12 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if p.Cid != "" {
-		fmt.Println("CID:", p.Cid)
-	} else {
-		fmt.Println("no events left")
+	if p.UID == "" {
+		if p.Cid != "" {
+			fmt.Println("CID:", p.Cid)
+		} else {
+			fmt.Println("no events left")
+		}
 	}
 
 	return nil
