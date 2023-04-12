@@ -52,21 +52,21 @@ var cmdEvent = &cobra.Command{
 
 var cmdEventGet = &cobra.Command{
 	Use:   "get <raw|bstates>",
-	Short: "Get events from a domain",
+	Short: "Get events",
 }
 
 var cmdEventGetRaw = &cobra.Command{
-	Use:   "raw <domain>",
-	Short: "Get all events from a domain. The events will be shown in raw format",
+	Use:   "raw { [DOMAIN] | -u [UID] | -a [ADDRESS] }",
+	Short: "Get all kind of events. The events will be shown in raw format",
 	RunE:  cmdEventGetRawRunE,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 }
 
 var cmdEventGetBevents = &cobra.Command{
-	Use:   "bstates <domain>",
-	Short: "Get bstates based events from a domain.",
+	Use:   "bstates { [DOMAIN] | -u [UID] | -a [ADDRESS] }",
+	Short: "Get bstates based events",
 	RunE:  cmdEventGetBstatesRunE,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 }
 
 var cmdEventCreate = &cobra.Command{
@@ -134,11 +134,14 @@ type GetEventsBaseParams struct {
 }
 
 func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBaseParams, error) {
+	var err error
 	params := &GetEventsBaseParams{}
-	params.Domain = args[0]
+	if len(args) == 1 {
+		params.Domain = args[0]
+	}
+	params.UID, _ = cmd.Flags().GetString("uid")
 	params.Limit, _ = cmd.Flags().GetUint("limit")
 	params.Cid, _ = cmd.Flags().GetString("cid")
-	params.UID, _ = cmd.Flags().GetString("uid")
 	timeoutraw, _ := cmd.Flags().GetString("timeout")
 	params.Timeout, _ = time.ParseDuration(timeoutraw)
 	sinceraw, _ := cmd.Flags().GetString("since")
@@ -147,7 +150,6 @@ func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBase
 		params.Limit = 100
 	}
 	params.Csvdir, _ = cmd.Flags().GetString("csvdir")
-	var err error
 	params.Since, err = dateparse.ParseStrict(sinceraw)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 'since': %w", err)
