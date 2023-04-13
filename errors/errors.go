@@ -113,3 +113,11 @@ func Parse(e string) (*IdefixError, error) {
 
 	return ie, nil
 }
+
+func ParseIs(e1 string, e2 error) bool {
+	parsed, err := Parse(e1)
+	if err != nil {
+		return false
+	}
+	return parsed.Is(e2)
+}
