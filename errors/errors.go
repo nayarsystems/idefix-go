@@ -20,6 +20,7 @@ var (
 	ErrChannelClosed    = IdefixError{Code: 12, Message: "Channel closed"}
 	ErrMarshal          = IdefixError{Code: 13, Message: "Marshal error"}
 	ErrParse            = IdefixError{Code: 14, Message: "Parse error"}
+	ErrTryAgain         = IdefixError{Code: 15, Message: "Try again"}
 
 	ErrInvalidCommand = IdefixError{Code: 100, Message: "Invalid command"}
 	ErrEmptyTopic     = IdefixError{Code: 101, Message: "Empty topic"}
