@@ -44,6 +44,7 @@ func init() {
 
 	cmdUpdateSendFile.Flags().StringP("file", "f", "", "Update file")
 	cmdUpdateSendFile.MarkFlagRequired("file")
+	cmdUpdateSendFile.Flags().BoolP("rollback", "r", false, "Also request device to save a rollback file")
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
@@ -467,6 +468,11 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	createRollback, err := cmd.Flags().GetBool("rollback")
+	if err != nil {
+		return err
+	}
+
 	p, err := getUpdateParams(cmd)
 	if err != nil {
 		return err
@@ -537,6 +543,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		"method":         "bytes",
 		"dsthash":        dsthash,
 		"data":           updatebytes,
+		"rollback":       createRollback,
 		"check_ppp":      p.checkPPP,
 		"check_tr":       p.checkTransport,
 		"stability_secs": p.stabilitySecs,
