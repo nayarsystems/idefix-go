@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
@@ -61,27 +61,13 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 }
 
 func printMsi(data map[string]interface{}) {
-	level := 1
-	for k, v := range data {
-		msi, isMsi := v.(map[string]interface{})
-		if isMsi {
-			fmt.Printf("%s:\n", k)
-			_printMsi(level, k, msi)
-		} else {
-			fmt.Printf("%s: %v\n", k, v)
+	if len(data) == 1 {
+		if b, err := json.Marshal(data); err == nil {
+			fmt.Printf("%s", b)
 		}
-	}
-}
-
-func _printMsi(level int, name string, data map[string]interface{}) {
-	prefix := strings.Repeat("  ", level)
-	for k, v := range data {
-		msi, isMsi := v.(map[string]interface{})
-		if isMsi {
-			fmt.Printf("%s%s:\n", prefix, k)
-			_printMsi(level+1, k, msi)
-		} else {
-			fmt.Printf("%s%s: %v\n", prefix, k, v)
+	} else {
+		if b, err := json.MarshalIndent(data, "", "  "); err == nil {
+			fmt.Printf("%s", b)
 		}
 	}
 }
