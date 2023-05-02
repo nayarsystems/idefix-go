@@ -19,15 +19,6 @@ type LoginMsg struct {
 	Meta     map[string]interface{} `json:"meta" msgpack:"meta"`
 }
 
-/************/
-/*   Info   */
-/************/
-
-type InfoReqMsg struct {
-	Report          bool     `bson:"report" json:"report" msgpack:"report" mapstructure:"report"`
-	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
-}
-
 /********************/
 /*      Address     */
 /********************/
