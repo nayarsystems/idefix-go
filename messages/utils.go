@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -57,7 +58,30 @@ func ParseMsi(input msi, output any) error {
 }
 
 func ParseMsiGeneric(input msi, output any) error {
-	return mapstructure.Decode(input, output)
+	base64ToSlice := func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf([]byte{}) {
+			return data, nil
+		}
+
+		// Convert it by parsing
+		res, err := base64.RawStdEncoding.DecodeString(data.(string))
+		return res, err
+	}
+	cfg := mapstructure.DecoderConfig{
+		Result:     output,
+		DecodeHook: base64ToSlice,
+	}
+	decoder, err := mapstructure.NewDecoder(&cfg)
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(input)
 }
 
 func ParseMsg(input any, output any) error {

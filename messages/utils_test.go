@@ -2,7 +2,6 @@ package messages
 
 import (
 	"testing"
-	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
@@ -119,7 +118,24 @@ func Test_ParseMsi_ToMsi(t *testing.T) {
 	require.Equal(t, in, tt)
 }
 
-type WithTimeAndDurations struct {
-	Since   time.Time     `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
-	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
+// type WithTimeAndDurations struct {
+// 	Since   time.Time     `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
+// 	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
+// }
+
+type WithByteSlice struct {
+	Buffer []byte `mapstructure:"buffer"`
+}
+
+func Test_ParseByteSlice_ParseMsi(t *testing.T) {
+	in := msi{
+		"buffer": "CgsM",
+	}
+	out := WithByteSlice{}
+	err := ParseMsi(in, &out)
+	require.NoError(t, err)
+	eout := WithByteSlice{
+		Buffer: []byte{0xa, 0xb, 0xc},
+	}
+	require.Equal(t, eout, out)
 }
