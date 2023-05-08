@@ -15,4 +15,22 @@ const (
 	//
 	// - response: UpdateDevFirmResMsg
 	TopicCmdUpdateDevFirm = "efirm_updater.cmd.update"
+
+	// TopicUsbEvtPathPrefix is used to subscribe to up/down (attached/detached) events on a usb path
+	//
+	// - format: usb.evt.path.<path>
+	TopicUsbEvtPathPrefix = "usb.evt.path"
+
+	// TopicUsbEvtPortPrefix is used to subscribe to up/down (attached/detached) events on a usb port
+	//
+	// - format: usb.evt.port.<port>
+	TopicUsbEvtPortPrefix = "usb.evt.port"
 )
+
+func TopicUsbEvtPath(path string) string {
+	return TopicUsbEvtPathPrefix + "." + path
+}
+
+func TopicUsbEvtPort(port string) string {
+	return TopicUsbEvtPortPrefix + "." + port
+}
