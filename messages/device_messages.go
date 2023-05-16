@@ -33,7 +33,8 @@ type DevListResponseMsg struct {
 type DevType int
 
 const (
-	DEV_TYPE_RP2040 DevType = iota
+	DEV_TYPE_UNKNOWN DevType = iota
+	DEV_TYPE_RP2040
 )
 
 type UpdateFileType int
