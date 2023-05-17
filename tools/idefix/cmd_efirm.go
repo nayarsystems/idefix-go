@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/pterm/pterm"
@@ -25,6 +25,7 @@ func init() {
 	cmdEfirmUpdate.Flags().StringP("usb-port", "p", "", "This is the usb tag assigned to the device's current usb path. Idefix must recognize this tag (e.g: 'P0' could be a tag for the usb path '3-1.1'). 'usb-port' and 'usb-path' are mutually exclusive and not all devices will require them")
 	cmdEfirmUpdate.Flags().StringP("usb-path", "P", "", "This is the device's usb path (e.g: '3-1.1'). 'usb-port' and 'usb-path' are mutually exclusive and not all devices will require them")
 	cmdEfirmUpdate.Flags().StringP("file-type", "t", "", "This is the update file type ('bin', 'uf2', 'elf', 'tar', etc.). If omitted, file's extension will be used to infer the file type. This parameter will be omitted if the file type is not recognized")
+	cmdEfirmUpdate.Flags().UintP("timeout", "", 60000, "timeout in milliseconds")
 	cmdEfirm.AddCommand(cmdEfirmUpdate)
 
 	rootCmd.AddCommand(cmdEfirm)
@@ -82,12 +83,29 @@ func cmdEfirmUpdateRunE(cmd *cobra.Command, args []string) error {
 
 	fileTypeStr, err := cmd.Flags().GetString("file-type")
 	if err != nil {
-		fileTypeStr = filepath.Ext(fileTypeStr)
+		return err
 	}
-	fileType, err := m.ParseFileType(fileTypeStr)
-	if err != nil {
+	var fileType m.UpdateFileType
+	if fileTypeStr == "" {
 		fileType = m.UPDATE_FILE_TYPE_UNSPECIFIED
-		fileTypeStr = "unspecified"
+	} else {
+		fileType, err = m.ParseFileType(fileTypeStr)
+		if err != nil {
+			return err
+		}
+	}
+	if fileType == m.UPDATE_FILE_TYPE_UNSPECIFIED {
+		extIndex := strings.LastIndex(file, ".")
+		if extIndex != -1 {
+			fileTypeStr = file[extIndex+1:]
+			fileType, err = m.ParseFileType(fileTypeStr)
+			if err != nil {
+				fileType = m.UPDATE_FILE_TYPE_UNSPECIFIED
+			}
+		}
+	}
+	if fileType == m.UPDATE_FILE_TYPE_UNSPECIFIED {
+		fileTypeStr = "unespecified"
 	}
 
 	fileData, err := os.ReadFile(file)
