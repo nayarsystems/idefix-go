@@ -91,3 +91,15 @@ type UpdateDevFirmReqMsg struct {
 type UpdateDevFirmResMsg struct {
 	Output string `json:"output" msgpack:"output" mapstructure:"output"`
 }
+
+// UsbPort and UsbPath are mutually exclusive and not all devices will require them (e.g: SPI or I2C connected devices)
+type RebootDevReqMsg struct {
+	DevType DevType `bson:"devType" json:"devType" msgpack:"devType" mapstructure:"devType"`
+	UsbPort string  `bson:"usbPort" json:"usbPort" msgpack:"usbPort" mapstructure:"usbPort,omitempty"`
+	UsbPath string  `bson:"usbPath" json:"usbPath" msgpack:"usbPath" mapstructure:"usbPath,omitempty"`
+}
+
+// Contains the reboot device command's output
+type RebootDevResMsg struct {
+	Output string `json:"output" msgpack:"output" mapstructure:"output"`
+}

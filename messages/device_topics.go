@@ -14,7 +14,23 @@ const (
 	// - message: UpdateDevFirmReqMsg
 	//
 	// - response: UpdateDevFirmResMsg
-	TopicCmdUpdateDevFirm = "efirm_updater.cmd.update"
+	TopicCmdUpdateDevFirm = "edev_manager.cmd.update"
+
+	// TopicCmdRebootDev2Flash is used to reboot a device to flash mode
+	// physically connected to a idefix client (e.g: RP2040, STM32)
+	//
+	// - message: RebootDevReqMsg
+	//
+	// - response: RebootDevResMsg
+	TopicCmdRebootDev2Flash = "edev_manager.cmd.reboot2flash"
+
+	// TopicCmdRebootDev2App is used to reboot a device to app mode
+	// physically connected to a idefix client (e.g: RP2040, STM32)
+	//
+	// - message: RebootDevReqMsg
+	//
+	// - response: RebootDevResMsg
+	TopicCmdRebootDev2App = "edev_manager.cmd.reboot2app"
 
 	// TopicUsbEvtPathPrefix is used to subscribe to up/down (attached/detached) events on a usb path
 	//
