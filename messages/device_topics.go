@@ -8,6 +8,13 @@ const (
 	// - response: DevListResponseMsg
 	TopicCmdGetDevInfo = "udev.cmd.info"
 
+	// TopicCmdExec is used to execute a command on device
+	//
+	// - message: ExecReqMsg
+	//
+	// - response: ExecResMsg
+	TopicCmdExec = "os.cmd.exec"
+
 	// TopicCmdUpdateDevFirm is used to update the firmware
 	// of a device physically connected to a idefix client (e.g: RP2040, STM32)
 	//

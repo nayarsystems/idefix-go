@@ -11,6 +11,21 @@ type InfoReqMsg struct {
 	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
 }
 
+/************/
+/*   Exec   */
+/************/
+
+type ExecReqMsg struct {
+	Cmd string `bson:"command" json:"command" msgpack:"command" mapstructure:"command"`
+}
+
+type ExecResMsg struct {
+	Code    int    `bson:"code" json:"code" msgpack:"code" mapstructure:"code"`
+	Stdout  string `bson:"stdout" json:"stdout" msgpack:"stdout" mapstructure:"stdout"`
+	Stderr  string `bson:"stderr" json:"stderr" msgpack:"stderr" mapstructure:"stderr"`
+	Success bool   `bson:"success" json:"success" msgpack:"success" mapstructure:"success"`
+}
+
 /*******************/
 /*   Udev module   */
 /*******************/
