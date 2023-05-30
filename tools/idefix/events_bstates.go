@@ -144,7 +144,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 						if fieldAlign {
 							for i, d := range blobDeltas {
 								if len(d) > 0 {
-									r, err := getEventRow(matchedFields, blobStates[i], d)
+									r, err := getEventRow(i, matchedFields, blobStates[i], d)
 									if err != nil {
 										fmt.Println(err)
 										continue
@@ -189,14 +189,21 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getEventRow(fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
+func getEventRow(blobStateIdx int, fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
 	row = append(row, state.Timestamp)
-	for _, fname := range fieldsNames {
-		dv, ok := delta[fname]
-		if ok {
-			row = append(row, dv)
-		} else {
-			row = append(row, "")
+	if blobStateIdx > 0 {
+		for _, fname := range fieldsNames {
+			dv, ok := delta[fname]
+			if ok {
+				row = append(row, dv)
+			} else {
+				row = append(row, "")
+			}
+		}
+	} else {
+		for _, fname := range fieldsNames {
+			sv, _ := state.State.Get(fname)
+			row = append(row, sv)
 		}
 	}
 	return
