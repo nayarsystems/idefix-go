@@ -61,13 +61,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 }
 
 func printMsi(data map[string]interface{}) {
-	if len(data) == 1 {
-		if b, err := json.Marshal(data); err == nil {
-			fmt.Printf("%s", b)
-		}
-	} else {
-		if b, err := json.MarshalIndent(data, "", "  "); err == nil {
-			fmt.Printf("%s", b)
-		}
+	if b, err := json.MarshalIndent(data, "", "  "); err == nil {
+		fmt.Printf("%s\n", b)
 	}
 }
