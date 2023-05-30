@@ -46,6 +46,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	benchmark, _ := cmd.Flags().GetBool("benchmark")
 	fieldAlign, _ := cmd.Flags().GetBool("field-align")
 	fieldAlignHs, _ := cmd.Flags().GetBool("field-align-hs")
+	hideBlobs, _ := cmd.Flags().GetBool("hide-blobs")
 	csvDir, _ := cmd.Flags().GetString("csvdir")
 	if csvDir != "" {
 		return fmt.Errorf("csvdir: not implemented")
@@ -74,9 +75,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 				for _, statesSource := range schemaMap {
 					sourceHeader := table.NewWriter()
 					sourceHeader.SetOutputMirror(os.Stdout)
-					sourceHeader.AppendHeader(table.Row{"DOMAIN", "ADDRESS", "SCHEMA", "META"})
-					sourceHeader.AppendRow(table.Row{domain, address, schema, statesSource.MetaRaw})
-					sourceHeader.Render()
+					sourceHeader.AppendHeader(table.Row{"DOMAIN", "ADDRESS", "SCHEMA", "META", "BLOBS", "EVENTs"})
 
 					var states []*idf.Bstate
 					var blobStarts []int
@@ -86,6 +85,10 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 						blobEnds = append(blobEnds, len(states)+len(blob.States))
 						states = append(states, blob.States...)
 					}
+
+					sourceHeader.AppendRow(table.Row{domain, address, schema, statesSource.MetaRaw, len(statesSource.Blobs), len(states)})
+					sourceHeader.Render()
+
 					var deltas []map[string]interface{}
 					deltas, err = idf.GetDeltaStates(states)
 					if err != nil {
@@ -124,13 +127,58 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 					}
 					sort.Strings(matchedFields)
 
-					for blobIdx, blob := range statesSource.Blobs {
-						bh := table.NewWriter()
-						bh.SetOutputMirror(os.Stdout)
-						bh.AppendHeader(table.Row{"BLOB UID", "DATE", "EVENT COUNT"})
-						bh.AppendRow(table.Row{blob.UID, blob.Timestamp, len(blob.States)})
-						bh.Render()
+					if !hideBlobs {
+						for blobIdx, blob := range statesSource.Blobs {
+							bh := table.NewWriter()
+							bh.SetOutputMirror(os.Stdout)
+							bh.AppendHeader(table.Row{"BLOB UID", "DATE", "EVENT COUNT"})
+							bh.AppendRow(table.Row{blob.UID, blob.Timestamp, len(blob.States)})
+							bh.Render()
 
+							t := table.NewWriter()
+							t.SetOutputMirror(os.Stdout)
+							header := table.Row{"TS"}
+							for _, fname := range matchedFields {
+								header = append(header, fname)
+							}
+							t.AppendHeader(header)
+
+							blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
+							blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
+							if fieldAlign {
+								for i, d := range blobDeltas {
+									if len(d) > 0 {
+										r, err := getEventRow(i, matchedFields, blobStates[i], d)
+										if err != nil {
+											fmt.Println(err)
+											continue
+										}
+										t.AppendRow(r)
+										if fieldAlignHs {
+											t.AppendSeparator()
+										}
+									}
+								}
+								t.Render()
+							} else {
+								for i, s := range blobDeltas {
+									je, err := json.Marshal(s)
+									if err != nil {
+										fmt.Println(err)
+										continue
+									}
+									fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
+								}
+							}
+							if benchmark {
+								//fmt.Printf("\n << BLOB STATS >>\n")
+								fmt.Printf("\n\n")
+								idf.BenchmarkBstates(blob, blobStates)
+								//fmt.Printf("<< BLOB STATS END >>\n\n")
+								fmt.Printf("\n\n")
+							}
+						}
+					} else {
 						t := table.NewWriter()
 						t.SetOutputMirror(os.Stdout)
 						header := table.Row{"TS"}
@@ -138,13 +186,10 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 							header = append(header, fname)
 						}
 						t.AppendHeader(header)
-
-						blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
-						blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
 						if fieldAlign {
-							for i, d := range blobDeltas {
+							for i, d := range deltas {
 								if len(d) > 0 {
-									r, err := getEventRow(i, matchedFields, blobStates[i], d)
+									r, err := getEventRow(i, matchedFields, states[i], d)
 									if err != nil {
 										fmt.Println(err)
 										continue
@@ -157,23 +202,17 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 							}
 							t.Render()
 						} else {
-							for i, s := range blobDeltas {
+							for i, s := range deltas {
 								je, err := json.Marshal(s)
 								if err != nil {
 									fmt.Println(err)
 									continue
 								}
-								fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
+								fmt.Printf("%v: %s\n", states[i].Timestamp, string(je))
 							}
 						}
-						if benchmark {
-							//fmt.Printf("\n << BLOB STATS >>\n")
-							fmt.Printf("\n\n")
-							idf.BenchmarkBstates(blob, blobStates)
-							//fmt.Printf("<< BLOB STATS END >>\n\n")
-							fmt.Printf("\n\n")
-						}
 					}
+
 				}
 			}
 		}
@@ -189,9 +228,9 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getEventRow(blobStateIdx int, fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
+func getEventRow(stateIdx int, fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
 	row = append(row, state.Timestamp)
-	if blobStateIdx > 0 {
+	if stateIdx > 0 {
 		for _, fname := range fieldsNames {
 			dv, ok := delta[fname]
 			if ok {

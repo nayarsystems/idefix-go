@@ -39,6 +39,7 @@ func init() {
 	cmdEventGetBevents.Flags().String("field-match", ".*", "A regex to only show changes on matched fields")
 	cmdEventGetBevents.Flags().Bool("field-align", false, "Try to align all field's values in the same column")
 	cmdEventGetBevents.Flags().Bool("field-align-hs", false, "Add row separator (used when field-align is true)")
+	cmdEventGetBevents.Flags().Bool("hide-blobs", false, "Do not group states per blob (show all states in the same list)")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)
