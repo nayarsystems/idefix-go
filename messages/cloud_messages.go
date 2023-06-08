@@ -28,6 +28,13 @@ type AddressTokenResetMsg struct {
 	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
+type AddressDisableMsg struct {
+	// Address to query
+	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	// Disable or enable the address
+	Disabled bool `bson:"disabled" json:"disabled" msgpack:"disabled" mapstructure:"disabled,omitempty"`
+}
+
 type AddressRulesGetMsg struct {
 	// Address to query
 	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`

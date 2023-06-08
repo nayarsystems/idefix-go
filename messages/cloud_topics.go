@@ -40,6 +40,9 @@ const (
 	// TopicTransportLocalRulesUpdate is used to update the local rules for the given client
 	TopicTransportAddressTokenReset = TopicTransportIdefixPrefix + CmdAddressTokenReset
 
+	// TopicTransportAddressDisable is used to prevent further activity from an address
+	TopicTransportAddressDisable = TopicTransportIdefixPrefix + CmdAddressDisable
+
 	// TopicTransportEventsCreate is used to create a new event on the server linked to the source address' domain
 	TopicTransportEventsCreate = TopicTransportIdefixPrefix + CmdEventsCreate
 
@@ -99,6 +102,9 @@ const (
 
 	// CmdLocalRulesUpdate is used to update the local rules for the given client
 	CmdAddressTokenReset = "address.token.reset"
+
+	// CmdAddressDisable is used to restrict the access to an address
+	CmdAddressDisable = "address.disable"
 
 	// CmdEventsCreate is used to create a new event on the server linked to the source address' domain
 	CmdEventsCreate = "events.create"
