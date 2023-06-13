@@ -186,5 +186,6 @@ func randSessionID() (string, error) {
 }
 
 func (c *Client) connectionLostHandler(client mqtt.Client, err error) {
+	c.setState(Disconnected)
 	c.cancelFunc()
 }
