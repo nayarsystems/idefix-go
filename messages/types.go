@@ -145,3 +145,14 @@ func (m *Schema) ParseMsi(input msi) (err error) {
 	}
 	return nil
 }
+
+/*********************/
+/*   Binary Updates  */
+/*********************/
+
+type TargetExec = int
+
+const (
+	LauncherTargetExec TargetExec = iota
+	IdefixTargetExec
+)

@@ -48,6 +48,7 @@ func init() {
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
+	cmdUpdateSend.PersistentFlags().StringP("target", "t", "idefix", "Target: launcher,idefix. Default: idefix")
 	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
 	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
 	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
@@ -286,6 +287,7 @@ func remoteExec(ic *idefixgo.Client, addr string, cmd string, timeout time.Durat
 }
 
 type updateParams struct {
+	target         m.TargetExec
 	checkPPP       bool
 	checkTransport bool
 	healthySecs    uint
@@ -296,6 +298,19 @@ type updateParams struct {
 
 func getUpdateParams(cmd *cobra.Command) (p *updateParams, err error) {
 	p = &updateParams{}
+	updateType, err := cmd.Flags().GetString("target")
+	if err != nil {
+		return
+	}
+	switch updateType {
+	case "launcher":
+		p.target = m.LauncherTargetExec
+	case "idefix":
+		p.target = m.IdefixTargetExec
+	default:
+		return nil, fmt.Errorf("invalid target")
+	}
+
 	p.checkPPP, err = cmd.Flags().GetBool("check-ppp")
 	if err != nil {
 		return
@@ -429,6 +444,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 
 	patchMsg := map[string]interface{}{
 		"method":         "bytes",
+		"target":         p.target,
 		"srchash":        srchash,
 		"dsthash":        dsthash,
 		"data":           data,
@@ -541,6 +557,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	msg = map[string]interface{}{
 		"method":         "bytes",
+		"target":         p.target,
 		"dsthash":        dsthash,
 		"data":           updatebytes,
 		"rollback":       createRollback,
