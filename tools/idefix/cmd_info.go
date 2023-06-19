@@ -45,7 +45,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	msg := &m.InfoReqMsg{
+	msg := &m.SysInfoReqMsg{
 		Report:          report,
 		ReportInstances: reportFilter,
 	}

@@ -7,6 +7,30 @@ import (
 	"github.com/jaracil/ei"
 )
 
+/************/
+/*   Info   */
+/************/
+
+type DeviceInfo struct {
+	Address string `mapstructure:"address"`
+	Product string `mapstructure:"product"`
+	Board   string `mapstructure:"board"`
+	Version string `mapstructure:"version"`
+	BootCnt uint32 `mapstructure:"bootCnt"`
+}
+
+type SysInfo struct {
+	DeviceInfo        `mapstructure:",squash"`
+	LauncherErrorMsg  string        `mapstructure:"launcherr,omitempty"`
+	LauncherFirstExec bool          `mapstructure:"firstExec,omitempty"`
+	RollbackExec      bool          `mapstructure:"rollback,omitempty"`
+	ExitCause         string        `mapstructure:"exitCause,omitempty"`
+	ExitCode          int           `mapstructure:"exitCode,omitempty"`
+	ExitIssuedBy      string        `mapstructure:"exitIssuedBy,omitempty"`
+	ExitIssuedAt      time.Time     `mapstructure:"exitIssuedAt,omitempty"`
+	Uptime            time.Duration `mapstructure:"uptime,omitempty"`
+}
+
 /********************/
 /*   Address Rules  */
 /********************/

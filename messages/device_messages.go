@@ -3,12 +3,17 @@ package messages
 import "fmt"
 
 /************/
-/*   Info   */
+/*   SysInfo   */
 /************/
 
-type InfoReqMsg struct {
+type SysInfoReqMsg struct {
 	Report          bool     `bson:"report" json:"report" msgpack:"report" mapstructure:"report"`
 	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
+}
+
+type SysInfoResMsg struct {
+	SysInfo `mapstructure:",squash"`
+	Report  map[string]map[string]interface{} `mapstructure:"report,omitempty"`
 }
 
 /************/

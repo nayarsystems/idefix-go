@@ -21,6 +21,8 @@ import (
 )
 
 func init() {
+	cmdUpdate.PersistentFlags().StringP("target", "t", "idefix", "Target: launcher,idefix. Default: idefix")
+
 	cmdUpdateCreate.Flags().StringP("source", "s", "", "Source")
 	cmdUpdateCreate.Flags().StringP("destination", "d", "", "Destination")
 	cmdUpdateCreate.Flags().StringP("output", "o", "", "Output")
@@ -48,7 +50,6 @@ func init() {
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
-	cmdUpdateSend.PersistentFlags().StringP("target", "t", "idefix", "Target: launcher,idefix. Default: idefix")
 	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
 	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
 	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
