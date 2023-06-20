@@ -1,7 +1,6 @@
 package messages
 
 import (
-	"encoding/base64"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -34,13 +33,25 @@ func ToMsi(input any) (msi, error) {
 	if ok {
 		return inputMsiable.ToMsi()
 	}
-	return ToMsiGeneric(input)
+	return ToMsiGeneric(input, nil)
 }
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
-func ToMsiGeneric(input any) (msi, error) {
+func ToMsiGeneric(input any, hookFunc mapstructure.DecodeHookFunc) (msi, error) {
 	output := msi{}
-	err := mapstructure.Decode(input, &output)
+
+	cfg := mapstructure.DecoderConfig{
+		Result:     &output,
+		DecodeHook: hookFunc,
+	}
+	decoder, err := mapstructure.NewDecoder(&cfg)
+	if err != nil {
+		return nil, err
+	}
+	err = decoder.Decode(input)
+	if err != nil {
+		return nil, err
+	}
 	return output, err
 }
 
@@ -54,28 +65,19 @@ func ParseMsi(input msi, output any) error {
 	if ok {
 		return outputMsiParser.ParseMsi(input)
 	}
-	return ParseMsiGeneric(input, output)
+	return ParseMsiGeneric(input, output, nil)
 }
 
-func ParseMsiGeneric(input msi, output any) error {
-	base64ToSlice := func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
-		if f.Kind() != reflect.String {
-			return data, nil
-		}
-		if t != reflect.TypeOf([]byte{}) {
-			return data, nil
-		}
-
-		// Convert it by parsing
-		res, err := base64.RawStdEncoding.DecodeString(data.(string))
-		return res, err
+func ParseMsiGeneric(input msi, output any, hookFunc mapstructure.DecodeHookFunc) error {
+	var hooks any
+	if hookFunc == nil {
+		hooks = Base64ToSliceHookFunc()
+	} else {
+		hooks = mapstructure.ComposeDecodeHookFunc(Base64ToSliceHookFunc(), hookFunc)
 	}
 	cfg := mapstructure.DecoderConfig{
 		Result:     output,
-		DecodeHook: base64ToSlice,
+		DecodeHook: hooks,
 	}
 	decoder, err := mapstructure.NewDecoder(&cfg)
 	if err != nil {

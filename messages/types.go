@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jaracil/ei"
+	"github.com/mitchellh/mapstructure"
 )
 
 /************/
@@ -29,6 +30,32 @@ type SysInfo struct {
 	ExitIssuedBy      string        `mapstructure:"exitIssuedBy,omitempty"`
 	ExitIssuedAt      time.Time     `mapstructure:"exitIssuedAt,omitempty"`
 	Uptime            time.Duration `mapstructure:"uptime,omitempty"`
+}
+
+func (m *SysInfo) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m, nil)
+	if err != nil {
+		return nil, err
+	}
+	// time.Time fields has kind struct, so mapstructure encodes them as a map.
+	// We need to convert them to unix milliseconds
+	data["exitIssuedAt"] = m.ExitIssuedAt.UnixMilli()
+
+	// We want to encode uptime as seconds
+	data["uptime"] = uint32(m.Uptime.Seconds())
+
+	return data, err
+}
+
+func (m *SysInfo) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			NumberToDurationHookFunc(time.Second),
+			UnixMilliToTimeHookFunc()))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /********************/
@@ -73,7 +100,7 @@ type Domain struct {
 }
 
 func (m *Domain) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m)
+	data, err = ToMsiGeneric(m, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +110,7 @@ func (m *Domain) ToMsi() (data msi, err error) {
 }
 
 func (m *Domain) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m)
+	err = ParseMsiGeneric(input, m, nil)
 	if err != nil {
 		return err
 	}
@@ -110,7 +137,7 @@ type Event struct {
 }
 
 func (m *Event) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m)
+	data, err = ToMsiGeneric(m, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +148,7 @@ func (m *Event) ToMsi() (data msi, err error) {
 
 func (m *Event) ParseMsi(input msi) (err error) {
 	m.Timestamp, _ = ei.N(input).M("timestamp").Time()
-	err = ParseMsiGeneric(input, m)
+	err = ParseMsiGeneric(input, m, nil)
 	if err != nil {
 		return err
 	}
@@ -150,7 +177,7 @@ type Schema struct {
 }
 
 func (m *Schema) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m)
+	data, err = ToMsiGeneric(m, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +186,7 @@ func (m *Schema) ToMsi() (data msi, err error) {
 }
 
 func (m *Schema) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m)
+	err = ParseMsiGeneric(input, m, nil)
 	if err != nil {
 		return err
 	}

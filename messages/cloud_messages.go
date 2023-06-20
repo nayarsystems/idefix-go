@@ -94,7 +94,7 @@ type EventsGetMsg struct {
 }
 
 func (m *EventsGetMsg) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m)
+	data, err = ToMsiGeneric(m, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
 		}
 		delete(input, "timeout")
 	}
-	err = ParseMsiGeneric(input, m)
+	err = ParseMsiGeneric(input, m, nil)
 	if err != nil {
 		return err
 	}

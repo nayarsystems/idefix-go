@@ -1,11 +1,41 @@
 package messages
 
 import (
+	"encoding/base64"
 	"testing"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 )
+
+type mapstructureHooksTestStruct struct {
+	Date    time.Time     `mapstructure:"date"`
+	Uptime  time.Duration `mapstructure:"uptime"`
+	RawData []byte        `mapstructure:"rawData"`
+}
+
+func Test_MapstructureHooks(t *testing.T) {
+	tt := time.UnixMilli(time.Now().UnixMilli())
+	dd := time.Second * 123
+	rawData := []byte("hello world")
+	rawDataB64 := base64.RawStdEncoding.EncodeToString(rawData)
+	input := map[string]any{
+		"date":    tt.UnixMilli(),
+		"uptime":  dd.Seconds(),
+		"rawData": rawDataB64,
+	}
+	out := mapstructureHooksTestStruct{}
+	err := ParseMsiGeneric(input, &out,
+		mapstructure.ComposeDecodeHookFunc(
+			// Base64ToSliceHookFunc() hook is always used
+			NumberToDurationHookFunc(time.Second),
+			UnixMilliToTimeHookFunc()))
+	require.NoError(t, err)
+	require.Equal(t, tt, out.Date)
+	require.Equal(t, dd, out.Uptime)
+	require.Equal(t, rawData, out.RawData)
+}
 
 func Test_BstatesParseSchemaFromType(t *testing.T) {
 	id0, err := BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=")

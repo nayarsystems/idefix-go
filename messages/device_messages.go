@@ -1,10 +1,15 @@
 package messages
 
-import "fmt"
+import (
+	"fmt"
+	"time"
 
-/************/
-/*   SysInfo   */
-/************/
+	"github.com/mitchellh/mapstructure"
+)
+
+/**************/
+/*   SysInfo  */
+/**************/
 
 type SysInfoReqMsg struct {
 	Report          bool     `bson:"report" json:"report" msgpack:"report" mapstructure:"report"`
@@ -14,6 +19,26 @@ type SysInfoReqMsg struct {
 type SysInfoResMsg struct {
 	SysInfo `mapstructure:",squash"`
 	Report  map[string]map[string]interface{} `mapstructure:"report,omitempty"`
+}
+
+func (m *SysInfoResMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsi(m.SysInfo)
+	if err != nil {
+		return nil, err
+	}
+	data["report"] = m.Report
+	return data, err
+}
+
+func (m *SysInfoResMsg) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			NumberToDurationHookFunc(time.Second),
+			UnixMilliToTimeHookFunc()))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /************/
