@@ -9,6 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// func Test_SysInfoToMsi(t *testing.T) {
+// 	info := SysInfo{
+// 		LastRunExitIssuedAt: time.UnixMilli(time.Now().UnixMilli()),
+// 	}
+// 	raw, err := ToMsi(info)
+// 	require.NoError(t, err)
+// 	require.Contains(t, raw, "lastRunExitIssuedAt")
+// 	require.Equal(t, info.LastRunExitIssuedAt.UnixMilli(), raw["lastRunExitIssuedAt"])
+// }
+
 type mapstructureHooksTestStruct struct {
 	Date    time.Time     `mapstructure:"date"`
 	Uptime  time.Duration `mapstructure:"uptime"`

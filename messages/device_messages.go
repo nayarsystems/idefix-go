@@ -26,7 +26,9 @@ func (m *SysInfoResMsg) ToMsi() (data msi, err error) {
 	if err != nil {
 		return nil, err
 	}
-	data["report"] = m.Report
+	if len(m.Report) != 0 {
+		data["report"] = m.Report
+	}
 	return data, err
 }
 

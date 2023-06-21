@@ -21,15 +21,16 @@ type DeviceInfo struct {
 }
 
 type SysInfo struct {
-	DeviceInfo        `mapstructure:",squash"`
-	LauncherErrorMsg  string        `mapstructure:"launcherr,omitempty"`
-	LauncherFirstExec bool          `mapstructure:"firstExec,omitempty"`
-	RollbackExec      bool          `mapstructure:"rollback,omitempty"`
-	ExitCause         string        `mapstructure:"exitCause,omitempty"`
-	ExitCode          int           `mapstructure:"exitCode,omitempty"`
-	ExitIssuedBy      string        `mapstructure:"exitIssuedBy,omitempty"`
-	ExitIssuedAt      time.Time     `mapstructure:"exitIssuedAt,omitempty"`
-	Uptime            time.Duration `mapstructure:"uptime,omitempty"`
+	DeviceInfo          `mapstructure:",squash"`
+	LauncherErrorMsg    string        `mapstructure:"launcherr,omitempty"`
+	LauncherFirstExec   bool          `mapstructure:"firstExec,omitempty"`
+	RollbackExec        bool          `mapstructure:"rollback,omitempty"`
+	Uptime              time.Duration `mapstructure:"uptime,omitempty"`
+	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty"`
+	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty"`
+	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty"`
+	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty"`
+	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty"`
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
@@ -39,7 +40,12 @@ func (m *SysInfo) ToMsi() (data msi, err error) {
 	}
 	// time.Time fields has kind struct, so mapstructure encodes them as a map.
 	// We need to convert them to unix milliseconds
-	data["exitIssuedAt"] = m.ExitIssuedAt.UnixMilli()
+	lastExitIssuedAt := m.LastRunExitIssuedAt.UnixMilli()
+	if lastExitIssuedAt != 0 {
+		data["lastRunExitIssuedAt"] = m.LastRunExitIssuedAt.UnixMilli()
+	} else {
+		delete(data, "lastRunExitIssuedAt")
+	}
 
 	// We want to encode uptime as seconds
 	data["uptime"] = uint32(m.Uptime.Seconds())

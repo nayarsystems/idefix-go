@@ -29,14 +29,31 @@ type MsiParser interface {
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
 func ToMsi(input any) (msi, error) {
+	// If the input implements the Msiable interface using a value receiver
+	// the "type assertion" will work for both cases of input (pointer or value)
 	inputMsiable, ok := input.(Msiable)
 	if ok {
 		return inputMsiable.ToMsi()
+	} else {
+		// In case the input implements Msiable interface using a pointer receiver
+		// we need to create a pointer to the value before the type assertion.
+		iType := reflect.TypeOf(input)
+		iKind := iType.Kind()
+		if iKind != reflect.Ptr {
+			// Let's create a pointer to the value and retry the type assertion
+			x := reflect.New(iType)
+			x.Elem().Set(reflect.ValueOf(input))
+			input2 := x.Interface()
+			input2Msiable, ok := input2.(Msiable)
+			if ok {
+				return input2Msiable.ToMsi()
+			}
+		}
 	}
 	return ToMsiGeneric(input, nil)
 }
 
-// Outputs a msi from struct or msi. It uses mapstructure by default.
+// Outputs a msi from struct or msi using mapstructure (optionally with a DecodeHookFunc)
 func ToMsiGeneric(input any, hookFunc mapstructure.DecodeHookFunc) (msi, error) {
 	output := msi{}
 
