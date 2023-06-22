@@ -9,23 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// func Test_SysInfoToMsi(t *testing.T) {
-// 	info := SysInfo{
-// 		LastRunExitIssuedAt: time.UnixMilli(time.Now().UnixMilli()),
-// 	}
-// 	raw, err := ToMsi(info)
-// 	require.NoError(t, err)
-// 	require.Contains(t, raw, "lastRunExitIssuedAt")
-// 	require.Equal(t, info.LastRunExitIssuedAt.UnixMilli(), raw["lastRunExitIssuedAt"])
-// }
-
 type mapstructureHooksTestStruct struct {
 	Date    time.Time     `mapstructure:"date"`
 	Uptime  time.Duration `mapstructure:"uptime"`
 	RawData []byte        `mapstructure:"rawData"`
 }
 
-func Test_MapstructureHooks(t *testing.T) {
+func Test_MapstructureDecodeHooks(t *testing.T) {
 	tt := time.UnixMilli(time.Now().UnixMilli())
 	dd := time.Second * 123
 	rawData := []byte("hello world")
@@ -38,13 +28,37 @@ func Test_MapstructureHooks(t *testing.T) {
 	out := mapstructureHooksTestStruct{}
 	err := ParseMsiGeneric(input, &out,
 		mapstructure.ComposeDecodeHookFunc(
-			// Base64ToSliceHookFunc() hook is always used
-			NumberToDurationHookFunc(time.Second),
-			UnixMilliToTimeHookFunc()))
+			// DecodeBase64ToSliceHookFunc() hook is always added
+			DecodeNumberToDurationHookFunc(time.Second),
+			DecodeUnixMilliToTimeHookFunc()))
 	require.NoError(t, err)
 	require.Equal(t, tt, out.Date)
 	require.Equal(t, dd, out.Uptime)
 	require.Equal(t, rawData, out.RawData)
+}
+
+func Test_MapstructureEncodeHooks(t *testing.T) {
+	tt := time.UnixMilli(time.Now().UnixMilli())
+	dd := time.Second * 123
+	rawData := []byte("hello world")
+	rawDataB64 := base64.RawStdEncoding.EncodeToString(rawData)
+	eOutput := map[string]any{
+		"date":    tt.UnixMilli(),
+		"uptime":  dd.Seconds(),
+		"rawData": rawDataB64,
+	}
+	input := mapstructureHooksTestStruct{
+		Date:    tt,
+		Uptime:  dd,
+		RawData: rawData,
+	}
+	output, err := ToMsiGeneric(input,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			// EncodeSliceToBase64Hook() hook is always added
+			EncodeDurationToSecondsHook(),
+			EncodeTimeToUnixMilliHook()))
+	require.NoError(t, err)
+	require.Equal(t, eOutput, output)
 }
 
 func Test_BstatesParseSchemaFromType(t *testing.T) {

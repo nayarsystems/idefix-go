@@ -9,6 +9,12 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// https://glucn.medium.com/golang-an-interface-holding-a-nil-value-is-not-nil-bb151f472cc7
+// https://stackoverflow.com/questions/13476349/check-for-nil-and-nil-interface-in-go
+func InterfaceIsNil(b interface{}) bool {
+	return b == nil || (reflect.ValueOf(b).Kind() == reflect.Ptr && reflect.ValueOf(b).IsNil())
+}
+
 /*
 A convention in idefix is that all messages must be published using the map[string]interface{} type (msi).
 In this way it facilitates all messages to be compatible with json/msgpack (de)serializers to allow them to be forwarded outside via a transport module (e.g. MQTT)
@@ -29,12 +35,22 @@ type MsiParser interface {
 
 // Outputs a msi from struct or msi. It uses mapstructure by default.
 func ToMsi(input any) (msi, error) {
+	if InterfaceIsNil(input) {
+		return msi{}, nil
+	}
+	msiable := getMsiable(input)
+	if msiable != nil {
+		return msiable.ToMsi()
+	}
+	return ToMsiGeneric(input, nil)
+}
+
+// Returns msiable object from input. Nil if input does not implement Msiable interface
+func getMsiable(input any) (msiable Msiable) {
 	// If the input implements the Msiable interface using a value receiver
 	// the "type assertion" will work for both cases of input (pointer or value)
-	inputMsiable, ok := input.(Msiable)
-	if ok {
-		return inputMsiable.ToMsi()
-	} else {
+	msiable, ok := input.(Msiable)
+	if !ok {
 		// In case the input implements Msiable interface using a pointer receiver
 		// we need to create a pointer to the value before the type assertion.
 		iType := reflect.TypeOf(input)
@@ -44,22 +60,25 @@ func ToMsi(input any) (msi, error) {
 			x := reflect.New(iType)
 			x.Elem().Set(reflect.ValueOf(input))
 			input2 := x.Interface()
-			input2Msiable, ok := input2.(Msiable)
-			if ok {
-				return input2Msiable.ToMsi()
-			}
+			msiable, _ = input2.(Msiable)
 		}
 	}
-	return ToMsiGeneric(input, nil)
+	return
 }
 
-// Outputs a msi from struct or msi using mapstructure (optionally with a DecodeHookFunc)
-func ToMsiGeneric(input any, hookFunc mapstructure.DecodeHookFunc) (msi, error) {
+// Outputs a msi from struct or msi using mapstructure (optionally with a EncodeFieldMapHookFunc)
+func ToMsiGeneric(input any, inputHook mapstructure.EncodeFieldMapHookFunc) (msi, error) {
 	output := msi{}
-
+	var hook mapstructure.EncodeFieldMapHookFunc
+	persistentHooks := mapstructure.ComposeEncodeFieldMapHookFunc(EncodeSliceToBase64Hook(), EncodeMsiableToMsiHook())
+	if inputHook == nil {
+		hook = persistentHooks
+	} else {
+		hook = mapstructure.ComposeEncodeFieldMapHookFunc(inputHook, persistentHooks)
+	}
 	cfg := mapstructure.DecoderConfig{
-		Result:     &output,
-		DecodeHook: hookFunc,
+		Result:             &output,
+		EncodeFieldMapHook: hook,
 	}
 	decoder, err := mapstructure.NewDecoder(&cfg)
 	if err != nil {
@@ -88,9 +107,9 @@ func ParseMsi(input msi, output any) error {
 func ParseMsiGeneric(input msi, output any, hookFunc mapstructure.DecodeHookFunc) error {
 	var hooks any
 	if hookFunc == nil {
-		hooks = Base64ToSliceHookFunc()
+		hooks = DecodeBase64ToSliceHookFunc()
 	} else {
-		hooks = mapstructure.ComposeDecodeHookFunc(Base64ToSliceHookFunc(), hookFunc)
+		hooks = mapstructure.ComposeDecodeHookFunc(DecodeBase64ToSliceHookFunc(), hookFunc)
 	}
 	cfg := mapstructure.DecoderConfig{
 		Result:     output,

@@ -34,21 +34,10 @@ type SysInfo struct {
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m, nil)
-	if err != nil {
-		return nil, err
-	}
-	// time.Time fields has kind struct, so mapstructure encodes them as a map.
-	// We need to convert them to unix milliseconds
-	lastExitIssuedAt := m.LastRunExitIssuedAt.UnixMilli()
-	if lastExitIssuedAt != 0 {
-		data["lastRunExitIssuedAt"] = m.LastRunExitIssuedAt.UnixMilli()
-	} else {
-		delete(data, "lastRunExitIssuedAt")
-	}
-
-	// We want to encode uptime as seconds
-	data["uptime"] = uint32(m.Uptime.Seconds())
+	data, err = ToMsiGeneric(m,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			EncodeDurationToSecondsHook(),
+			EncodeTimeToUnixMilliHook()))
 
 	return data, err
 }
@@ -56,8 +45,8 @@ func (m *SysInfo) ToMsi() (data msi, err error) {
 func (m *SysInfo) ParseMsi(input msi) (err error) {
 	err = ParseMsiGeneric(input, m,
 		mapstructure.ComposeDecodeHookFunc(
-			NumberToDurationHookFunc(time.Second),
-			UnixMilliToTimeHookFunc()))
+			DecodeNumberToDurationHookFunc(time.Second),
+			DecodeUnixMilliToTimeHookFunc()))
 	if err != nil {
 		return err
 	}

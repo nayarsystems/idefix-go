@@ -9,7 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func Base64ToSliceHookFunc() mapstructure.DecodeHookFunc {
+func DecodeBase64ToSliceHookFunc() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
 		t reflect.Type,
@@ -26,7 +26,7 @@ func Base64ToSliceHookFunc() mapstructure.DecodeHookFunc {
 	}
 }
 
-func NumberToDurationHookFunc(unit time.Duration) mapstructure.DecodeHookFunc {
+func DecodeNumberToDurationHookFunc(unit time.Duration) mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
 		t reflect.Type,
@@ -57,7 +57,7 @@ func NumberToDurationHookFunc(unit time.Duration) mapstructure.DecodeHookFunc {
 	}
 }
 
-func UnixMilliToTimeHookFunc() mapstructure.DecodeHookFunc {
+func DecodeUnixMilliToTimeHookFunc() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
 		t reflect.Type,
