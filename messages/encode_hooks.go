@@ -23,9 +23,7 @@ func EncodeMsiableToMsiHook() mapstructure.EncodeFieldMapHookFunc {
 
 func recursiveToMsi(input any) (output any, err error) {
 	ivalue := reflect.ValueOf(input)
-	if ivalue.Kind() == reflect.Ptr || ivalue.Kind() == reflect.Interface {
-		ivalue = ivalue.Elem()
-	}
+	ivalue = getActualValue(ivalue)
 	if ivalue.Kind() == reflect.Struct {
 		oldObj := ivalue.Interface()
 		output, err = ToMsi(oldObj)
@@ -65,6 +63,7 @@ func recursiveToMsi(input any) (output any, err error) {
 
 func EncodeDurationToSecondsInt64Hook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		if t != reflect.TypeOf(time.Duration(0)) {
 			new = old
@@ -80,6 +79,7 @@ func EncodeDurationToSecondsInt64Hook() mapstructure.EncodeFieldMapHookFunc {
 
 func EncodeDurationToStringHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		if t != reflect.TypeOf(time.Duration(0)) {
 			new = old
@@ -95,6 +95,7 @@ func EncodeDurationToStringHook() mapstructure.EncodeFieldMapHookFunc {
 
 func EncodeTimeToUnixMilliHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		new = old
 		if t == reflect.TypeOf(time.Time{}) {
@@ -108,6 +109,7 @@ func EncodeTimeToUnixMilliHook() mapstructure.EncodeFieldMapHookFunc {
 
 func EncodeTimeToStringHook(layout string) mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		new = old
 		if t == reflect.TypeOf(time.Time{}) {
@@ -123,6 +125,7 @@ func EncodeTimeToStringHook(layout string) mapstructure.EncodeFieldMapHookFunc {
 // This hook avoids the attempt to encode time.Time as a map[string]interface{} with the fields
 func EncodeTimeToTimeHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		new = old
 		if t == reflect.TypeOf(time.Time{}) {
@@ -134,11 +137,12 @@ func EncodeTimeToTimeHook() mapstructure.EncodeFieldMapHookFunc {
 
 func EncodeSliceToBase64Hook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		old = getActualValue(old)
 		t := old.Type()
 		new = old
 		if t == reflect.TypeOf([]byte{}) {
 			data := old.Interface().([]byte)
-			newValue := base64.RawStdEncoding.EncodeToString(data)
+			newValue := base64.StdEncoding.EncodeToString(data)
 			new = reflect.ValueOf(newValue)
 			handled = true
 		}

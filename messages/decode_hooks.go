@@ -11,17 +11,20 @@ import (
 
 func DecodeBase64ToSliceHookFunc() mapstructure.DecodeHookFunc {
 	return func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
+		f reflect.Value,
+		t reflect.Value) (interface{}, error) {
+
+		f = getActualValue(f)
+
 		if f.Kind() != reflect.String {
-			return data, nil
+			return f.Interface(), nil
 		}
-		if t != reflect.TypeOf([]byte{}) {
-			return data, nil
+		if t.Type() != reflect.TypeOf([]byte{}) {
+			return f.Interface(), nil
 		}
 		// Convert it by parsing
-		res, err := base64.RawStdEncoding.DecodeString(data.(string))
+		b64input := f.Interface().(string)
+		res, err := base64.StdEncoding.DecodeString(b64input)
 		return res, err
 	}
 }

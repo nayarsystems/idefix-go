@@ -177,3 +177,10 @@ func IsMsi(input any) bool {
 func TimeToString(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
+
+func getActualValue(old reflect.Value) reflect.Value {
+	if old.Kind() == reflect.Ptr || old.Kind() == reflect.Interface {
+		old = old.Elem()
+	}
+	return old
+}
