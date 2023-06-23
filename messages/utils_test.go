@@ -55,7 +55,7 @@ func Test_MapstructureEncodeHooks(t *testing.T) {
 	output, err := ToMsiGeneric(input,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
 			// EncodeSliceToBase64Hook() hook is always added
-			EncodeDurationToSecondsHook(),
+			EncodeDurationToSecondsInt64Hook(),
 			EncodeTimeToUnixMilliHook()))
 	require.NoError(t, err)
 	require.Equal(t, eOutput, output)

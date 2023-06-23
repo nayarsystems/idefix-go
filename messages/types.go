@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jaracil/ei"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -36,7 +35,7 @@ type SysInfo struct {
 func (m *SysInfo) ToMsi() (data msi, err error) {
 	data, err = ToMsiGeneric(m,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
-			EncodeDurationToSecondsHook(),
+			EncodeDurationToSecondsInt64Hook(),
 			EncodeTimeToUnixMilliHook()))
 
 	return data, err
@@ -95,29 +94,13 @@ type Domain struct {
 }
 
 func (m *Domain) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m, nil)
-	if err != nil {
-		return nil, err
-	}
-	data["creation"] = TimeToString(m.Creation)
-	data["lastUpdate"] = TimeToString(m.LastUpdate)
-	return data, err
+	data, err = ToMsiGeneric(m, EncodeTimeToStringHook(time.RFC3339))
+	return
 }
 
 func (m *Domain) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m, nil)
-	if err != nil {
-		return err
-	}
-	m.LastUpdate, err = ei.N(input).M("lastUpdate").Time()
-	if err != nil {
-		return err
-	}
-	m.Creation, err = ei.N(input).M("creation").Time()
-	if err != nil {
-		return err
-	}
-	return nil
+	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	return
 }
 
 /************/
@@ -128,7 +111,17 @@ type Event struct {
 	EventMsg  `bson:",inline" mapstructure:",squash"`
 	Domain    string    `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 	Address   string    `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
-	Timestamp time.Time `bson:"timestamp" json:"timestamp" msgpack:"timestamp" mapstructure:"-,omitempty"`
+	Timestamp time.Time `bson:"timestamp" json:"timestamp" msgpack:"timestamp" mapstructure:"timestamp,omitempty"`
+}
+
+func (m *Event) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m, EncodeTimeToStringHook(time.RFC3339))
+	return
+}
+
+func (m *Event) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	return
 }
 
 func (e *Event) String() string {
@@ -153,24 +146,13 @@ type Schema struct {
 }
 
 func (m *Schema) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m, nil)
-	if err != nil {
-		return nil, err
-	}
-	data["creationTime"] = TimeToString(m.CreationTime)
-	return data, err
+	data, err = ToMsiGeneric(m, EncodeTimeToStringHook(time.RFC3339))
+	return
 }
 
 func (m *Schema) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m, nil)
-	if err != nil {
-		return err
-	}
-	m.CreationTime, err = ei.N(input).M("creationTime").Time()
-	if err != nil {
-		return err
-	}
-	return nil
+	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	return
 }
 
 /*********************/

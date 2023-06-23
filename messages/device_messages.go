@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	//"github.com/mitchellh/mapstructure"
 )
 
 /**************/
@@ -18,14 +17,14 @@ type SysInfoReqMsg struct {
 }
 
 type SysInfoResMsg struct {
-	SysInfo
-	Report map[string]map[string]interface{} `mapstructure:"report,omitempty"`
+	SysInfo `mapstructure:",squash"`
+	Report  map[string]map[string]interface{} `mapstructure:"report,omitempty"`
 }
 
 func (m *SysInfoResMsg) ToMsi() (data msi, err error) {
 	data, err = ToMsiGeneric(m,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
-			EncodeDurationToSecondsHook(),
+			EncodeDurationToSecondsInt64Hook(),
 			EncodeTimeToUnixMilliHook()))
 
 	return data, err

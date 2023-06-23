@@ -96,10 +96,10 @@ type EventsGetUIDResponseMsg struct {
 
 type EventsGetResponseMsg struct {
 	// Array of events
-	Events []*Event `json:"events" msgpack:"events"`
+	Events []*Event `json:"events" msgpack:"events" mapstructure:"events,omitempty"`
 
 	// ContinuationID lets you get following results after your last request
-	ContinuationID string `json:"cid" msgpack:"cid"`
+	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
 }
 
 /********************/

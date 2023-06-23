@@ -42,6 +42,12 @@ func Test_EventsGetResponseMsg(t *testing.T) {
 	inputRaw, err := ToMsi(input)
 	require.NoError(t, err)
 
+	require.Contains(t, inputRaw, "events")
+	events := inputRaw["events"]
+	require.IsType(t, []any{}, events)
+	require.Len(t, events, 2)
+	require.IsType(t, msi{}, events.([]any)[0])
+
 	output := EventsGetResponseMsg{}
 	err = ParseMsi(inputRaw, &output)
 	require.NoError(t, err)
