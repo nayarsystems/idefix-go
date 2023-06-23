@@ -131,25 +131,6 @@ type Event struct {
 	Timestamp time.Time `bson:"timestamp" json:"timestamp" msgpack:"timestamp" mapstructure:"-,omitempty"`
 }
 
-func (m *Event) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m, nil)
-	if err != nil {
-		return nil, err
-	}
-	// replace timeout field by its string format
-	data["timestamp"] = TimeToString(m.Timestamp)
-	return data, err
-}
-
-func (m *Event) ParseMsi(input msi) (err error) {
-	m.Timestamp, _ = ei.N(input).M("timestamp").Time()
-	err = ParseMsiGeneric(input, m, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (e *Event) String() string {
 	return fmt.Sprintf("[%s] %s @ %s | %s: %v | %v", e.Timestamp, e.Address, e.Domain, e.Type, e.Payload, e.Meta)
 }

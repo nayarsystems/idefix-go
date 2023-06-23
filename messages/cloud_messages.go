@@ -1,10 +1,7 @@
 package messages
 
 import (
-	"fmt"
 	"time"
-
-	"github.com/jaracil/ei"
 )
 
 /************/
@@ -97,60 +94,12 @@ type EventsGetUIDResponseMsg struct {
 	Event `bson:",inline" mapstructure:",squash"`
 }
 
-func (m *EventsGetUIDResponseMsg) ToMsi() (data msi, err error) {
-	return m.Event.ToMsi()
-}
-
-func (m *EventsGetUIDResponseMsg) ParseMsi(input msi) (err error) {
-	return m.Event.ParseMsi(input)
-}
-
 type EventsGetResponseMsg struct {
 	// Array of events
 	Events []*Event `json:"events" msgpack:"events"`
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid"`
-}
-
-func (m *EventsGetResponseMsg) ToMsi() (data msi, err error) {
-	data = msi{
-		"cid": m.ContinuationID,
-	}
-	events := []msi{}
-	for _, ev := range m.Events {
-		evraw, err := ev.ToMsi()
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, evraw)
-	}
-	data["events"] = events
-	return data, err
-}
-
-func (m *EventsGetResponseMsg) ParseMsi(input msi) (err error) {
-	m.ContinuationID, err = ei.N(input).M("cid").String()
-	if err != nil {
-		return err
-	}
-	reventsI, err := ei.N(input).M("events").Raw()
-	if err != nil {
-		return err
-	}
-	reventsIa, ok := reventsI.([]map[string]interface{})
-	if !ok {
-		return fmt.Errorf("events must be an array of maps")
-	}
-	for _, rev := range reventsIa {
-		ev := &Event{}
-		err = ParseMsg(rev, ev)
-		if err != nil {
-			return err
-		}
-		m.Events = append(m.Events, ev)
-	}
-	return nil
 }
 
 /********************/
