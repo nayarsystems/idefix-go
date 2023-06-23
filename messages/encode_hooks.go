@@ -41,6 +41,21 @@ func EncodeDurationToSecondsHook() mapstructure.EncodeFieldMapHookFunc {
 	}
 }
 
+func EncodeDurationToStringHook() mapstructure.EncodeFieldMapHookFunc {
+	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
+		t := old.Type()
+		if t != reflect.TypeOf(time.Duration(0)) {
+			new = old
+		} else {
+			d := old.Interface().(time.Duration)
+			secs := d.String()
+			new = reflect.ValueOf(secs)
+			handled = true
+		}
+		return
+	}
+}
+
 func EncodeTimeToUnixMilliHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
 		t := old.Type()

@@ -105,11 +105,15 @@ func ParseMsi(input msi, output any) error {
 }
 
 func ParseMsiGeneric(input msi, output any, hookFunc mapstructure.DecodeHookFunc) error {
+	persistentHook := mapstructure.ComposeDecodeHookFunc(
+		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.StringToTimeHookFunc(time.RFC3339),
+		DecodeBase64ToSliceHookFunc())
 	var hooks any
 	if hookFunc == nil {
-		hooks = DecodeBase64ToSliceHookFunc()
+		hooks = persistentHook
 	} else {
-		hooks = mapstructure.ComposeDecodeHookFunc(DecodeBase64ToSliceHookFunc(), hookFunc)
+		hooks = mapstructure.ComposeDecodeHookFunc(hookFunc, persistentHook)
 	}
 	cfg := mapstructure.DecoderConfig{
 		Result:     output,
