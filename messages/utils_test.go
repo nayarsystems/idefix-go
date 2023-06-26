@@ -19,7 +19,7 @@ func Test_MapstructureDecodeHooks(t *testing.T) {
 	tt := time.UnixMilli(time.Now().UnixMilli())
 	dd := time.Second * 123
 	rawData := []byte("hello world")
-	rawDataB64 := base64.RawStdEncoding.EncodeToString(rawData)
+	rawDataB64 := base64.StdEncoding.EncodeToString(rawData)
 	input := map[string]any{
 		"date":    tt.UnixMilli(),
 		"uptime":  dd.Seconds(),
@@ -41,10 +41,10 @@ func Test_MapstructureEncodeHooks(t *testing.T) {
 	tt := time.UnixMilli(time.Now().UnixMilli())
 	dd := time.Second * 123
 	rawData := []byte("hello world")
-	rawDataB64 := base64.RawStdEncoding.EncodeToString(rawData)
+	rawDataB64 := base64.StdEncoding.EncodeToString(rawData)
 	eOutput := map[string]any{
 		"date":    tt.UnixMilli(),
-		"uptime":  dd.Seconds(),
+		"uptime":  int64(dd.Seconds()),
 		"rawData": rawDataB64,
 	}
 	input := mapstructureHooksTestStruct{
