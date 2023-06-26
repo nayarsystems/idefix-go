@@ -12,17 +12,18 @@ import (
 /************/
 
 type DeviceInfo struct {
-	Address string `mapstructure:"address"`
-	Product string `mapstructure:"product"`
-	Board   string `mapstructure:"board"`
-	Version string `mapstructure:"version"`
-	BootCnt uint32 `mapstructure:"bootCnt"`
+	Address         string `mapstructure:"address"`
+	Product         string `mapstructure:"product"`
+	Board           string `mapstructure:"board"`
+	Version         string `mapstructure:"version"`
+	BootCnt         uint32 `mapstructure:"bootCnt"`
+	LauncherVersion string `mapstructure:"launcherVersion,omitempty"`
 }
 
 type SysInfo struct {
-	DeviceInfo          `mapstructure:",squash"`
-	LauncherErrorMsg    string        `mapstructure:"launcherr,omitempty"`
-	LauncherFirstExec   bool          `mapstructure:"firstExec,omitempty"`
+	DeviceInfo          `mapstructure:"devInfo"`
+	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty"`
+	NumExecs            uint64        `mapstructure:"numExecs,omitempty"`
 	RollbackExec        bool          `mapstructure:"rollback,omitempty"`
 	Uptime              time.Duration `mapstructure:"uptime,omitempty"`
 	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty"`

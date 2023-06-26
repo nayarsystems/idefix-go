@@ -7,6 +7,31 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+/******************/
+/*   Idefix Exit  */
+/******************/
+
+type ExitReqMsg struct {
+	Source        string        `mapstructure:"source"`
+	StopDelay     time.Duration `mapstructure:"stopDelay"`
+	WaitHaltDelay time.Duration `mapstructure:"waitHaltDelay"`
+	ExitCode      int           `mapstructure:"exitCode"`
+	ExitCause     string        `mapstructure:"exitCause"`
+}
+
+func (m *ExitReqMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m, EncodeDurationToSecondsInt64Hook())
+	return data, err
+}
+
+func (m *ExitReqMsg) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m, DecodeNumberToDurationHookFunc(time.Second))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /**************/
 /*   SysInfo  */
 /**************/

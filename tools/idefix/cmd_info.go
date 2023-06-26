@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	m "github.com/nayarsystems/idefix-go/messages"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -49,19 +50,43 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		Report:          report,
 		ReportInstances: reportFilter,
 	}
-	var info map[string]any
+	var info m.SysInfoResMsg
 	err = ic.Call2(addr, &m.Message{To: "sys.cmd.info", Data: msg}, &info, getTimeout(cmd))
 	if err != nil {
 		return fmt.Errorf("cannot get the device info: %w", err)
 	}
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Device info", ""},
+		{"Address", info.Address},
+		{"Product", info.Product},
+		{"Board", info.Board},
+		{"Boot counter", fmt.Sprintf("%d", info.BootCnt)},
+		{"Version", info.Version},
+		{"Launcher version", info.LauncherVersion},
+	}).Render()
 
-	printMsi(info)
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Device status", ""},
+		{"Uptime", fmt.Sprintf("%v", info.Uptime)},
+		{"Last run uptime", fmt.Sprintf("%v", info.LastRunUptime)},
+		{"Last run exit cause", fmt.Sprintf("%v (exit code: %d)", info.LastRunExitCause, info.LastRunExitCode)},
+		{"Last run exit issued by", fmt.Sprintf("%v", info.LastRunExitIssuedBy)},
+		{"Last run exit issued at", fmt.Sprintf("%v", info.LastRunExitIssuedAt)},
+		{"Execs since system boot", fmt.Sprintf("%v", info.NumExecs)},
+	}).Render()
 
-	return nil
-}
-
-func printMsi(data map[string]interface{}) {
-	if b, err := json.MarshalIndent(data, "", "  "); err == nil {
-		fmt.Printf("%s\n", b)
+	if info.RollbackExec {
+		pterm.Warning.Println("This is a rollback execution")
 	}
+	if info.LauncherErrorMsg != "" {
+		pterm.Warning.Println("Last launcher error:", info.LauncherErrorMsg)
+	}
+	if len(info.Report) > 0 {
+		if b, err := json.MarshalIndent(info.Report, "", "  "); err == nil {
+			pterm.Info.Printf("Report:\n%s\n", b)
+		}
+	}
+
+	fmt.Println()
+	return nil
 }

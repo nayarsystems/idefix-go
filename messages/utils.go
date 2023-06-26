@@ -134,17 +134,6 @@ func ParseMsg(input any, output any) error {
 	return ParseMsi(inputMsi, output)
 }
 
-// TODO: investigate the use of mapstructure hooks to minimize custom Msiable/MsiParser
-// cfg := mapstructure.DecoderConfig{
-// 	Result:     output,
-// 	DecodeHook: mapstructure.StringToTimeHookFunc(time.RFC1123),
-// }
-// decoder, err := mapstructure.NewDecoder(&cfg)
-// if err != nil {
-// 	return err
-// }
-// return decoder.Decode(input)
-
 func MsiCast(input any) (msi, error) {
 	if inputMsi, ok := input.(msi); ok {
 		return inputMsi, nil

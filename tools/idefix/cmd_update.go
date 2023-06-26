@@ -506,9 +506,10 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
-		{"Update", "", ""},
+		{"Update", ""},
 		{"Size", fmt.Sprintf("%d", len(updatebytes))},
 		{"Destination Hash", hex.EncodeToString(dsthash[:])},
+		{"Create rollback", fmt.Sprintf("%v", createRollback)},
 	}).Render()
 
 	ic, err := getConnectedClient()

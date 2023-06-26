@@ -32,8 +32,10 @@ func Test_SysInfoResMsg(t *testing.T) {
 	require.Contains(t, inputRaw, "lastRunUptime")
 	require.Equal(t, int64(12345), inputRaw["lastRunUptime"])
 
-	require.Contains(t, inputRaw, "address")
-	require.Equal(t, "random-address", inputRaw["address"])
+	require.Contains(t, inputRaw, "devInfo")
+	devInfoRaw := inputRaw["devInfo"]
+	require.IsType(t, map[string]any{}, devInfoRaw)
+	require.Contains(t, devInfoRaw, "address")
 
 	output := SysInfoResMsg{}
 	err = ParseMsi(inputRaw, &output)
