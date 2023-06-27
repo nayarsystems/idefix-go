@@ -2,6 +2,8 @@ package messages
 
 import (
 	"time"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 /************/
@@ -78,16 +80,37 @@ type EventsGetMsg struct {
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 
 	// Timestamp to search since
-	Since time.Time `json:"since" msgpack:"since" mapstructure:"-,omitempty"`
+	Since time.Time `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
 
 	// Limit the number of results returned
 	Limit uint `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
 
 	// Timeout sets the long-polling duration
-	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"-,omitempty"`
+	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
+}
+
+func (m *EventsGetMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			EncodeTimeToStringHook(time.RFC3339),
+			EncodeDurationToStringHook()))
+
+	return data, err
+}
+
+func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeHookFunc(time.RFC3339),
+			mapstructure.StringToTimeDurationHookFunc(),
+		))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type EventsGetUIDResponseMsg struct {

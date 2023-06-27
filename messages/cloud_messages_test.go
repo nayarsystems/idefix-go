@@ -73,3 +73,25 @@ func Test_EventsGetResponseMsg(t *testing.T) {
 
 	require.Equal(t, input, output)
 }
+
+func Test_EventsGetMsg(t *testing.T) {
+	since, err := time.Parse(time.RFC3339, TimeToString(time.Now()))
+	require.NoError(t, err)
+	input := EventsGetMsg{
+		UID:            "uid1",
+		Domain:         "domain1",
+		Address:        "address1",
+		Since:          since,
+		Limit:          10,
+		Timeout:        time.Second * 10,
+		ContinuationID: "continuation-id",
+	}
+	inputRaw, err := ToMsi(input)
+	require.NoError(t, err)
+
+	output := EventsGetMsg{}
+	err = ParseMsi(inputRaw, &output)
+	require.NoError(t, err)
+
+	require.Equal(t, input, output)
+}

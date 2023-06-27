@@ -72,7 +72,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Last run exit cause", fmt.Sprintf("%v (exit code: %d)", info.LastRunExitCause, info.LastRunExitCode)},
 		{"Last run exit issued by", fmt.Sprintf("%v", info.LastRunExitIssuedBy)},
 		{"Last run exit issued at", fmt.Sprintf("%v", info.LastRunExitIssuedAt)},
-		{"Execs since system boot", fmt.Sprintf("%v", info.NumExecs)},
+		{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
 	}).Render()
 
 	if info.RollbackExec {
