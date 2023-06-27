@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 	"github.com/stretchr/testify/require"
 )
 

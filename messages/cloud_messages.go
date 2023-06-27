@@ -3,7 +3,7 @@ package messages
 import (
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 )
 
 /************/

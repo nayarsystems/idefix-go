@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 )
 
 // https://glucn.medium.com/golang-an-interface-holding-a-nil-value-is-not-nil-bb151f472cc7

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jaracil/ei"
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 )
 
 func DecodeBase64ToSliceHookFunc() mapstructure.DecodeHookFunc {

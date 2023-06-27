@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 )
 
 func EncodeMsiableToMsiHook() mapstructure.EncodeFieldMapHookFunc {

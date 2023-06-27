@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/nayarsystems/mapstructure"
 )
 
 /************/

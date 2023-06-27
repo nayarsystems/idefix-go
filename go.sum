@@ -152,6 +152,8 @@ github.com/nayarsystems/idefix/core/cert v0.0.2 h1:4EUg3SFa+U6mgNFgAJjIx+mC48t+J
 github.com/nayarsystems/idefix/core/cert v0.0.2/go.mod h1:GrS/IUvzP4KL0Rbf2ArWJ4geyKKf9ILhseisllN89rQ=
 github.com/nayarsystems/idefix/libraries/eval v0.0.3 h1:whlNT4uXb2Og2Ruf+dyGaA3GZcHHc+/jm/GJqHntTiQ=
 github.com/nayarsystems/idefix/libraries/eval v0.0.3/go.mod h1:oOWGpOZXOF6T2CTdKmZUMBXcANw0NCdrLfsz6/+hi5s=
+github.com/nayarsystems/mapstructure v0.0.0-20230627150341-7bf3e832a92c h1:kuiT6sBYqZ62tlDeeVaVudIAGISYMGXYhg8ihrnj5+c=
+github.com/nayarsystems/mapstructure v0.0.0-20230627150341-7bf3e832a92c/go.mod h1:MwQRg460McCg5XPzOkY8SLyxI7sPZV7n9zej76uhoqU=
 github.com/pelletier/go-toml/v2 v2.0.6 h1:nrzqCb7j9cDFj2coyLNLaZuJTLjWjlaz6nvTvIwycIU=
 github.com/pelletier/go-toml/v2 v2.0.6/go.mod h1:eumQOmlWiOPt5WriQQqoM5y18pDHwha2N+QD+EUNTek=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
