@@ -90,3 +90,23 @@ func DecodeUnixMilliToTimeHookFunc() mapstructure.DecodeHookFunc {
 		return res, nil
 	}
 }
+
+func DecodeAnyTimeStringToTimeHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf(time.Time{}) {
+			return data, nil
+		}
+		res, err := ei.N(data).Time()
+		if err != nil {
+			return data, nil
+		}
+		return res, nil
+	}
+}

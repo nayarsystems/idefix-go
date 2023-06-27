@@ -100,7 +100,7 @@ func (m *Domain) ToMsi() (data msi, err error) {
 }
 
 func (m *Domain) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	err = ParseMsiGeneric(input, m, DecodeAnyTimeStringToTimeHookFunc())
 	return
 }
 
@@ -121,7 +121,7 @@ func (m *Event) ToMsi() (data msi, err error) {
 }
 
 func (m *Event) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	err = ParseMsiGeneric(input, m, DecodeAnyTimeStringToTimeHookFunc())
 	return
 }
 
@@ -152,7 +152,7 @@ func (m *Schema) ToMsi() (data msi, err error) {
 }
 
 func (m *Schema) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m, mapstructure.StringToTimeHookFunc(time.RFC3339))
+	err = ParseMsiGeneric(input, m, DecodeAnyTimeStringToTimeHookFunc())
 	return
 }
 

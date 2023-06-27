@@ -104,7 +104,7 @@ func (m *EventsGetMsg) ToMsi() (data msi, err error) {
 func (m *EventsGetMsg) ParseMsi(input msi) (err error) {
 	err = ParseMsiGeneric(input, m,
 		mapstructure.ComposeDecodeHookFunc(
-			mapstructure.StringToTimeHookFunc(time.RFC3339),
+			DecodeAnyTimeStringToTimeHookFunc(),
 			mapstructure.StringToTimeDurationHookFunc(),
 		))
 	if err != nil {
