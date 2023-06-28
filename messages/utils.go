@@ -12,7 +12,21 @@ import (
 // https://glucn.medium.com/golang-an-interface-holding-a-nil-value-is-not-nil-bb151f472cc7
 // https://stackoverflow.com/questions/13476349/check-for-nil-and-nil-interface-in-go
 func InterfaceIsNil(b interface{}) bool {
-	return b == nil || (reflect.ValueOf(b).Kind() == reflect.Ptr && reflect.ValueOf(b).IsNil())
+	return b == nil ||
+		((reflect.ValueOf(b).Kind() == reflect.Ptr ||
+			reflect.ValueOf(b).Kind() == reflect.Map ||
+			reflect.ValueOf(b).Kind() == reflect.Chan ||
+			reflect.ValueOf(b).Kind() == reflect.Func ||
+			reflect.ValueOf(b).Kind() == reflect.Slice) && reflect.ValueOf(b).IsNil())
+}
+
+func ValueIsNil(v reflect.Value) bool {
+	return (v.Kind() == reflect.Interface ||
+		v.Kind() == reflect.Ptr ||
+		v.Kind() == reflect.Map ||
+		v.Kind() == reflect.Chan ||
+		v.Kind() == reflect.Func ||
+		v.Kind() == reflect.Slice) && v.IsNil()
 }
 
 /*
@@ -167,9 +181,9 @@ func TimeToString(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
-func getActualValue(old reflect.Value) reflect.Value {
+func getActualValue(old reflect.Value) (reflect.Value, bool) {
 	if old.Kind() == reflect.Ptr || old.Kind() == reflect.Interface {
 		old = old.Elem()
 	}
-	return old
+	return old, old.IsValid()
 }

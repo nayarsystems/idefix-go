@@ -9,10 +9,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mapstructureHooksTestStruct struct {
+type hooksTestStructB struct {
 	Date    time.Time     `mapstructure:"date"`
 	Uptime  time.Duration `mapstructure:"uptime"`
 	RawData []byte        `mapstructure:"rawData"`
+}
+
+type hooksTestStructA struct {
+	Date    time.Time        `mapstructure:"date"`
+	Uptime  time.Duration    `mapstructure:"uptime"`
+	RawData []byte           `mapstructure:"rawData"`
+	Sub     hooksTestStructB `mapstructure:"sub"`
+}
+
+func (m *hooksTestStructB) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			EncodeTimeToStringHook(time.UnixDate),
+			EncodeDurationToStringHook()))
+
+	return data, err
+}
+
+func (m *hooksTestStructB) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			DecodeAnyTimeStringToTimeHookFunc(),
+			mapstructure.StringToTimeDurationHookFunc(),
+		))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func Test_MapstructureDecodeHooks(t *testing.T) {
@@ -25,7 +53,7 @@ func Test_MapstructureDecodeHooks(t *testing.T) {
 		"uptime":  dd.Seconds(),
 		"rawData": rawDataB64,
 	}
-	out := mapstructureHooksTestStruct{}
+	out := hooksTestStructA{}
 	err := ParseMsiGeneric(input, &out,
 		mapstructure.ComposeDecodeHookFunc(
 			// DecodeBase64ToSliceHookFunc() hook is always added
@@ -46,11 +74,21 @@ func Test_MapstructureEncodeHooks(t *testing.T) {
 		"date":    tt.UnixMilli(),
 		"uptime":  int64(dd.Seconds()),
 		"rawData": rawDataB64,
+		"sub": map[string]any{
+			"date":    tt.Format(time.UnixDate),
+			"uptime":  dd.String(),
+			"rawData": rawDataB64,
+		},
 	}
-	input := mapstructureHooksTestStruct{
+	input := hooksTestStructA{
 		Date:    tt,
 		Uptime:  dd,
 		RawData: rawData,
+		Sub: hooksTestStructB{
+			Date:    tt,
+			Uptime:  dd,
+			RawData: rawData,
+		},
 	}
 	output, err := ToMsiGeneric(input,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
@@ -172,16 +210,10 @@ func Test_ParseMsi_ToMsi(t *testing.T) {
 	require.Equal(t, in, tt)
 }
 
-// type WithTimeAndDurations struct {
-// 	Since   time.Time     `json:"since" msgpack:"since" mapstructure:"since,omitempty"`
-// 	Timeout time.Duration `json:"timeout" msgpack:"timeout" mapstructure:"timeout,omitempty"`
-// }
-
-type WithByteSlice struct {
-	Buffer []byte `mapstructure:"buffer"`
-}
-
 func Test_ParseByteSlice_ParseMsi(t *testing.T) {
+	type WithByteSlice struct {
+		Buffer []byte `mapstructure:"buffer"`
+	}
 	in := msi{
 		"buffer": "CgsM",
 	}
@@ -192,4 +224,48 @@ func Test_ParseByteSlice_ParseMsi(t *testing.T) {
 		Buffer: []byte{0xa, 0xb, 0xc},
 	}
 	require.Equal(t, eout, out)
+}
+
+func Test_MapstructureDecodeNilTest(t *testing.T) {
+	type mapstructureDecodeNilSliceTestStruct struct {
+		RawData []byte `mapstructure:"rawData"`
+	}
+	input := map[string]any{
+		"rawData": nil,
+	}
+	out := mapstructureDecodeNilSliceTestStruct{}
+	err := ParseMsi(input, &out)
+	require.NoError(t, err)
+}
+
+func Test_MapstructureEncodeNilInterfaceTest(t *testing.T) {
+	type mapstructureEncodeNilInterfaceTestStruct struct {
+		RawData any `mapstructure:"rawData"`
+	}
+	input := mapstructureEncodeNilInterfaceTestStruct{
+		RawData: nil,
+	}
+	raw, err := ToMsi(input)
+	require.NoError(t, err)
+
+	out := mapstructureEncodeNilInterfaceTestStruct{}
+	err = ParseMsi(raw, &out)
+	require.NoError(t, err)
+	require.Equal(t, input, out)
+}
+
+func Test_MapstructureEncodeNilPointerTest(t *testing.T) {
+	type mapstructureEncodeNilPointerTestStruct struct {
+		RawData *int `mapstructure:"rawData"`
+	}
+	input := mapstructureEncodeNilPointerTestStruct{
+		RawData: nil,
+	}
+	raw, err := ToMsi(input)
+	require.NoError(t, err)
+
+	out := mapstructureEncodeNilPointerTestStruct{}
+	err = ParseMsi(raw, &out)
+	require.NoError(t, err)
+	require.Equal(t, input, out)
 }

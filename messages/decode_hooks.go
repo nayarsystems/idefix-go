@@ -14,8 +14,6 @@ func DecodeBase64ToSliceHookFunc() mapstructure.DecodeHookFunc {
 		f reflect.Value,
 		t reflect.Value) (interface{}, error) {
 
-		f = getActualValue(f)
-
 		if f.Kind() != reflect.String {
 			return f.Interface(), nil
 		}

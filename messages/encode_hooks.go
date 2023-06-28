@@ -11,64 +11,78 @@ import (
 
 func EncodeMsiableToMsiHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		//fmt.Printf("oldkind: %v, old: %v\n", old.Kind(), old)
-		oldObj := old.Interface()
-		newObj, err := recursiveToMsi(oldObj)
+		new = old
+		msiValue, err := recursiveToMsi(old)
 		if err != nil {
 			return
 		}
-		return reflect.ValueOf(newObj), true, nil
+		new = msiValue
+		handled = true
+		return
 	}
 }
 
-func recursiveToMsi(input any) (output any, err error) {
-	ivalue := reflect.ValueOf(input)
-	ivalue = getActualValue(ivalue)
-	if ivalue.Kind() == reflect.Struct {
-		oldObj := ivalue.Interface()
-		output, err = ToMsi(oldObj)
-		return
+func recursiveToMsi(input reflect.Value) (output reflect.Value, err error) {
+	var ivalue reflect.Value
+	var valid bool
+	var newObj any
+	if ValueIsNil(input) {
+		goto unhandled
 	}
-	if ivalue.Kind() == reflect.Slice {
-		output = []any{}
+	ivalue, valid = getActualValue(input)
+	if !valid {
+		goto unhandled
+	}
+	switch ivalue.Kind() {
+	case reflect.Struct:
+		oldObj := ivalue.Interface()
+		newObj, err = ToMsi(oldObj)
+		if err != nil {
+			return input, err
+		}
+	case reflect.Slice:
+		newObj = []any{}
 		for i := 0; i < ivalue.Len(); i++ {
 			iv := ivalue.Index(i)
-			ov, err := recursiveToMsi(iv.Interface())
+			ov, err := recursiveToMsi(iv)
 			if err != nil {
-				return nil, err
+				return input, err
 			}
-			output = append(output.([]any), ov)
+			newObj = append(newObj.([]any), ov.Interface())
 		}
-		return
-	}
-	if ivalue.Kind() == reflect.Map {
+	case reflect.Map:
 		newMap := msi{}
 		if ivalue.Type().Key() != reflect.TypeOf("") {
-			return nil, fmt.Errorf("map key is not string")
+			return input, fmt.Errorf("map key is not string")
 		}
 		for _, key := range ivalue.MapKeys() {
 			iv := ivalue.MapIndex(key)
-			ov, err := recursiveToMsi(iv.Interface())
+			ov, err := recursiveToMsi(iv)
 			if err != nil {
-				return nil, err
+				return input, err
 			}
 			keyStr := key.Interface().(string)
-			newMap[keyStr] = ov
+			newMap[keyStr] = ov.Interface()
 		}
-		output = newMap
-		return
+		newObj = newMap
 	}
+	if newObj != nil {
+		return reflect.ValueOf(newObj), nil
+	}
+unhandled:
 	return input, nil
 }
 
 func EncodeDurationToSecondsInt64Hook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
-		if t != reflect.TypeOf(time.Duration(0)) {
-			new = old
-		} else {
-			d := old.Interface().(time.Duration)
+		new = old
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
+		}
+		t := actual.Type()
+		if t == reflect.TypeOf(time.Duration(0)) {
+			d := actual.Interface().(time.Duration)
 			secs := int64(d.Seconds())
 			new = reflect.ValueOf(secs)
 			handled = true
@@ -79,45 +93,53 @@ func EncodeDurationToSecondsInt64Hook() mapstructure.EncodeFieldMapHookFunc {
 
 func EncodeDurationToStringHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
-		if t != reflect.TypeOf(time.Duration(0)) {
-			new = old
-		} else {
-			d := old.Interface().(time.Duration)
-			secs := d.String()
-			new = reflect.ValueOf(secs)
-			handled = true
+		new = old
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
 		}
+		if actual.Type() != reflect.TypeOf(time.Duration(0)) {
+			return
+		}
+		d := actual.Interface().(time.Duration)
+		secs := d.String()
+		new = reflect.ValueOf(secs)
+		handled = true
 		return
 	}
 }
 
 func EncodeTimeToUnixMilliHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
 		new = old
-		if t == reflect.TypeOf(time.Time{}) {
-			tt := old.Interface().(time.Time)
-			new = reflect.ValueOf(tt.UnixMilli())
-			handled = true
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
 		}
+		if actual.Type() != reflect.TypeOf(time.Time{}) {
+			return
+		}
+		tt := actual.Interface().(time.Time)
+		new = reflect.ValueOf(tt.UnixMilli())
+		handled = true
 		return
 	}
 }
 
 func EncodeTimeToStringHook(layout string) mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
 		new = old
-		if t == reflect.TypeOf(time.Time{}) {
-			tt := old.Interface().(time.Time)
-			ttStr := tt.Format(layout)
-			new = reflect.ValueOf(ttStr)
-			handled = true
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
 		}
+		if actual.Type() != reflect.TypeOf(time.Time{}) {
+			return
+		}
+		tt := actual.Interface().(time.Time)
+		ttStr := tt.Format(layout)
+		new = reflect.ValueOf(ttStr)
+		handled = true
 		return
 	}
 }
@@ -125,27 +147,33 @@ func EncodeTimeToStringHook(layout string) mapstructure.EncodeFieldMapHookFunc {
 // This hook avoids the attempt to encode time.Time as a map[string]interface{} with the fields
 func EncodeTimeToTimeHook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
 		new = old
-		if t == reflect.TypeOf(time.Time{}) {
-			handled = true
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
 		}
+		if actual.Type() != reflect.TypeOf(time.Time{}) {
+			return
+		}
+		handled = true
 		return
 	}
 }
 
 func EncodeSliceToBase64Hook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
-		old = getActualValue(old)
-		t := old.Type()
 		new = old
-		if t == reflect.TypeOf([]byte{}) {
-			data := old.Interface().([]byte)
-			newValue := base64.StdEncoding.EncodeToString(data)
-			new = reflect.ValueOf(newValue)
-			handled = true
+		actual, valid := getActualValue(old)
+		if !valid {
+			return
 		}
+		if actual.Type() != reflect.TypeOf([]byte{}) {
+			return
+		}
+		data := actual.Interface().([]byte)
+		newValue := base64.StdEncoding.EncodeToString(data)
+		new = reflect.ValueOf(newValue)
+		handled = true
 		return
 	}
 }
