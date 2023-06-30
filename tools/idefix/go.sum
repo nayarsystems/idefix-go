@@ -194,8 +194,8 @@ github.com/nayarsystems/bstates v0.2.1 h1:1Q7cSh7W2orp0A0Vww96iWLPTYxyNmlUIg4F9J
 github.com/nayarsystems/bstates v0.2.1/go.mod h1:BdT9csZPRt4vqRLzsuysS7HsmsSvUD54scD2roa0Vv8=
 github.com/nayarsystems/buffer v0.1.1 h1:ioRQ9aza2bEvPnSJKNjPcjXHhvjtDJEPOqHZQ58vtI0=
 github.com/nayarsystems/buffer v0.1.1/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
-github.com/nayarsystems/idefix-go v0.0.26 h1:Tu6ol6pUCtsu9aM8dED1U8FO1X8uNvFPrU35zJQA0eM=
-github.com/nayarsystems/idefix-go v0.0.26/go.mod h1:pLB00CKhrZX38WUT6/oaGsvMrxEA9DYBe8cE5zWhZo0=
+github.com/nayarsystems/idefix-go v0.0.27 h1:NGXzIDEj5JsMLCtg0/DyhiGHSWor+hOboMUdkS7bJm4=
+github.com/nayarsystems/idefix-go v0.0.27/go.mod h1:pLB00CKhrZX38WUT6/oaGsvMrxEA9DYBe8cE5zWhZo0=
 github.com/nayarsystems/idefix-go/minips v0.0.4 h1:pb0gfH3T921iW+AvatLQ93Ot+P/qBMlMN5620cVNXaM=
 github.com/nayarsystems/idefix-go/minips v0.0.4/go.mod h1:AkH3hDvXIn2HHdUNBJW9Rm8biMSn6vC2X1sbNivBZac=
 github.com/nayarsystems/idefix/core/cert v0.0.2 h1:4EUg3SFa+U6mgNFgAJjIx+mC48t+JV2/9fCh9mwO8A8=
