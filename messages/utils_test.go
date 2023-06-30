@@ -9,112 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type hooksTestStructB struct {
-	Date    time.Time     `mapstructure:"date"`
-	Uptime  time.Duration `mapstructure:"uptime"`
-	RawData []byte        `mapstructure:"rawData"`
-}
-
-type hooksTestStructA struct {
-	Date    time.Time        `mapstructure:"date"`
-	Uptime  time.Duration    `mapstructure:"uptime"`
-	RawData []byte           `mapstructure:"rawData"`
-	Sub     hooksTestStructB `mapstructure:"sub"`
-}
-
-func (m *hooksTestStructB) ToMsi() (data msi, err error) {
-	data, err = ToMsiGeneric(m,
-		mapstructure.ComposeEncodeFieldMapHookFunc(
-			EncodeTimeToStringHook(time.UnixDate),
-			EncodeDurationToStringHook()))
-
-	return data, err
-}
-
-func (m *hooksTestStructB) ParseMsi(input msi) (err error) {
-	err = ParseMsiGeneric(input, m,
-		mapstructure.ComposeDecodeHookFunc(
-			DecodeAnyTimeStringToTimeHookFunc(),
-			mapstructure.StringToTimeDurationHookFunc(),
-		))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func Test_MapstructureDecodeHooks(t *testing.T) {
-	tt := time.UnixMilli(time.Now().UnixMilli())
-	dd := time.Second * 123
-	rawData := []byte("hello world")
-	rawDataB64 := base64.StdEncoding.EncodeToString(rawData)
-	input := map[string]any{
-		"date":    tt.UnixMilli(),
-		"uptime":  dd.Seconds(),
-		"rawData": rawDataB64,
-	}
-	out := hooksTestStructA{}
-	err := ParseMsiGeneric(input, &out,
-		mapstructure.ComposeDecodeHookFunc(
-			// DecodeBase64ToSliceHookFunc() hook is always added
-			DecodeNumberToDurationHookFunc(time.Second),
-			DecodeUnixMilliToTimeHookFunc()))
-	require.NoError(t, err)
-	require.Equal(t, tt, out.Date)
-	require.Equal(t, dd, out.Uptime)
-	require.Equal(t, rawData, out.RawData)
-}
-
-func Test_MapstructureEncodeHooks(t *testing.T) {
-	tt := time.UnixMilli(time.Now().UnixMilli())
-	dd := time.Second * 123
-	rawData := []byte("hello world")
-	rawDataB64 := base64.StdEncoding.EncodeToString(rawData)
-	eOutput := map[string]any{
-		"date":    tt.UnixMilli(),
-		"uptime":  int64(dd.Seconds()),
-		"rawData": rawDataB64,
-		"sub": map[string]any{
-			"date":    tt.Format(time.UnixDate),
-			"uptime":  dd.String(),
-			"rawData": rawDataB64,
-		},
-	}
-	input := hooksTestStructA{
-		Date:    tt,
-		Uptime:  dd,
-		RawData: rawData,
-		Sub: hooksTestStructB{
-			Date:    tt,
-			Uptime:  dd,
-			RawData: rawData,
-		},
-	}
-	output, err := ToMsiGeneric(input,
-		mapstructure.ComposeEncodeFieldMapHookFunc(
-			// EncodeSliceToBase64Hook() hook is always added
-			EncodeDurationToSecondsInt64Hook(),
-			EncodeTimeToUnixMilliHook()))
-	require.NoError(t, err)
-	require.Equal(t, eOutput, output)
-}
-
-func Test_BstatesParseSchemaFromType(t *testing.T) {
-	id0, err := BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=")
-	require.NoError(t, err)
-	require.Equal(t, "8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=", id0)
-
-	id1, err := BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=\"")
-	require.NoError(t, err)
-	require.Equal(t, id0, id1)
-
-	_, err = BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"\"")
-	require.Error(t, err)
-
-	_, err = BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=")
-	require.Error(t, err)
-}
-
 func Test_ToMsi_FromMsi(t *testing.T) {
 	in := msi{
 		"param0": 1,
@@ -268,4 +162,151 @@ func Test_MapstructureEncodeNilPointerTest(t *testing.T) {
 	err = ParseMsi(raw, &out)
 	require.NoError(t, err)
 	require.Equal(t, input, out)
+}
+
+type hooksTestStructA struct {
+	Date   time.Time        `mapstructure:"date"`
+	Uptime time.Duration    `mapstructure:"uptime"`
+	Bytes  []byte           `mapstructure:"bytes"`
+	Any    any              `mapstructure:"any"`
+	Sub    hooksTestStructB `mapstructure:"sub"`
+}
+
+type hooksTestStructB struct {
+	Date   time.Time     `mapstructure:"date"`
+	Uptime time.Duration `mapstructure:"uptime"`
+	Bytes  []byte        `mapstructure:"bytes"`
+	Any    any           `mapstructure:"any"`
+}
+
+func (m *hooksTestStructB) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			EncodeTimeToStringHook(time.UnixDate),
+			EncodeDurationToStringHook()))
+
+	return data, err
+}
+
+func (m *hooksTestStructB) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			DecodeAnyTimeStringToTimeHookFunc(),
+			mapstructure.StringToTimeDurationHookFunc(),
+		))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func Test_MapstructureEncodeHooks(t *testing.T) {
+	tt := time.Unix(time.Now().Unix(), 0)
+	dd := time.Second * 123
+	bytes := []byte("hello world")
+
+	input := hooksTestStructA{
+		Date:   tt,
+		Uptime: dd,
+		Bytes:  bytes,
+		Any:    bytes,
+		Sub: hooksTestStructB{
+			Date:   tt,
+			Uptime: dd,
+			Bytes:  bytes,
+			Any:    bytes,
+		},
+	}
+
+	bytesB64 := base64.StdEncoding.EncodeToString(bytes)
+	eOutput := map[string]any{
+		"date":   tt.UnixMilli(),
+		"uptime": int64(dd.Seconds()),
+		"bytes":  bytesB64,
+		"any":    bytesB64,
+		"sub": map[string]any{
+			"date":   tt.Format(time.UnixDate),
+			"uptime": dd.String(),
+			"bytes":  bytesB64,
+			"any":    bytesB64,
+		},
+	}
+
+	// These hooks will only be used to encode the top level struct's fields since
+	// nested struct ("Sub" field) implements the Msiable interface to customize
+	// its encoding to a msi. So that, time.Time and time.Duration fields will be
+	// encoded differently for each struct.
+	encodeHooks := mapstructure.ComposeEncodeFieldMapHookFunc(
+		// EncodeSliceToBase64Hook() hook is added intrinsically (see ToMsiGeneric func)
+		EncodeDurationToSecondsInt64Hook(),
+		EncodeTimeToUnixMilliHook())
+
+	output, err := ToMsiGeneric(input, encodeHooks)
+
+	require.NoError(t, err)
+	require.Equal(t, eOutput, output)
+}
+
+func Test_MapstructureDecodeHooks(t *testing.T) {
+	tt := time.Unix(time.Now().Unix(), 0)
+	dd := time.Second * 123
+	bytes := []byte("hello world")
+	bytesB64 := base64.StdEncoding.EncodeToString(bytes)
+
+	input := map[string]any{
+		"date":   tt.UnixMilli(),
+		"uptime": dd.Seconds(),
+		"bytes":  bytesB64,
+		"any":    bytesB64,
+		"sub": map[string]any{
+			"date":   tt.Format(time.UnixDate),
+			"uptime": dd.String(),
+			"bytes":  bytesB64,
+			"any":    bytesB64,
+		},
+	}
+
+	eOutput := hooksTestStructA{
+		Date:   tt,
+		Uptime: dd,
+		Bytes:  bytes,
+		Any:    bytesB64,
+		Sub: hooksTestStructB{
+			Date:   tt,
+			Uptime: dd,
+			Bytes:  bytes,
+			Any:    bytesB64,
+		},
+	}
+
+	// These hooks will only be used to decode the top level struct's fields since
+	// nested struct ("Sub" field) implements the Msiable interface to customize
+	// its decoding from a msi. So that, time.Time and time.Duration fields will be
+	// decoded differently for each struct.
+	decodeHooks := mapstructure.ComposeDecodeHookFunc(
+		// DecodeBase64ToSliceHookFunc() hook is added intrinsically (see ParseMsiGeneric func)
+		DecodeNumberToDurationHookFunc(time.Second),
+		DecodeUnixMilliToTimeHookFunc())
+	output := hooksTestStructA{}
+
+	err := ParseMsiGeneric(input, &output, decodeHooks)
+
+	require.NoError(t, err)
+	require.Equal(t, eOutput, output)
+}
+
+func Test_BstatesParseSchemaFromType(t *testing.T) {
+	id0, err := BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=")
+	require.NoError(t, err)
+	require.Equal(t, "8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=", id0)
+
+	id1, err := BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=\"")
+	require.NoError(t, err)
+	require.Equal(t, id0, id1)
+
+	_, err = BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"\"")
+	require.Error(t, err)
+
+	_, err = BstatesParseSchemaIdFromType("application/vnd.nayar.bstates; id=\"8OTC92xYkW7CWPJGhRvqCR0U1CR6L8PhhpRGGxgW4Ts=")
+	require.Error(t, err)
 }
