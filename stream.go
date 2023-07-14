@@ -17,6 +17,7 @@ type Stream struct {
 	sub     *minips.Subscriber[*m.Message]
 	topic   string
 	address string
+	errCh   chan error
 }
 
 func (c *Client) NewStream(address string, topic string, capacity uint, timeout time.Duration) (*Stream, error) {
@@ -26,6 +27,7 @@ func (c *Client) NewStream(address string, topic string, capacity uint, timeout 
 		topic:   topic,
 		c:       c,
 		sub:     c.ps.NewSubscriber(capacity),
+		errCh:   make(chan error, 1),
 	}
 
 	if err := s.sub.Subscribe(s.subTopic()); err != nil {
@@ -67,6 +69,10 @@ func (s *Stream) keepalive() {
 		case <-t.C:
 			_, err := s.c.Call(s.address, &m.Message{To: s.openTopic(), Data: map[string]any{"timeout": s.timeout.Seconds()}}, time.Second*5)
 			if err != nil {
+				select {
+				case s.errCh <- err:
+				default:
+				}
 				return
 			}
 		}
@@ -75,6 +81,10 @@ func (s *Stream) keepalive() {
 
 func (s *Stream) Channel() <-chan *m.Message {
 	return s.sub.Channel()
+}
+
+func (s *Stream) ErrChannel() <-chan error {
+	return s.errCh
 }
 
 func (s *Stream) Close() error {

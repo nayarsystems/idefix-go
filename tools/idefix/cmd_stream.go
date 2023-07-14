@@ -77,6 +77,10 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 
 			fmt.Printf("[%d] %s\n", l, m)
 
+		case err = <-s.ErrChannel():
+			fmt.Println(err)
+			return nil
+
 		case <-ic.Context().Done():
 			return nil
 		}
@@ -111,6 +115,10 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 		select {
 		case k := <-s.Channel():
 			fmt.Printf("%v\n", k.Data)
+
+		case err = <-s.ErrChannel():
+			fmt.Println(err)
+			return nil
 
 		case <-ic.Context().Done():
 			return nil
