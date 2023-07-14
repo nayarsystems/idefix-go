@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"os/signal"
 	"time"
 
 	idf "github.com/nayarsystems/idefix-go"
@@ -18,8 +19,19 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
+func handleInterrupts(cancel context.CancelFunc) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt) // SIGINT
+
+	go func() {
+		<-sigChan
+		cancel()
+	}()
+}
+
 func main() {
 	rootctx, cancel = context.WithCancel(context.Background())
+	handleInterrupts(cancel)
 
 	rootCmd.PersistentFlags().StringP("config", "c", "default", "idefix-go config file for connection settings")
 	rootCmd.PersistentFlags().UintP("timeout", "", 10000, "global timeout in milliseconds")
