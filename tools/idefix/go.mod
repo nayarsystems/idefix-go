@@ -6,7 +6,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/nayarsystems/idefix-go v0.0.29-0.20230728104351-b4281b61caad
+	github.com/nayarsystems/idefix-go v0.0.29
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 )
 
