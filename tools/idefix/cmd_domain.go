@@ -25,7 +25,8 @@ func init() {
 	cmdDomain.AddCommand(cmdDomainAssign)
 
 	cmdDomainGet.Flags().StringP("domain", "n", "", "Domain Name")
-	cmdDomainGet.MarkFlagRequired("domain")
+	cmdDomainGet.Flags().StringP("address", "a", "", "Address to obtain domain from")
+	cmdDomainGet.MarkFlagsMutuallyExclusive("domain", "address")
 	cmdDomain.AddCommand(cmdDomainGet)
 
 	cmdDomainDelete.Flags().StringP("domain", "n", "", "Domain Name")
@@ -174,12 +175,17 @@ func parseDomainFlags(cmd *cobra.Command) (domain *m.DomainInfo, err error) {
 }
 
 func cmdDomainGetRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := &m.DomainGetMsg{}
-	msg.Domain, err = cmd.Flags().GetString("domain")
-	if err != nil {
-		return err
+	domain, err := cmd.Flags().GetString("domain")
+	if err == nil && domain != "" {
+		msg := &m.DomainGetMsg{Domain: domain}
+		return commandCall2(m.IdefixCmdPrefix, m.CmdDomainGet, msg, getTimeout(cmd))
 	}
-	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainGet, msg, getTimeout(cmd))
+	address, err := cmd.Flags().GetString("address")
+	if err == nil && address != "" {
+		msg := &m.AddressDomainGetMsg{Address: address}
+		return commandCall2(m.IdefixCmdPrefix, m.CmdAddressDomainGet, msg, getTimeout(cmd))
+	}
+	return err
 }
 
 func cmdDomainDeleteRunE(cmd *cobra.Command, args []string) (err error) {
