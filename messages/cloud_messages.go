@@ -46,6 +46,11 @@ type AddressRulesUpdateMsg struct {
 	AddressRules `bson:",inline" mapstructure:",squash"`
 }
 
+type AddressDomainGetMsg struct {
+	// Address to query
+	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+}
+
 /************/
 /*  Events  */
 /************/

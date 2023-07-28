@@ -43,6 +43,9 @@ const (
 	// TopicTransportAddressDisable is used to prevent further activity from an address
 	TopicTransportAddressDisable = TopicTransportIdefixPrefix + CmdAddressDisable
 
+	// TopicTransportAddressDomainGet is used to get the domain assigned to address
+	TopicTransportAddressDomainGet = TopicTransportIdefixPrefix + CmdAddressDomainGet
+
 	// TopicTransportEventsCreate is used to create a new event on the server linked to the source address' domain
 	TopicTransportEventsCreate = TopicTransportIdefixPrefix + CmdEventsCreate
 
@@ -105,6 +108,9 @@ const (
 
 	// CmdAddressDisable is used to restrict the access to an address
 	CmdAddressDisable = "address.disable"
+
+	// CmdAddressDomainGet is used to get the domain assigned to an address
+	CmdAddressDomainGet = "address.domain.get"
 
 	// CmdEventsCreate is used to create a new event on the server linked to the source address' domain
 	CmdEventsCreate = "events.create"
