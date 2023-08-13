@@ -56,7 +56,8 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	res := idf.GetBstatesResult{}
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
 	for keepPolling {
-		_, p.Cid, err = idf.GetBstates(ic, &p, res)
+		var newEvents uint
+		newEvents, p.Cid, err = idf.GetBstates(ic, &p, res)
 		timeout := false
 		if err != nil {
 			timeout = ie.ErrTimeout.Is(err)
@@ -65,7 +66,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 				return err
 			}
 		}
-		keepPolling = !timeout && bp.Continue
+		keepPolling = !timeout && (bp.Continue || newEvents == p.Limit)
 	}
 	spinner.Success()
 

@@ -77,20 +77,9 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (tot
 		}
 		return
 	}
-	for {
-		var nBlobsRead uint
-		nBlobsRead, p.Cid, err = getBstates(ic, p, stateMap)
-		cid = p.Cid
-		totalBlobs += nBlobsRead
-		//fmt.Println("read: ", nBlobsRead, "blobs: ", totalBlobs, "limit: ", p.Limit, "cid: ", cid)
-		if err != nil {
-			return
-		}
-		keepPolling := totalBlobs < p.Limit
-		if !keepPolling {
-			return
-		}
-	}
+	totalBlobs, p.Cid, err = getBstates(ic, p, stateMap)
+	cid = p.Cid
+	return
 }
 
 func getBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (numblobs uint, cid string, err error) {
