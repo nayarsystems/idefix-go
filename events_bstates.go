@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jaracil/ei"
@@ -141,7 +142,7 @@ func fillStateMap(ic *Client, events []*messages.Event, p *GetBstatesParams, sta
 		}
 
 		var schema *be.StateSchema
-		if schema, ok = schemasMap[schemaId]; !ok {
+		if schema = getSchemaFromCache(schemaId); schema == nil {
 			schemaMsg, serr := ic.GetSchema(schemaId, time.Second)
 			if serr != nil {
 				fmt.Printf("schema '%s' was not found: %v\n", schemaId, serr)
@@ -153,7 +154,7 @@ func fillStateMap(ic *Client, events []*messages.Event, p *GetBstatesParams, sta
 				fmt.Printf("can't parse schema '%s': %v\n", schemaId, serr)
 				continue
 			}
-			schemasMap[schemaId] = schema
+			saveSchemaOnCache(schemaId, schema)
 		}
 
 		var domainMap map[string]map[string]map[string]*BstatesSource
@@ -405,3 +406,16 @@ func createBlobInfo(source *BstatesSource, schema *be.StateSchema, uid string, t
 }
 
 var schemasMap = map[string]*be.StateSchema{}
+var schemasMapMutex sync.Mutex
+
+func getSchemaFromCache(schemaId string) *be.StateSchema {
+	schemasMapMutex.Lock()
+	defer schemasMapMutex.Unlock()
+	return schemasMap[schemaId]
+}
+
+func saveSchemaOnCache(schemaId string, schema *be.StateSchema) {
+	schemasMapMutex.Lock()
+	defer schemasMapMutex.Unlock()
+	schemasMap[schemaId] = schema
+}
