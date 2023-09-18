@@ -81,6 +81,106 @@ type ExecResMsg struct {
 	Success bool   `bson:"success" json:"success" msgpack:"success" mapstructure:"success"`
 }
 
+/***************/
+/*   OS Utils  */
+/***************/
+
+type FileWriteMsg struct {
+	// Path to write the file
+	Path string `mapstructure:"path"`
+
+	// File content
+	Data []byte `mapstructure:"data"`
+
+	// File permissions
+	Mode int `mapstructure:"mode"`
+}
+
+type FileWriteResMsg struct {
+}
+
+type FileReadMsg struct {
+	// Path to write the file
+	Path string `mapstructure:"path"`
+}
+
+type FileReadResMsg struct {
+	// File content
+	Data []byte `mapstructure:"data"`
+}
+
+type FileSHA256Msg struct {
+	// Path to write the file
+	Path string `mapstructure:"path"`
+}
+
+type FileSHA256ResMsg struct {
+	// File hash
+	Hash []byte `mapstructure:"hash"`
+}
+
+type FileSizeMsg struct {
+	// File path to check size
+	Path string `mapstructure:"path"`
+}
+
+type FileSizeResMsg struct {
+	// File size in bytes
+	Size int64 `mapstructure:"size"`
+}
+
+type FreeSpaceMsg struct {
+	// Directory path to check free space. If empty, check idefix's working directory
+	Path string `mapstructure:"path,omitempty"`
+}
+
+type FreeSpaceResMsg struct {
+	// Bytes of free space
+	Free uint64 `mapstructure:"free"`
+}
+
+type RemoveMsg struct {
+	// File path to remove
+	Path string `mapstructure:"path,omitempty"`
+}
+
+type RemoveResMsg struct {
+}
+
+/******************/
+/*   Idefix update  */
+/******************/
+
+const (
+	UpdateTypeIdefixUpgrade   = 0
+	UpdateTypeIdefixRollback  = 1
+	UpdateTypeLauncherUpgrade = 2
+)
+
+type UpdateReqMsg struct {
+	Type          int           `mapstructure:"type"`
+	Cause         string        `mapstructure:"cause,omitempty"`
+	StopDelay     time.Duration `mapstructure:"stopDelay,omitempty"`
+	WaitHaltDelay time.Duration `mapstructure:"waitHaltDelay,omitempty"`
+}
+
+func (m *UpdateReqMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m, EncodeDurationToSecondsInt64Hook())
+	return data, err
+}
+
+func (m *UpdateReqMsg) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m, DecodeNumberToDurationHookFunc(time.Second))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type UpdateResMsg struct {
+	UpdateReqMsg `mapstructure:",squash"`
+}
+
 /*******************/
 /*   Udev module   */
 /*******************/
