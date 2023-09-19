@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"time"
 
@@ -490,6 +491,12 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	toutMs, err := cmd.Flags().GetUint("timeout")
+	if err != nil {
+		return err
+	}
+	tout := time.Duration(toutMs) * time.Millisecond
+
 	p, err := getUpdateParams(cmd)
 	if err != nil {
 		return err
@@ -507,7 +514,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Update", ""},
-		{"Size", fmt.Sprintf("%d", len(updatebytes))},
+		{"Update file size", KB(uint64(len(updatebytes)))},
 		{"Destination Hash", hex.EncodeToString(dsthash[:])},
 		{"Create rollback", fmt.Sprintf("%v", createRollback)},
 	}).Render()
@@ -529,15 +536,26 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Check space available
+	freeSpace, err := idefixgo.GetFree(ic, addr, "", tout)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println()
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device", ""},
 		{"Address", address},
 		{"Boot Counter", fmt.Sprintf("%d", bootcnt)},
 		{"Version", version},
+		{"Free space", KB(freeSpace)},
 	}).Render()
 
 	fmt.Println()
+
+	if freeSpace < uint64(len(updatebytes)) {
+		return fmt.Errorf("not enough space available: update (%d) > free (%d)", len(updatebytes), freeSpace)
+	}
 
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Update params", "", ""},
@@ -555,8 +573,14 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending update...")
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending file...")
+	err = idefixgo.FileWrite(ic, addr, "../updates/upgrade.bin", updatebytes, 0744, tout)
+	if err != nil {
+		return err
+	}
 
+	spinner.Stop()
+	return nil
 	msg = map[string]interface{}{
 		"method":         "bytes",
 		"target":         p.target,
@@ -604,4 +628,8 @@ func getDevInfoFromMsg(data interface{}) (address, version string, bootCnt int, 
 		return
 	}
 	return
+}
+
+func KB(bytes uint64) string {
+	return fmt.Sprintf("%.2f KB", float64(bytes)/math.Pow(2, 10))
 }
