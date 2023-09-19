@@ -41,6 +41,12 @@ func recursiveToMsi(input reflect.Value) (output reflect.Value, err error) {
 			return input, err
 		}
 	case reflect.Slice:
+		switch ivalue.Type().Elem().Kind() {
+		case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint,
+			reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
+			reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
+			goto unhandled
+		}
 		newObj = []any{}
 		for i := 0; i < ivalue.Len(); i++ {
 			iv := ivalue.Index(i)
@@ -160,7 +166,7 @@ func EncodeTimeToTimeHook() mapstructure.EncodeFieldMapHookFunc {
 	}
 }
 
-func EncodeSliceToBase64Hook() mapstructure.EncodeFieldMapHookFunc {
+func EncodeByteSliceToBase64Hook() mapstructure.EncodeFieldMapHookFunc {
 	return func(old reflect.Value) (new reflect.Value, handled bool, err error) {
 		new = old
 		actual, valid := getActualValue(old)

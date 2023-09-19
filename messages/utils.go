@@ -84,7 +84,7 @@ func getMsiable(input any) (msiable Msiable) {
 func ToMsiGeneric(input any, inputHook mapstructure.EncodeFieldMapHookFunc) (msi, error) {
 	output := msi{}
 	var hook mapstructure.EncodeFieldMapHookFunc
-	persistentHooks := mapstructure.ComposeEncodeFieldMapHookFunc(EncodeSliceToBase64Hook(), EncodeMsiableToMsiHook())
+	persistentHooks := mapstructure.ComposeEncodeFieldMapHookFunc(EncodeMsiableToMsiHook())
 	if inputHook == nil {
 		hook = persistentHooks
 	} else {

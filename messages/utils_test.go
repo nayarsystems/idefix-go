@@ -227,8 +227,8 @@ func Test_MapstructureEncodeHooks(t *testing.T) {
 		"sub": map[string]any{
 			"date":   tt.Format(time.UnixDate),
 			"uptime": dd.String(),
-			"bytes":  bytesB64,
-			"any":    bytesB64,
+			"bytes":  bytes,
+			"any":    bytes,
 		},
 	}
 
@@ -237,7 +237,7 @@ func Test_MapstructureEncodeHooks(t *testing.T) {
 	// its encoding to a msi. So that, time.Time and time.Duration fields will be
 	// encoded differently for each struct.
 	encodeHooks := mapstructure.ComposeEncodeFieldMapHookFunc(
-		// EncodeSliceToBase64Hook() hook is added intrinsically (see ToMsiGeneric func)
+		EncodeByteSliceToBase64Hook(),
 		EncodeDurationToSecondsInt64Hook(),
 		EncodeTimeToUnixMilliHook())
 

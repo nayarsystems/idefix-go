@@ -87,13 +87,13 @@ type ExecResMsg struct {
 
 type FileWriteMsg struct {
 	// Path to write the file
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path,omitempty"`
 
 	// File content
-	Data []byte `mapstructure:"data"`
+	Data []byte `mapstructure:"data,omitempty"`
 
 	// File permissions
-	Mode int `mapstructure:"mode"`
+	Mode uint32 `mapstructure:"mode,omitempty"`
 }
 
 type FileWriteResMsg struct {
@@ -101,32 +101,32 @@ type FileWriteResMsg struct {
 
 type FileReadMsg struct {
 	// Path to write the file
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path,omitempty"`
 }
 
 type FileReadResMsg struct {
 	// File content
-	Data []byte `mapstructure:"data"`
+	Data []byte `mapstructure:"data,omitempty"`
 }
 
 type FileSHA256Msg struct {
 	// Path to write the file
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path,omitempty"`
 }
 
 type FileSHA256ResMsg struct {
 	// File hash
-	Hash []byte `mapstructure:"hash"`
+	Hash []byte `mapstructure:"hash,omitempty"`
 }
 
 type FileSizeMsg struct {
 	// File path to check size
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path,omitempty"`
 }
 
 type FileSizeResMsg struct {
 	// File size in bytes
-	Size int64 `mapstructure:"size"`
+	Size int64 `mapstructure:"size,omitempty"`
 }
 
 type FreeSpaceMsg struct {
@@ -136,7 +136,7 @@ type FreeSpaceMsg struct {
 
 type FreeSpaceResMsg struct {
 	// Bytes of free space
-	Free uint64 `mapstructure:"free"`
+	Free uint64 `mapstructure:"free,omitempty"`
 }
 
 type RemoveMsg struct {
@@ -145,6 +145,68 @@ type RemoveMsg struct {
 }
 
 type RemoveResMsg struct {
+}
+
+type FileCopyMsg struct {
+	// Source path
+	SrcPath string `mapstructure:"srcPath,omitempty"`
+
+	// Dst path
+	DstPath string `mapstructure:"dstPath,omitempty"`
+}
+
+type FileCopyResMsg struct {
+}
+
+type MoveMsg struct {
+	// Source path
+	SrcPath string `mapstructure:"srcPath,omitempty"`
+
+	// Dst path
+	DstPath string `mapstructure:"dstPath,omitempty"`
+}
+
+type MoveResMsg struct {
+}
+
+const (
+	MkdirTypeVolatile = 0
+	MkdirTypeScratch  = 1
+	MkdirTypeAbsolute = 2
+)
+
+type MkdirMsg struct {
+	Type int    `mapstructure:"type,omitempty"`
+	Path string `mapstructure:"path,omitempty"`
+}
+
+type MkdirResMsg struct {
+	Path string `mapstructure:"path,omitempty"`
+}
+
+type PatchMsg struct {
+	Source      string `mapstructure:"source,omitempty"`
+	Destination string `mapstructure:"destination,omitempty"`
+	PatchData   []byte `mapstructure:"patchData,omitempty"`
+	PatchPath   string `mapstructure:"patchPath,omitempty"`
+}
+
+type PatchResMsg struct {
+}
+
+type ListDirMsg struct {
+	Path string `mapstructure:"path,omitempty"`
+}
+
+type FileInfo struct {
+	Name  string `mapstructure:"name,omitempty"`
+	IsDir bool   `mapstructure:"isDir,omitempty"`
+	Size  int64  `mapstructure:"size,omitempty"`
+	Mode  uint32 `mapstructure:"mode,omitempty"`
+}
+
+type ListDirResMsg struct {
+	Files []*FileInfo
 }
 
 /******************/
@@ -157,19 +219,19 @@ const (
 	UpdateTypeLauncherUpgrade = 2
 )
 
-type UpdateReqMsg struct {
+type UpdateMsg struct {
 	Type          int           `mapstructure:"type"`
 	Cause         string        `mapstructure:"cause,omitempty"`
 	StopDelay     time.Duration `mapstructure:"stopDelay,omitempty"`
 	WaitHaltDelay time.Duration `mapstructure:"waitHaltDelay,omitempty"`
 }
 
-func (m *UpdateReqMsg) ToMsi() (data msi, err error) {
+func (m *UpdateMsg) ToMsi() (data msi, err error) {
 	data, err = ToMsiGeneric(m, EncodeDurationToSecondsInt64Hook())
 	return data, err
 }
 
-func (m *UpdateReqMsg) ParseMsi(input msi) (err error) {
+func (m *UpdateMsg) ParseMsi(input msi) (err error) {
 	err = ParseMsiGeneric(input, m, DecodeNumberToDurationHookFunc(time.Second))
 	if err != nil {
 		return err
@@ -178,7 +240,7 @@ func (m *UpdateReqMsg) ParseMsi(input msi) (err error) {
 }
 
 type UpdateResMsg struct {
-	UpdateReqMsg `mapstructure:",squash"`
+	UpdateMsg `mapstructure:",squash"`
 }
 
 /*******************/
