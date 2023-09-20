@@ -56,7 +56,7 @@ func (c *Client) Call2(remoteAddress string, msg *m.Message, resp any, timeout t
 		return fmt.Errorf(msg.Err)
 	}
 	if resp != nil {
-		respMsi, err := m.MsiCast(ret.Data)
+		respMsi, err := m.GetMsi(ret.Data)
 		if err != nil {
 			return err
 		}

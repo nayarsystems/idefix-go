@@ -141,18 +141,26 @@ func ParseMsiGeneric(input msi, output any, hookFunc mapstructure.DecodeHookFunc
 }
 
 func ParseMsg(input any, output any) error {
-	inputMsi, err := MsiCast(input)
+	inputMsi, err := GetMsi(input)
 	if err != nil {
 		return err
 	}
 	return ParseMsi(inputMsi, output)
 }
 
+// Deprecated: use GetMsi
 func MsiCast(input any) (msi, error) {
+	return GetMsi(input)
+}
+
+func GetMsi(input any) (msi, error) {
 	if inputMsi, ok := input.(msi); ok {
 		return inputMsi, nil
 	}
-	return nil, fmt.Errorf("%v (%T) is not a msi", input, input)
+	if input == nil {
+		return msi{}, nil
+	}
+	return nil, fmt.Errorf("can't get msi from %T", input)
 }
 
 // Gets the schema Id from a bstates based event's type field.

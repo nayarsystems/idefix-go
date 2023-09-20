@@ -97,6 +97,8 @@ type FileWriteMsg struct {
 }
 
 type FileWriteResMsg struct {
+	// File hash
+	Hash []byte `mapstructure:"hash,omitempty"`
 }
 
 type FileReadMsg struct {

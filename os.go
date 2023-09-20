@@ -26,7 +26,7 @@ const (
 	TopicCmdListDir    = TopicCmd + ".listdir"
 )
 
-func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (err error) {
+func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
 	msg := &m.FileWriteMsg{
 		Path: path,
 		Data: data,
@@ -34,6 +34,7 @@ func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, 
 	}
 	resp := &m.FileWriteResMsg{}
 	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
+	hash = base64.StdEncoding.EncodeToString(resp.Hash)
 	return
 }
 
