@@ -6,7 +6,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/nayarsystems/idefix-go v0.0.31
+	github.com/nayarsystems/idefix-go v0.1.0
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nayarsystems/bstates v0.3.0 // indirect
 	github.com/nayarsystems/buffer v0.1.1 // indirect
-	github.com/nayarsystems/mapstructure v0.0.0-20230627150341-7bf3e832a92c // indirect
+	github.com/nayarsystems/mapstructure v0.0.0-20230919191513-e7445bf97909 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
