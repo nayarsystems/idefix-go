@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -57,21 +57,21 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	data, err := ei.N(patchmap).M("data").Bytes()
+	upgradePatch, err := ei.N(patchmap).M("data").Bytes()
 	if err != nil {
 		return err
 	}
 
-	var rdata []byte
+	var rollbackPatch []byte
 	if p.rollbackType == "patch" && p.createRollback {
-		rdata, err = ei.N(patchmap).M("rdata").Bytes()
+		rollbackPatch, err = ei.N(patchmap).M("rdata").Bytes()
 		if err != nil {
 			return fmt.Errorf("selected rollback type is \"patch\" but cannot get the rollback data data in patch file: %w", err)
 		}
 	}
 
-	srchash := Sha256B64(srchashRaw)
-	dsthash := Sha256B64(dsthashRaw)
+	srchash := base64.StdEncoding.EncodeToString(srchashRaw)
+	dsthash := base64.StdEncoding.EncodeToString(dsthashRaw)
 
 	upgradeEnvPath, rollbackEnvPath, upgradeBinPath, rollbackBinPath, exitType := getRawParams(p)
 
@@ -87,7 +87,8 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	updateParamsTable := pterm.TableData{
 		{"Upgrade params", ""},
 		{"Target", "idefix"},
-		{"Upgrade patch size", fmt.Sprintf("%d", len(data))},
+		{"Reason", p.reason},
+		{"Upgrade patch size", KB(uint64(len(upgradePatch)))},
 		{"Source hash", srchash},
 		{"Destination hash", dsthash},
 		{"Create rollback", fmt.Sprintf("%v", p.createRollback)},
@@ -107,7 +108,6 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	}...)
 
 	pterm.DefaultTable.WithHasHeader().WithData(updateParamsTable).Render()
-	fmt.Println()
 
 	ic, err := getConnectedClient()
 	if err != nil {
@@ -136,7 +136,6 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println()
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device", ""},
 		{"Address", address},
@@ -156,9 +155,60 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("Sending update...")
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("sending upgrade env file...")
 	defer spinner.Stop()
 
-	pterm.Success.Println("Patch completed! Device should reboot now...")
+	err = sendEnvFile(ic, p.address, p, upgradeEnvPath, false, srchash, dsthash, p.tout)
+	if err != nil {
+		return err
+	}
+
+	patchHash := Sha256B64(upgradePatch)
+	spinner.UpdateText("sending upgrade patch file...")
+	receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, upgradePatch, 0744, p.tout)
+	if err != nil {
+		return err
+	}
+	if receivedHash != patchHash {
+		return fmt.Errorf("received upgrade hash (%s) != expected upgrade hash (%s)", receivedHash, patchHash)
+	}
+
+	if p.createRollback {
+		spinner.UpdateText("sending rollback env file...")
+		err = sendEnvFile(ic, p.address, p, rollbackEnvPath, true, dsthash, srchash, p.tout)
+		if err != nil {
+			return err
+		}
+		if p.rollbackType == "patch" {
+			patchHash := Sha256B64(rollbackPatch)
+			spinner.UpdateText("sending rollback patch file...")
+			receivedHash, err := idefixgo.FileWrite(ic, p.address, rollbackBinPath, rollbackPatch, 0744, p.tout)
+			if err != nil {
+				return err
+			}
+			if receivedHash != patchHash {
+				return fmt.Errorf("received upgrade hash (%s) != expected upgrade hash (%s)", receivedHash, patchHash)
+			}
+
+		} else {
+			spinner.UpdateText("backup idefix file...")
+			err = idefixgo.FileCopy(ic, p.address, IdefixExecIdefixRelativePath, rollbackBinPath, p.tout)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	spinner.UpdateText("sending update request...")
+	res, err := idefixgo.ExitToUpdate(ic, p.address,
+		exitType,
+		p.reason,
+		time.Duration(p.stopToutSecs)*time.Second,
+		time.Duration(p.haltToutSecs)*time.Second,
+		p.tout)
+	if err != nil {
+		return err
+	}
+	pterm.Success.Printf("Response. %#v\nUpdate completed!\nDevice should reboot now...\n", res)
 	return nil
 }

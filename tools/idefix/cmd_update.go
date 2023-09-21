@@ -38,7 +38,7 @@ func init() {
 
 	cmdUpdateSendPatch.Flags().StringP("patch", "p", "", "Patch file")
 	cmdUpdateSendPatch.Flags().BoolP("rollback", "r", false, "Also either send (it depends on rollback-type param) a rollback patch (.patch) or request to save a backup file as rollback file (.bin)")
-	cmdUpdateSendPatch.Flags().StringP("rollback-type", "p", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
+	cmdUpdateSendPatch.Flags().String("rollback-type", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
 	cmdUpdateSendPatch.MarkFlagRequired("patch")
 	cmdUpdateSend.AddCommand(cmdUpdateSendPatch)
 
@@ -48,6 +48,7 @@ func init() {
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
+	cmdUpdateSend.PersistentFlags().String("reason", "", "Optinal reason for update")
 	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
 	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
 	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
@@ -122,6 +123,7 @@ const (
 
 type updateParams struct {
 	address                 string
+	reason                  string
 	tout                    time.Duration
 	target                  m.TargetExec
 	targetStr               string
@@ -160,6 +162,11 @@ func getUpdateParams(cmd *cobra.Command) (p *updateParams, err error) {
 	p.tout = time.Duration(toutMs) * time.Millisecond
 
 	p.address, err = cmd.Flags().GetString("address")
+	if err != nil {
+		return
+	}
+
+	p.reason, err = cmd.Flags().GetString("reason")
 	if err != nil {
 		return
 	}

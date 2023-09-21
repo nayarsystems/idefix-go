@@ -46,6 +46,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Upgrade params", ""},
 		{"Target", p.targetStr},
+		{"Reason", p.reason},
 		{"Upgrade file size", KB(uint64(len(updatebytes)))},
 		{"Updated file hash", dsthash},
 		{"Create rollback (full binary)", fmt.Sprintf("%v", p.createRollback)},
@@ -102,10 +103,9 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
 	}
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("")
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("sending upgrade env file...")
 	defer spinner.Stop()
 
-	spinner.UpdateText("sending upgrade env file...")
 	err = sendEnvFile(ic, p.address, p, upgradeEnvPath, false, "", "", p.tout)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	spinner.UpdateText("sending update request...")
 	res, err := idefixgo.ExitToUpdate(ic, p.address,
 		exitType,
-		"",
+		p.reason,
 		time.Duration(p.stopToutSecs)*time.Second,
 		time.Duration(p.haltToutSecs)*time.Second,
 		p.tout)
