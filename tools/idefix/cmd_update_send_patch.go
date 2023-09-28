@@ -116,7 +116,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	msg := map[string]interface{}{
 		"report": false,
 	}
-	ret, err := ic.Call(p.address, &m.Message{To: "sys.cmd.info", Data: msg}, time.Second*10)
+	ret, err := ic.Call(p.address, &m.Message{To: "sys.cmd.info", Data: msg}, p.tout)
 	if err != nil {
 		return fmt.Errorf("cannot get device info: %w", err)
 	}

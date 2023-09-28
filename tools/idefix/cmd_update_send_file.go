@@ -68,7 +68,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	msg := map[string]interface{}{
 		"report": false,
 	}
-	ret, err := ic.Call(p.address, &m.Message{To: "sys.cmd.info", Data: msg}, time.Second)
+	ret, err := ic.Call(p.address, &m.Message{To: "sys.cmd.info", Data: msg}, p.tout)
 	if err != nil {
 		return err
 	}
