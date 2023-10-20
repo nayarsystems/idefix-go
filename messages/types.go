@@ -134,10 +134,10 @@ func (e *Event) String() string {
 /********************/
 
 type SchemaInfo struct {
+	Hash        string `bson:"_id" json:"hash" msgpack:"hash"`
 	Address     string `bson:"address" json:"address" msgpack:"address"`
 	Domain      string `bson:"domain" json:"domain" msgpack:"domain"`
 	Description string `bson:"description" json:"description" msgpack:"description"`
-	Hash        string `bson:"hash" json:"hash" msgpack:"hash"`
 	Payload     string `bson:"payload" json:"payload" msgpack:"payload"`
 }
 
