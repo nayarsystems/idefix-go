@@ -57,7 +57,7 @@ type AddressDomainGetMsg struct {
 
 type EventMsg struct {
 	// UID must be provided by the client, and must be a unique identifier
-	UID string `bson:"_id" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
+	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
 
 	// Meta can hold any client provided data related to this event
 	Meta map[string]interface{} `bson:"meta" json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
