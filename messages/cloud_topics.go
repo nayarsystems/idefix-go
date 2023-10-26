@@ -61,6 +61,9 @@ const (
 	// Mqtt prefix for idefix project
 	MqttIdefixPrefix = "ifx"
 
+	// Mqtt prefix for public messages
+	MqttPublicPrefix = "p"
+
 	// IdefixPrefix is the prefix for all cloud system commands like login
 	IdefixCmdPrefix = "idefix"
 

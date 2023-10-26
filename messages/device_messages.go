@@ -82,6 +82,41 @@ type ExecResMsg struct {
 }
 
 /***************/
+/*   Streams   */
+/***************/
+
+type StreamSubMsg struct {
+	TargetTopic string        `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
+	PublicTopic string        `json:"pub" msgpack:"pub" mapstructure:"pub"`
+	Timeout     time.Duration `json:"tout" msgpack:"tout" mapstructure:"tout"`
+}
+
+func (m *StreamSubMsg) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m, EncodeDurationToSecondsInt64Hook())
+	return data, err
+}
+
+func (m *StreamSubMsg) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m, DecodeNumberToDurationHookFunc(time.Second))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type StreamSubResMsg struct {
+	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
+}
+
+type StreamUnsubMsg struct {
+	TargetTopic string `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
+}
+
+type StreamUnsubResMsg struct {
+	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
+}
+
+/***************/
 /*   OS Utils  */
 /***************/
 
