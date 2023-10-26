@@ -1,6 +1,20 @@
 package messages
 
 const (
+	// TopicRemoteSubscribe is the prefix for remote subscription using public MQTT topic
+	//
+	// - message: StreamSubMsg
+	//
+	// - response: StreamSubResMsg
+	TopicRemoteSubscribe = "$rs"
+
+	// TopicRemoteUnsubscribe is the prefix for remote unsubscription using public MQTT topic
+	//
+	// - message: StreamUnsubMsg
+	//
+	// - response: StreamUnsubResMsg
+	TopicRemoteUnsubscribe = "$ru"
+
 	// TopicCmdGetDevInfo is used to get the entire ENV for every device matched with the given mongo expression
 	//
 	// - message: DevListReqMsg
