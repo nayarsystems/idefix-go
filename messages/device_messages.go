@@ -86,8 +86,10 @@ type ExecResMsg struct {
 /***************/
 
 type StreamSubMsg struct {
+	SubId       string        `json:"id" msgpack:"id" mapstructure:"id"`
 	TargetTopic string        `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
 	PublicTopic string        `json:"pub" msgpack:"pub" mapstructure:"pub"`
+	PayloadOnly bool          `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
 	Timeout     time.Duration `json:"tout" msgpack:"tout" mapstructure:"tout"`
 }
 
@@ -104,16 +106,21 @@ func (m *StreamSubMsg) ParseMsi(input msi) (err error) {
 	return nil
 }
 
+type StreamMsg struct {
+	SourceTopic string `json:"s,omitempty" msgpack:"s,omitempty" mapstructure:"s,omitempty"`
+	Payload     any    `json:"p" msgpack:"p" mapstructure:"p"`
+}
+
 type StreamSubResMsg struct {
+	SubId       string `json:"id" msgpack:"id" mapstructure:"id"`
 	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
 }
 
 type StreamUnsubMsg struct {
-	TargetTopic string `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
+	SubId string `json:"id" msgpack:"id" mapstructure:"id"`
 }
 
 type StreamUnsubResMsg struct {
-	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
 }
 
 /***************/
