@@ -42,7 +42,7 @@ func setup() error {
 
 func createTestDomain(c *Client) {
 	domainCreateMsg := m.DomainCreateMsg{
-		DomainInfo: m.DomainInfo{
+		Domain: m.Domain{
 			Domain: testDomain,
 			Allow:  `{"$true": true}`,
 		},

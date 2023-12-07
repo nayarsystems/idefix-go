@@ -178,7 +178,7 @@ type DomainDeleteMsg struct {
 
 type DomainCreateMsg struct {
 	// Domain name
-	DomainInfo `bson:",inline" mapstructure:",squash"`
+	Domain `bson:",inline" mapstructure:",squash"`
 }
 
 type DomainCreateResponseMsg struct {
@@ -187,7 +187,7 @@ type DomainCreateResponseMsg struct {
 }
 
 type DomainUpdateMsg struct {
-	DomainInfo `bson:",inline" mapstructure:",squash"`
+	Domain `bson:",inline" mapstructure:",squash"`
 }
 
 type DomainUpdateResponseMsg struct {

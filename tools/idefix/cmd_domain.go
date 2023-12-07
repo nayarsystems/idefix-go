@@ -86,7 +86,7 @@ func cmdDomainCreateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	msg := &m.DomainCreateMsg{
-		DomainInfo: *domain,
+		Domain: *domain,
 	}
 	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainCreate, msg, getTimeout(cmd))
 }
@@ -112,13 +112,13 @@ func cmdDomainUpdateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	msg := &m.DomainUpdateMsg{
-		DomainInfo: *domain,
+		Domain: *domain,
 	}
 	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainUpdate, msg, getTimeout(cmd))
 }
 
-func parseDomainFlags(cmd *cobra.Command) (domain *m.DomainInfo, err error) {
-	domain = &m.DomainInfo{}
+func parseDomainFlags(cmd *cobra.Command) (domain *m.Domain, err error) {
+	domain = &m.Domain{}
 	domain.Domain, err = cmd.Flags().GetString("domain")
 	if err != nil {
 		return nil, err

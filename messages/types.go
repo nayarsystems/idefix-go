@@ -71,27 +71,23 @@ type AddressRules struct {
 /*  Domains  */
 /*************/
 
-type DomainInfo struct {
+type Domain struct {
 	// Domain name
-	Domain string `bson:"_id" json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 
 	// List of addresses which have admin permissions on this domain
-	Admins []string `bson:"admins" json:"admins" msgpack:"admins" mapstructure:"admins"`
+	Admins []string `json:"admins" msgpack:"admins" mapstructure:"admins"`
 
 	// "Allow" rules to apply to every message reaching an address in this domain
-	Allow string `bson:"allow" json:"allow" msgpack:"allow" mapstructure:"allow,omitempty"`
+	Allow string `json:"allow" msgpack:"allow" mapstructure:"allow,omitempty"`
 
 	// "Deny" rules to apply to every message reaching an address in this domain
-	Deny string `bson:"deny" json:"deny" msgpack:"deny" mapstructure:"deny,omitempty"`
+	Deny string `json:"deny" msgpack:"deny" mapstructure:"deny,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `bson:"env" json:"env" msgpack:"env" mapstructure:"env"`
-}
-
-type Domain struct {
-	DomainInfo `bson:",inline" mapstructure:",squash"`
-	Creation   time.Time `bson:"creation" json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
-	LastUpdate time.Time `bson:"lastUpdate" json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty"`
+	Env        map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Creation   time.Time              `json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
+	LastUpdate time.Time              `json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty"`
 }
 
 func (m *Domain) ToMsi() (data msi, err error) {
