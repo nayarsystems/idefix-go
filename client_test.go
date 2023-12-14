@@ -8,7 +8,7 @@ import (
 	"time"
 
 	m "github.com/nayarsystems/idefix-go/messages"
-	"github.com/nayarsystems/idefix/core/cert"
+	"github.com/nayarsystems/idefix/libraries/cert"
 	"github.com/stretchr/testify/require"
 )
 
