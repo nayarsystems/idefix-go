@@ -124,32 +124,6 @@ func parseDomainFlags(cmd *cobra.Command) (domain *m.Domain, err error) {
 		return nil, err
 	}
 
-	sallow, err := cmd.Flags().GetString("allow")
-	if err != nil {
-		return nil, err
-	}
-	if cmd.Flags().Changed("allow") {
-		dummy := make(map[string]interface{})
-		err = json.Unmarshal([]byte(sallow), &dummy)
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse allow rule: %w", err)
-		}
-		domain.Allow = sallow
-	}
-
-	sdeny, err := cmd.Flags().GetString("deny")
-	if err != nil {
-		return nil, err
-	}
-	if cmd.Flags().Changed("deny") {
-		dummy := make(map[string]interface{})
-		err = json.Unmarshal([]byte(sdeny), &dummy)
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse deny rule: %w", err)
-		}
-		domain.Deny = sdeny
-	}
-
 	env := make(map[string]interface{})
 	senv, err := cmd.Flags().GetString("env")
 	if err != nil {

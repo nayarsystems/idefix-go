@@ -43,8 +43,8 @@ func setup() error {
 func createTestDomain(c *Client) {
 	domainCreateMsg := m.DomainCreateMsg{
 		Domain: m.Domain{
-			Domain: testDomain,
-			Allow:  `{"$true": true}`,
+			Domain:      testDomain,
+			AccessRules: `func f(){return 1;}`, // 0: not decided, 1: allow, 2: deny
 		},
 	}
 	msg := &m.Message{

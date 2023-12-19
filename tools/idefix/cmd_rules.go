@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
 )
@@ -15,8 +12,7 @@ func init() {
 
 	cmdRulesUpdate.Flags().StringP("address", "a", "", "Device address")
 	cmdRulesUpdate.MarkFlagRequired("address")
-	cmdRulesUpdate.Flags().StringP("allow", "", "", "Allow rules")
-	cmdRulesUpdate.Flags().StringP("deny", "", "", "Deny rules")
+	cmdRulesUpdate.Flags().StringP("accessRules", "", "", "Device access rules (snippet)")
 	cmdRules.AddCommand(cmdRulesUpdate)
 
 	rootCmd.AddCommand(cmdRules)
@@ -40,7 +36,7 @@ var cmdRulesUpdate = &cobra.Command{
 }
 
 func cmdRulesGetRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := m.AddressRulesGetMsg{}
+	msg := m.AddressAccessRulesGetMsg{}
 	msg.Address, err = cmd.Flags().GetString("address")
 
 	if err != nil {
@@ -51,37 +47,17 @@ func cmdRulesGetRunE(cmd *cobra.Command, args []string) (err error) {
 }
 
 func cmdRulesUpdateRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := m.AddressRulesUpdateMsg{}
+	msg := m.AddressAccessRulesUpdateMsg{}
 	msg.Address, err = cmd.Flags().GetString("address")
 	if err != nil {
 		return err
 	}
 
-	sallow, err := cmd.Flags().GetString("allow")
+	snippet, err := cmd.Flags().GetString("accessRules")
 	if err != nil {
 		return err
 	}
-	if cmd.Flags().Changed("allow") {
-		dummy := make(map[string]interface{})
-		err = json.Unmarshal([]byte(sallow), &dummy)
-		if err != nil {
-			return fmt.Errorf("cannot parse allow rule: %w", err)
-		}
-		msg.Allow = m.MongoRulesExpression(sallow)
-	}
-
-	sdeny, err := cmd.Flags().GetString("deny")
-	if err != nil {
-		return err
-	}
-	if cmd.Flags().Changed("deny") {
-		dummy := make(map[string]interface{})
-		err = json.Unmarshal([]byte(sdeny), &dummy)
-		if err != nil {
-			return fmt.Errorf("cannot parse deny rule: %w", err)
-		}
-		msg.Deny = m.MongoRulesExpression(sdeny)
-	}
+	msg.AccessRules = snippet
 
 	return commandCall2(m.IdefixCmdPrefix, m.CmdAddressRulesUpdate, msg, getTimeout(cmd))
 }

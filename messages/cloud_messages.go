@@ -24,31 +24,35 @@ type LoginMsg struct {
 
 type AddressTokenResetMsg struct {
 	// Address to query
-	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
 type AddressDisableMsg struct {
 	// Address to query
-	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 	// Disable or enable the address
-	Disabled bool `bson:"disabled" json:"disabled" msgpack:"disabled" mapstructure:"disabled,omitempty"`
+	Disabled bool `json:"disabled" msgpack:"disabled" mapstructure:"disabled,omitempty"`
 }
 
-type AddressRulesGetMsg struct {
+type AddressAccessRulesGetMsg struct {
 	// Address to query
-	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
-type AddressRulesUpdateMsg struct {
-	// Address to query
-	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+type AddressAccessRulesGetResponseMsg struct {
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+}
 
-	AddressRules `bson:",inline" mapstructure:",squash"`
+type AddressAccessRulesUpdateMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 }
 
 type AddressDomainGetMsg struct {
 	// Address to query
-	Address string `bson:"address" json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 }
 
 /************/

@@ -53,20 +53,6 @@ func (m *SysInfo) ParseMsi(input msi) (err error) {
 	return nil
 }
 
-/********************/
-/*   Address Rules  */
-/********************/
-
-type MongoRulesExpression string
-
-type AddressRules struct {
-	// "Allow" rules to apply to every message reaching this address
-	Allow MongoRulesExpression `json:"allow,omitempty"`
-
-	// "Deny" rules to apply to every message reaching this address
-	Deny MongoRulesExpression `json:"deny,omitempty"`
-}
-
 /*************/
 /*  Domains  */
 /*************/
@@ -78,11 +64,8 @@ type Domain struct {
 	// List of addresses which have admin permissions on this domain
 	Admins []string `json:"admins" msgpack:"admins" mapstructure:"admins"`
 
-	// "Allow" rules to apply to every message reaching an address in this domain
-	Allow string `json:"allow" msgpack:"allow" mapstructure:"allow,omitempty"`
-
-	// "Deny" rules to apply to every message reaching an address in this domain
-	Deny string `json:"deny" msgpack:"deny" mapstructure:"deny,omitempty"`
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
 	Env        map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
