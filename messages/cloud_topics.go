@@ -10,6 +10,9 @@ const (
 	// TopicTransportDomainUpdate is the update domain function
 	TopicTransportDomainUpdate = TopicTransportIdefixPrefix + CmdDomainUpdate
 
+	// TopicTransportDomainUpdateAccessRules is the update domain function
+	TopicTransportDomainUpdateAccessRules = TopicTransportIdefixPrefix + CmdDomainUpdateAccessRules
+
 	// TopicTransportDomainDelete is the delete domain function
 	TopicTransportDomainDelete = TopicTransportIdefixPrefix + CmdDomainDelete
 
@@ -78,6 +81,9 @@ const (
 
 	// CmdDomainUpdate is the update domain function
 	CmdDomainUpdate = "domain.update"
+
+	// CmdDomainUpdateAccessRules is the update domain's access rules function
+	CmdDomainUpdateAccessRules = "domain.rules.update"
 
 	// CmdDomainDelete is the delete domain function
 	CmdDomainDelete = "domain.delete"

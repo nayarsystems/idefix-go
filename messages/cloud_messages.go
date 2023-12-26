@@ -11,11 +11,11 @@ import (
 /************/
 
 type LoginMsg struct {
-	Address  string                 `json:"address" msgpack:"address"`
-	Encoding string                 `json:"encoding" msgpack:"encoding"`
-	Token    string                 `json:"token" msgpack:"token"`
-	Time     int64                  `json:"time" msgpack:"time"`
-	Meta     map[string]interface{} `json:"meta" msgpack:"meta"`
+	Address  string                 `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Encoding string                 `json:"encoding" msgpack:"encoding" mapstructure:"encoding,omitempty"`
+	Token    string                 `json:"token" msgpack:"token" mapstructure:"token,omitempty"`
+	Time     int64                  `json:"time" msgpack:"time" mapstructure:"time,omitempty"`
+	Meta     map[string]interface{} `json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
 }
 
 /********************/
@@ -48,6 +48,9 @@ type AddressAccessRulesUpdateMsg struct {
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
 
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+}
+
+type AddressAccessRulesUpdateResponseMsg struct {
 }
 
 type AddressDomainGetMsg struct {
@@ -196,6 +199,17 @@ type DomainUpdateMsg struct {
 
 type DomainUpdateResponseMsg struct {
 	Domain `bson:",inline" mapstructure:",squash"`
+}
+
+type DomainUpdateAccessRulesMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+}
+
+type DomainUpdateAccessRulesResponseMsg struct {
 }
 
 type DomainAssignMsg struct {
