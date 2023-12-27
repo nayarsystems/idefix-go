@@ -287,8 +287,8 @@ type GroupGetAddressesMsg struct {
 }
 
 type GroupGetAddressesResponseMsg struct {
-	// Addresses in group
-	Addresses []string `json:"addresses" msgpack:"addresses" mapstructure:"addresses"`
+	// Addresses in group: domain -> addresses
+	Addresses map[string][]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses"`
 }
 
 type AddressGetGroupsMsg struct {
@@ -300,6 +300,6 @@ type AddressGetGroupsMsg struct {
 }
 
 type AddressGetGroupsResponseMsg struct {
-	// Address's groups
-	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+	// Address's groups: domain -> groups
+	Groups map[string][]string `json:"groups" msgpack:"groups" mapstructure:"groups"`
 }
