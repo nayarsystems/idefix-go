@@ -246,3 +246,60 @@ type DomainListAddressesMsg struct {
 type DomainListAddressesResponseMsg struct {
 	Addresses map[string]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
 }
+
+/*************/
+/*  Groups  */
+/*************/
+
+type GroupAddAddressMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+
+	// Group name
+	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+
+	// Address to assign
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+}
+type GroupAddAddressResponseMsg struct {
+}
+
+type GroupRemoveAddressMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+
+	// Group name
+	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+
+	// Address to remove
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+}
+
+type GroupRemoveAddressResponseMsg struct {
+}
+
+type GroupGetAddressesMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+
+	// Group name
+	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+}
+
+type GroupGetAddressesResponseMsg struct {
+	// Addresses in group
+	Addresses []string `json:"addresses" msgpack:"addresses" mapstructure:"addresses"`
+}
+
+type AddressGetGroupsMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+
+	// Address
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+}
+
+type AddressGetGroupsResponseMsg struct {
+	// Address's groups
+	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+}

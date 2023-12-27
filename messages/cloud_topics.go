@@ -31,6 +31,18 @@ const (
 	// TopicTransportDomainTree list every nested domain under the specified domain
 	TopicTransportDomainTree = TopicTransportIdefixPrefix + CmdDomainTree
 
+	// TopicTransportAddToGroup: add an address to a group
+	TopicTransportAddToGroup = TopicTransportIdefixPrefix + CmdGroupAddAddress
+
+	// TopicTransportRemoveFromGroup remove an address from a group
+	TopicTransportRemoveFromGroup = TopicTransportIdefixPrefix + CmdGroupRemoveAddress
+
+	// TopicTransportGetAddressGroups: add an address to a group
+	TopicTransportGetAddressGroups = TopicTransportIdefixPrefix + CmdAddressGetGroups
+
+	// TopicTransportGetAddressGroups: list all the addresses from a group
+	TopicTransportGetGroupAddresses = TopicTransportIdefixPrefix + CmdGroupGetAddresses
+
 	// TopicTransportEnvGet is the environment get function
 	TopicTransportEnvGet = TopicTransportIdefixPrefix + CmdEnvGet
 
@@ -103,8 +115,20 @@ const (
 	// CmdDomainTree list every nested domain under the specified domain
 	CmdDomainTree = "domain.tree"
 
+	// CmdGroupAddAddress is used to add an address to a group
+	CmdGroupAddAddress = "group.add"
+
+	// CmdGroupRemoveAddress is used to remove an address from a group
+	CmdGroupRemoveAddress = "group.remove"
+
+	// CmdGroupGetAddresses is used to get all the addresseses from a group
+	CmdGroupGetAddresses = "group.get"
+
 	// CmdEnvGet is the environment get function
 	CmdEnvGet = "env.get"
+
+	// CmdAddressGetGroups is used to get the groups of an address
+	CmdAddressGetGroups = "address.groups.get"
 
 	// CmdLocalRulesGet is used to get the local rules for the given client
 	CmdAddressRulesGet = "address.rules.get"
