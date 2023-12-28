@@ -300,6 +300,6 @@ type AddressGetGroupsMsg struct {
 }
 
 type AddressGetGroupsResponseMsg struct {
-	// Address's groups: domain -> groups
-	Groups map[string][]string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+	// Address's groups: list of domain#group
+	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
 }
