@@ -25,6 +25,9 @@ const (
 	// TopicTransportDomainListAddresses list every address assigned to domains under the specified domain
 	TopicTransportDomainListAddresses = TopicTransportIdefixPrefix + CmdDomainListAddresses
 
+	// TopicTransportDomainListGroups: used to list every group under the specified domain
+	TopicTransportDomainListGroups = TopicTransportIdefixPrefix + CmdDomainListGroups
+
 	// TopicTransportDomainCountAddresses count every address assigned to domains under the specified domain
 	TopicTransportDomainCountAddresses = TopicTransportIdefixPrefix + CmdDomainCountAddresses
 
@@ -108,6 +111,9 @@ const (
 
 	// CmdDomainListAddresses list every address assigned to domains under the specified domain
 	CmdDomainListAddresses = "domain.list.addresses"
+
+	// CmdDomainListGroups list every group under the specified domain
+	CmdDomainListGroups = "domain.list.groups"
 
 	// CmdDomainCountAddresses count every address assigned to domains under the specified domain
 	CmdDomainCountAddresses = "domain.count.addresses"

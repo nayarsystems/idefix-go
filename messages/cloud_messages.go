@@ -291,6 +291,16 @@ type GroupGetAddressesResponseMsg struct {
 	Addresses map[string][]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses"`
 }
 
+type DomainGetGroupsMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+}
+
+type DomainGetGroupsResponseMsg struct {
+	// Groups <domain>#<group>
+	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+}
+
 type AddressGetGroupsMsg struct {
 	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
