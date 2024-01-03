@@ -61,9 +61,6 @@ type Domain struct {
 	// Domain name
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 
-	// List of addresses which have admin permissions on this domain
-	Admins []string `json:"admins" msgpack:"admins" mapstructure:"admins"`
-
 	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
