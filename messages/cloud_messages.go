@@ -284,6 +284,10 @@ type GroupGetAddressesMsg struct {
 
 	// Group name
 	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+
+	// True: Get addresses from all subdomains from Domain to tis TLD (bubble up)
+	// False: Get addresses from all subdomains below Domain (propagate down)
+	BubbleUp bool `json:"bubbleUp" msgpack:"bubbleUp" mapstructure:"bubbleUp"`
 }
 
 type GroupGetAddressesResponseMsg struct {
@@ -312,4 +316,17 @@ type AddressGetGroupsMsg struct {
 type AddressGetGroupsResponseMsg struct {
 	// Address's groups: list of domain#group
 	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+}
+
+type GroupRemoveMsg struct {
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+
+	// Group name
+	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+
+	// Propagate down the domain tree
+	PropagateDown bool `json:"propagateDown" msgpack:"propagateDown" mapstructure:"propagateDown"`
+}
+type GroupRemoveResponseMsg struct {
 }
