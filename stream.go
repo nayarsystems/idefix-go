@@ -7,6 +7,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/jaracil/ei"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -66,7 +67,18 @@ func (s *Stream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 			return
 		}
 
-		s.buffer <- &m.Message{To: s.topic, Data: msg.Payload()}
+		topic, err := ei.N(tmp).M("s").String()
+		if err != nil {
+			topic = s.topic
+		}
+
+		payload, err := ei.N(tmp).M("p").Raw()
+		if err != nil {
+			fmt.Println("Error getting payload", err)
+			return
+		}
+
+		s.buffer <- &m.Message{To: topic, Data: payload}
 	}
 }
 
