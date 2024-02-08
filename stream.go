@@ -67,6 +67,11 @@ func (s *Stream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 			return
 		}
 
+		if s.payloadOnly {
+			s.buffer <- &m.Message{To: s.topic, Data: tmp}
+			return
+		}
+
 		topic, err := ei.N(tmp).M("s").String()
 		if err != nil {
 			topic = s.topic
