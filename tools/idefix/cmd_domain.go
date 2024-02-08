@@ -137,13 +137,7 @@ func parseDomainFlags(cmd *cobra.Command) (domain *m.Domain, err error) {
 		domain.Env = env
 	}
 
-	admins, err := cmd.Flags().GetStringArray("admin")
-	if err != nil {
-		return nil, err
-	}
-	if cmd.Flags().Changed("admin") {
-		domain.Admins = admins
-	}
+	// TODO: Parse access rules
 
 	return domain, nil
 }
