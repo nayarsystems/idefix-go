@@ -140,6 +140,8 @@ func (mp *Minips[T]) unregisterChannelFromAll(ch chan T) {
 	}
 }
 
+var topicSplitterRegexp = regexp.MustCompile(`^(.*)[.][^.]+$`)
+
 func (mp *Minips[T]) Publish(topic string, elem T) uint {
 	mp.m.Lock()
 	defer mp.m.Unlock()
@@ -147,11 +149,10 @@ func (mp *Minips[T]) Publish(topic string, elem T) uint {
 
 	receivers += mp.publishTopic(topic, elem)
 
-	re := regexp.MustCompile(`^(.*)[.][^.]+$`)
 	remainder := topic
 
 	for {
-		match := re.FindStringSubmatch(remainder)
+		match := topicSplitterRegexp.FindStringSubmatch(remainder)
 		if match == nil {
 			return receivers
 		}
@@ -164,7 +165,7 @@ func (mp *Minips[T]) Publish(topic string, elem T) uint {
 func (mp *Minips[T]) publishTopic(topic string, elem T) uint {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("recovered:", r)
+			fmt.Printf("panic publishing on topic %s: %s\n", topic, r)
 		}
 	}()
 
