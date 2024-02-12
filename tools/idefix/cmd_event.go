@@ -26,7 +26,7 @@ func init() {
 	cmdEventGet.PersistentFlags().StringP("address", "a", "", "Filter by the indicated address")
 	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")
 	cmdEventGet.PersistentFlags().String("csvdir", "", "Directory path used to export all events in csv format (if specified)")
-	cmdEventGet.PersistentFlags().Bool("continue", false, "Perform requests until no events pending")
+	cmdEventGet.PersistentFlags().Bool("continue", false, "Keep polling until cancelation")
 	cmdEvent.AddCommand(cmdEventGet)
 
 	cmdEventGetRaw.Flags().String("format", "json", "Format to show results: [pretty, json]")
@@ -147,9 +147,6 @@ func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBase
 	params.Timeout, _ = time.ParseDuration(timeoutraw)
 	sinceraw, _ := cmd.Flags().GetString("since")
 	params.Continue, _ = cmd.Flags().GetBool("continue")
-	if params.Continue {
-		params.Limit = 100
-	}
 	params.Csvdir, _ = cmd.Flags().GetString("csvdir")
 	params.Since, err = dateparse.ParseStrict(sinceraw)
 	if err != nil {

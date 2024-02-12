@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -52,24 +53,133 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("csvdir: not implemented")
 	}
 
-	keepPolling := true
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start()
+	if bp.UID == "" {
+		err = cmdBstatesGetMultipleBlobs(spinner, ic, bp, p, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	} else {
+		err = cmdBstatesGetSingleBlob(spinner, ic, bp, p, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	}
+	if err != nil {
+		spinner.Fail()
+	} else {
+		spinner.Success()
+	}
+	return err
+}
+
+func cmdBstatesGetSingleBlob(
+	spinner *pterm.SpinnerPrinter,
+	ic *idf.Client,
+	bp *GetEventsBaseParams,
+	p idf.GetBstatesParams,
+	fieldNameRegex *regexp.Regexp,
+	fieldNameRegexStr string,
+	benchmark bool,
+	fieldAlign bool,
+	fieldAlignHs bool,
+	hideBlobs bool) (err error) {
+	spinner.UpdateText(fmt.Sprintf("Query bstates events of blob %s (timeout: %v)", p.UID, p.Timeout))
 	res := idf.GetBstatesResult{}
-	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf("Query for bstates events from domain %q, limit: %d, cid: %s, since: %v, for: %d", p.Domain, p.Limit, p.Cid, p.Since, p.Timeout))
+	_, _, err = idf.GetBstates(ic, &p, res)
+	if err != nil {
+		return err
+	}
+	showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	return
+}
+
+func cmdBstatesGetMultipleBlobs(
+	spinner *pterm.SpinnerPrinter,
+	ic *idf.Client,
+	bp *GetEventsBaseParams,
+	p idf.GetBstatesParams,
+	fieldNameRegex *regexp.Regexp,
+	fieldNameRegexStr string,
+	benchmark bool,
+	fieldAlign bool,
+	fieldAlignHs bool,
+	hideBlobs bool) (err error) {
+
+	res := idf.GetBstatesResult{}
+	keepPolling := true
+	lastCID := ""
+	nReq := 0
+	var domainText string
+	var addressText string
+	if bp.Domain != "" {
+		domainText = bp.Domain
+	} else {
+		domainText = "*"
+	}
+	if bp.AddressFilter != "" {
+		addressText = bp.AddressFilter
+	} else {
+		addressText = "*"
+	}
+
+	var newBlobs uint
+	var totalBlobs uint
 	for keepPolling {
-		var newEvents uint
-		newEvents, p.Cid, err = idf.GetBstates(ic, &p, res)
-		timeout := false
-		if err != nil {
-			timeout = ie.ErrTimeout.Is(err)
-			if !timeout {
-				spinner.Fail()
-				return err
+		spinner.UpdateText(fmt.Sprintf("Query bstates events (domain: %s, address: %s): req. num: %d (timeout: %v, limit: %d, cid: %s, since: %v), new: %d, total: %d", domainText, addressText, nReq, p.Timeout, p.Limit, p.Cid, p.Since, newBlobs, totalBlobs))
+		newBlobs, p.Cid, err = idf.GetBstates(ic, &p, res)
+		if err != nil && !ie.ErrTimeout.Is(err) {
+			return err
+		}
+
+		if bp.Continue {
+			showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+			// Reinitialize res to avoid appending the same events
+			res = idf.GetBstatesResult{}
+			if p.Cid == "" {
+				p.Cid = lastCID
+			}
+			lastCID = p.Cid
+		}
+
+		totalBlobs += newBlobs
+		nReq++
+		keepPolling = rootctx.Err() == nil && bp.Continue
+	}
+
+	if !bp.Continue {
+		showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	}
+	if rootctx.Err() == context.Canceled {
+		return nil
+	}
+	return rootctx.Err()
+}
+
+func getEventRow(stateIdx int, fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
+	row = append(row, state.Timestamp)
+	if stateIdx > 0 {
+		for _, fname := range fieldsNames {
+			dv, ok := delta[fname]
+			if ok {
+				row = append(row, dv)
+			} else {
+				row = append(row, "")
 			}
 		}
-		keepPolling = !timeout && (bp.Continue || newEvents == p.Limit)
+	} else {
+		for _, fname := range fieldsNames {
+			sv, _ := state.State.Get(fname)
+			row = append(row, sv)
+		}
 	}
-	spinner.Success()
+	return
+}
 
+func showEvents(
+	res idf.GetBstatesResult,
+	p *GetEventsBaseParams,
+	fieldNameRegex *regexp.Regexp,
+	fieldNameRegexStr string,
+	benchmark bool,
+	fieldAlign bool,
+	fieldAlignHs bool,
+	hideBlobs bool) {
+	var err error
 	for domain, domainMap := range res {
 		for address, addressMap := range domainMap {
 			for schema, schemaMap := range addressMap {
@@ -218,33 +328,4 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if p.UID == "" {
-		if p.Cid != "" {
-			fmt.Println("CID:", p.Cid)
-		} else {
-			fmt.Println("no events left")
-		}
-	}
-
-	return nil
-}
-
-func getEventRow(stateIdx int, fieldsNames []string, state *idf.Bstate, delta map[string]interface{}) (row table.Row, err error) {
-	row = append(row, state.Timestamp)
-	if stateIdx > 0 {
-		for _, fname := range fieldsNames {
-			dv, ok := delta[fname]
-			if ok {
-				row = append(row, dv)
-			} else {
-				row = append(row, "")
-			}
-		}
-	} else {
-		for _, fname := range fieldsNames {
-			sv, _ := state.State.Get(fname)
-			row = append(row, sv)
-		}
-	}
-	return
 }
