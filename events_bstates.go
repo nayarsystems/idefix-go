@@ -84,7 +84,7 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (tot
 }
 
 func getBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (numblobs uint, cid string, err error) {
-	m, err := ic.GetEvents(p.Domain, p.AddressFilter, p.Since, 100, p.Cid, p.Timeout)
+	m, err := ic.GetEvents(p.Domain, p.AddressFilter, p.Since, p.Limit, p.Cid, p.Timeout)
 	if err != nil {
 		return
 	}
