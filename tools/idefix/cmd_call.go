@@ -69,22 +69,23 @@ func commandCall2(deviceId string, topic string, msg any, timeout time.Duration)
 	}
 	defer ic.Disconnect()
 
+	t0 := time.Now()
 	ret, err := ic.Call(deviceId, &m.Message{To: topic, Data: amap}, timeout)
 	if err != nil {
-		spinner.Fail()
+		spinner.Fail(fmt.Sprintf("%s (%dms)", spinner.Text, time.Since(t0).Milliseconds()))
 		return fmt.Errorf("cannot publish the message to the device: %w", err)
 	}
 
 	if ret.Err != "" {
-		spinner.Fail()
+		spinner.Fail(fmt.Sprintf("%s (%dms)", spinner.Text, time.Since(t0).Milliseconds()))
 		return fmt.Errorf(ret.Err)
 	} else {
 		rj, err := json.MarshalIndent(ret.Data, "", "  ")
 		if err != nil {
-			spinner.Fail()
+			spinner.Fail(fmt.Sprintf("%s (%dms)", spinner.Text, time.Since(t0).Milliseconds()))
 			return err
 		}
-		spinner.Success()
+		spinner.Success(fmt.Sprintf("%s (%dms)", spinner.Text, time.Since(t0).Milliseconds()))
 		fmt.Printf("%s\n", rj)
 	}
 	return nil
