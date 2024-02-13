@@ -14,8 +14,6 @@ require (
 	github.com/vishvananda/netlink v1.1.0
 )
 
-replace github.com/nayarsystems/idefix-go => ../../
-
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
