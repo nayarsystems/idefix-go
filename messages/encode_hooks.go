@@ -143,6 +143,13 @@ func EncodeTimeToStringHook(layout string) mapstructure.EncodeFieldMapHookFunc {
 			return
 		}
 		tt := actual.Interface().(time.Time)
+
+		// RFC3339 representation of zero value
+		// can't be parsed by golang's RFC3339 parser: https://github.com/golang/go/issues/20555
+		if tt.IsZero() {
+			tt = time.Unix(0, 0)
+		}
+
 		ttStr := tt.Format(layout)
 		new = reflect.ValueOf(ttStr)
 		handled = true

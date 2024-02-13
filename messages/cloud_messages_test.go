@@ -2,6 +2,7 @@ package messages
 
 import (
 	"encoding/base64"
+	"fmt"
 	"testing"
 	"time"
 
@@ -93,5 +94,21 @@ func Test_EventsGetMsg(t *testing.T) {
 	err = ParseMsi(inputRaw, &output)
 	require.NoError(t, err)
 
+	require.Equal(t, input, output)
+}
+
+func Test_EventMsgGetUID(t *testing.T) {
+	input := EventsGetMsg{
+		UID: "uid1",
+	}
+	inputRaw, err := ToMsi(input)
+	fmt.Println(inputRaw)
+	require.NoError(t, err)
+
+	output := EventsGetMsg{}
+	err = ParseMsi(inputRaw, &output)
+	require.NoError(t, err)
+
+	input.Since = time.Unix(0, 0)
 	require.Equal(t, input, output)
 }
