@@ -41,9 +41,14 @@ type SysInfoReqMsg struct {
 	ReportInstances []string `bson:"instances" json:"instances" msgpack:"instances" mapstructure:"instances,omitempty"`
 }
 
+type SysInfoReportMsg struct {
+	Class string                 `bson:"class" json:"class" msgpack:"class" mapstructure:"class"`
+	State map[string]interface{} `bson:"state" json:"state" msgpack:"state" mapstructure:"state"`
+}
+
 type SysInfoResMsg struct {
 	SysInfo `mapstructure:",squash"`
-	Report  map[string]map[string]interface{} `mapstructure:"report,omitempty"`
+	Report  map[string]SysInfoReportMsg `mapstructure:"report,omitempty"`
 }
 
 func (m *SysInfoResMsg) ToMsi() (data msi, err error) {
