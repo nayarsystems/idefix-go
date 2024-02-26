@@ -19,6 +19,14 @@ func init() {
 	_ = cmdGroupsAdd.MarkFlagRequired("group")
 	cmdGroups.AddCommand(cmdGroupsAdd)
 
+	cmdGroupsRemove.Flags().StringP("address", "a", "", "Device address")
+	_ = cmdGroupsRemove.MarkFlagRequired("address")
+	cmdGroupsRemove.Flags().StringP("domain", "d", "", "Domain")
+	_ = cmdGroupsRemove.MarkFlagRequired("domain")
+	cmdGroupsRemove.Flags().StringP("group", "g", "", "Group")
+	_ = cmdGroupsRemove.MarkFlagRequired("group")
+	cmdGroups.AddCommand(cmdGroupsRemove)
+
 	rootCmd.AddCommand(cmdGroups)
 }
 
@@ -37,6 +45,12 @@ var cmdGroupsAdd = &cobra.Command{
 	Use:   "add",
 	Short: "Add an address to a group",
 	RunE:  cmdGroupsAddRunE,
+}
+
+var cmdGroupsRemove = &cobra.Command{
+	Use:   "remove",
+	Short: "Remove an address from a group",
+	RunE:  cmdGroupsRemoveRunE,
 }
 
 func cmdGroupsGetRunE(cmd *cobra.Command, args []string) (err error) {
@@ -69,4 +83,23 @@ func cmdGroupsAddRunE(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	return commandCall2(m.IdefixCmdPrefix, m.CmdGroupAddAddress, msg, getTimeout(cmd))
+}
+
+func cmdGroupsRemoveRunE(cmd *cobra.Command, args []string) (err error) {
+	msg := m.GroupRemoveAddressMsg{}
+	msg.Address, err = cmd.Flags().GetString("address")
+	if err != nil {
+		return err
+	}
+	msg.Domain, err = cmd.Flags().GetString("domain")
+	if err != nil {
+		return err
+	}
+
+	msg.Group, err = cmd.Flags().GetString("group")
+	if err != nil {
+		return err
+	}
+
+	return commandCall2(m.IdefixCmdPrefix, m.CmdGroupRemoveAddress, msg, getTimeout(cmd))
 }
