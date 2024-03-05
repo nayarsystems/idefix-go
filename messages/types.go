@@ -59,7 +59,7 @@ func (m *SysInfo) ParseMsi(input msi) (err error) {
 
 type Domain struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 
 	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`

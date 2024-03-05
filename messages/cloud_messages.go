@@ -24,19 +24,19 @@ type LoginMsg struct {
 
 type AddressTokenResetMsg struct {
 	// Address to query
-	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
 }
 
 type AddressDisableMsg struct {
 	// Address to query
-	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
 	// Disable or enable the address
-	Disabled bool `json:"disabled" msgpack:"disabled" mapstructure:"disabled,omitempty"`
+	Disabled bool `json:"disabled" msgpack:"disabled" mapstructure:"disabled,omitempty" validate:"required"`
 }
 
 type AddressAccessRulesGetMsg struct {
 	// Address to query
-	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
 }
 
 type AddressAccessRulesGetResponseMsg struct {
@@ -45,7 +45,7 @@ type AddressAccessRulesGetResponseMsg struct {
 
 type AddressAccessRulesUpdateMsg struct {
 	// Address to query
-	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
 
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 }
@@ -64,7 +64,7 @@ type AddressDomainGetMsg struct {
 
 type EventMsg struct {
 	// UID must be provided by the client, and must be a unique identifier
-	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty"`
+	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty" validate:"required"`
 
 	// Meta can hold any client provided data related to this event
 	Meta map[string]interface{} `bson:"meta" json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
@@ -73,7 +73,7 @@ type EventMsg struct {
 	Type string `bson:"type" json:"type" msgpack:"type" mapstructure:"type,omitempty"`
 
 	// Payload is the raw data of the event
-	Payload interface{} `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty"`
+	Payload interface{} `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty" validate:"required"`
 }
 
 type EventResponseMsg struct {
@@ -146,7 +146,7 @@ type SchemaMsg struct {
 	Description string `bson:"description" json:"description" msgpack:"description" mapstructure:"description,omitempty"`
 
 	// Schema content
-	Payload string `bson:"payload,omitempty" json:"payload,omitempty" msgpack:"payload,omitempty" mapstructure:"payload,omitempty"`
+	Payload string `bson:"payload,omitempty" json:"payload,omitempty" msgpack:"payload,omitempty" mapstructure:"payload,omitempty" validate:"required"`
 }
 
 type SchemaResponseMsg struct {
@@ -156,7 +156,7 @@ type SchemaResponseMsg struct {
 
 type SchemaGetMsg struct {
 	// Hash of the schema requested
-	Hash string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty"`
+	Hash string `bson:"hash" json:"hash" msgpack:"hash" mapstructure:"hash,omitempty" validate:"required"`
 
 	// Check if the schema is available, but do not return its content
 	Check bool `bson:"check,omitempty" json:"check,omitempty" msgpack:"check,omitempty" mapstructure:"check,omitempty"`
@@ -175,12 +175,12 @@ type SchemaGetResponseMsg struct {
 
 type DomainGetMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 }
 
 type DomainDeleteMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"  validate:"required"`
 }
 
 type DomainCreateMsg struct {
@@ -203,10 +203,10 @@ type DomainUpdateResponseMsg struct {
 
 type DomainUpdateAccessRulesMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 
 	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
-	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty" validate:"required"`
 }
 
 type DomainUpdateAccessRulesResponseMsg struct {
@@ -214,15 +214,15 @@ type DomainUpdateAccessRulesResponseMsg struct {
 
 type DomainAssignMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 
 	// Address to assign
-	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
 }
 
 type DomainGetTreeMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 }
 
 // TODO: transform to struct
@@ -230,7 +230,7 @@ type DomainGetTreeResponseMsg []string
 
 type DomainCountAddressesMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 }
 
 type DomainCountAddressesResponseMsg struct {
@@ -238,7 +238,7 @@ type DomainCountAddressesResponseMsg struct {
 }
 
 type DomainListAddressesMsg struct {
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 	Limit  uint   `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
 	Skip   uint   `json:"skip" msgpack:"skip" mapstructure:"skip,omitempty"`
 }
@@ -253,26 +253,26 @@ type DomainListAddressesResponseMsg struct {
 
 type GroupAddAddressMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain" validate:"required"`
 
 	// Group name
-	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+	Group string `json:"group" msgpack:"group" mapstructure:"group" validate:"required"`
 
 	// Address to assign
-	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address" validate:"required"`
 }
 type GroupAddAddressResponseMsg struct {
 }
 
 type GroupRemoveAddressMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain" validate:"required"`
 
 	// Group name
-	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+	Group string `json:"group" msgpack:"group" mapstructure:"group" validate:"required"`
 
 	// Address to remove
-	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address" validate:"required"`
 }
 
 type GroupRemoveAddressResponseMsg struct {
@@ -280,10 +280,10 @@ type GroupRemoveAddressResponseMsg struct {
 
 type GroupGetAddressesMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain" validate:"required"`
 
 	// Group name
-	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+	Group string `json:"group" msgpack:"group" mapstructure:"group" validate:"required"`
 
 	// True: Get addresses from all subdomains from Domain to tis TLD (bubble up)
 	// False: Get addresses from all subdomains below Domain (propagate down)
@@ -297,7 +297,7 @@ type GroupGetAddressesResponseMsg struct {
 
 type DomainGetGroupsMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain" validate:"required"`
 }
 
 type DomainGetGroupsResponseMsg struct {
@@ -310,7 +310,7 @@ type AddressGetGroupsMsg struct {
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 
 	// Address
-	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+	Address string `json:"address" msgpack:"address" mapstructure:"address"  validate:"required"`
 }
 
 type AddressGetGroupsResponseMsg struct {
@@ -320,10 +320,10 @@ type AddressGetGroupsResponseMsg struct {
 
 type GroupRemoveMsg struct {
 	// Domain name
-	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain" validate:"required"`
 
 	// Group name
-	Group string `json:"group" msgpack:"group" mapstructure:"group"`
+	Group string `json:"group" msgpack:"group" mapstructure:"group"  validate:"required"`
 
 	// Propagate down the domain tree
 	PropagateDown bool `json:"propagateDown" msgpack:"propagateDown" mapstructure:"propagateDown"`
