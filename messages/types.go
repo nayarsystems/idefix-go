@@ -25,6 +25,7 @@ type SysInfo struct {
 	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty"`
 	NumExecs            uint64        `mapstructure:"numExecs,omitempty"`
 	RollbackExec        bool          `mapstructure:"rollback,omitempty"`
+	SafeRunExec         bool          `mapstructure:"safeRun,omitempty"`
 	Uptime              time.Duration `mapstructure:"uptime,omitempty"`
 	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty"`
 	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty"`
