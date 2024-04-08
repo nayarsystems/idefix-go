@@ -1,8 +1,6 @@
 module github.com/nayarsystems/idefix-go/tools/idefix
 
-go 1.21.4
-
-toolchain go1.21.6
+go 1.21
 
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
