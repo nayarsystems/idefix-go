@@ -8,8 +8,8 @@ require (
 	github.com/nayarsystems/buffer v0.1.1
 	github.com/nayarsystems/cacert-go v0.20240410.16
 	github.com/nayarsystems/idefix-go/minips v0.0.4
-	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 	github.com/nayarsystems/mapstructure v0.0.0-20230919191513-e7445bf97909
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
@@ -21,7 +21,6 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

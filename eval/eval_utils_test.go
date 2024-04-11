@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nayarsystems/idefix/libraries/eval"
+	"github.com/nayarsystems/idefix-go/eval"
 	"github.com/stretchr/testify/assert"
 )
 

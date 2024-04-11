@@ -10,8 +10,8 @@ import (
 
 	"github.com/jaracil/ei"
 	be "github.com/nayarsystems/bstates"
+	"github.com/nayarsystems/idefix-go/eval"
 	"github.com/nayarsystems/idefix-go/messages"
-	"github.com/nayarsystems/idefix/libraries/eval"
 )
 
 type GetBstatesParams struct {
