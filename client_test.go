@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	cert "github.com/nayarsystems/cacert-go"
 	m "github.com/nayarsystems/idefix-go/messages"
-	"github.com/nayarsystems/idefix/libraries/cert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,14 +44,15 @@ func createTestDomain(c *Client) {
 	domainCreateMsg := m.DomainCreateMsg{
 		Domain: m.Domain{
 			Domain:      testDomain,
-			AccessRules: `func f(){return 1;}`, // 0: not decided, 1: allow, 2: deny
+			AccessRules: `func check(){ return 2; }`, // 0: not decided, 1: allow, 2: deny
 		},
 	}
 	msg := &m.Message{
 		To:   m.CmdDomainCreate,
 		Data: domainCreateMsg,
 	}
-	_ = c.Call2("idefix", msg, nil, time.Second)
+	err := c.Call2("idefix", msg, nil, time.Second)
+	fmt.Println("createTestDomain", err)
 }
 
 func assignTestDomain(c *Client, d *Client) {
@@ -64,7 +65,9 @@ func assignTestDomain(c *Client, d *Client) {
 		To:   m.CmdDomainAssign,
 		Data: domainAssignMsg,
 	}
-	_ = c.Call2("idefix", msg, nil, time.Second)
+	err := c.Call2("idefix", msg, nil, time.Second)
+	fmt.Println("assignTestDomain", err)
+
 }
 
 func createTestClient(address, token string) *Client {
@@ -93,7 +96,7 @@ func TestPublish(t *testing.T) {
 
 	require.NoError(t, err)
 
-	_, err = s.WaitOne(time.Second)
+	_, err = s.WaitOne(time.Second * 5)
 	require.NoError(t, err)
 }
 

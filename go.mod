@@ -6,8 +6,8 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/nayarsystems/bstates v0.6.0
 	github.com/nayarsystems/buffer v0.1.1
+	github.com/nayarsystems/cacert-go v0.20240410.16
 	github.com/nayarsystems/idefix-go/minips v0.0.4
-	github.com/nayarsystems/idefix/libraries/cert v0.0.3
 	github.com/nayarsystems/idefix/libraries/eval v0.0.3
 	github.com/nayarsystems/mapstructure v0.0.0-20230919191513-e7445bf97909
 	github.com/stretchr/testify v1.8.4
