@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/nayarsystems/idefix/libraries/eval"
+	"github.com/nayarsystems/idefix-go/eval"
 	"github.com/spf13/cobra"
 )
 
