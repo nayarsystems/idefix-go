@@ -38,6 +38,16 @@ func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, 
 	return
 }
 
+func FileRead(ic *Client, address, path string, tout time.Duration) (data []byte, err error) {
+	msg := &m.FileReadMsg{
+		Path: path,
+	}
+	resp := &m.FileReadResMsg{}
+	err = ic.Call2(address, &m.Message{To: TopicCmdFileRead, Data: msg}, resp, tout)
+	data = resp.Data
+	return
+}
+
 func FileSHA256(ic *Client, address, path string, tout time.Duration) (hash []byte, err error) {
 	msg := &m.FileSHA256Msg{
 		Path: path,
