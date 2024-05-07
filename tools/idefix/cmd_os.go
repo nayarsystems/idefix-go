@@ -15,3 +15,15 @@ var cmdOs = &cobra.Command{
 	Use:   "os",
 	Short: "os related commands",
 }
+
+type osBaseParams struct {
+	address string
+}
+
+func getOsBaseParams(cmd *cobra.Command) (params osBaseParams, err error) {
+	params.address, err = cmd.Flags().GetString("address")
+	if err != nil {
+		return
+	}
+	return
+}

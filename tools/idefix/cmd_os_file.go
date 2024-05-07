@@ -15,20 +15,16 @@ var defaultFileModeRaw uint32 = 0744
 
 func init() {
 	cmdOsFile.PersistentFlags().StringP("src", "s", "", "source path")
+	cmdOsFile.PersistentFlags().StringP("dst", "d", "", "destination path")
 	cmdOsFile.PersistentFlags().Uint32P("mode", "m", 0, fmt.Sprintf("file mode (default 0%o)", defaultFileModeRaw))
 	cmdOsFile.MarkPersistentFlagRequired("src")
+	cmdOsFile.MarkPersistentFlagRequired("dst")
 
 	cmdOs.AddCommand(cmdOsFile)
 
-	cmdOsFileRead.Flags().StringP("dst", "d", "", "destination path in host")
-	cmdOsFileRead.MarkFlagRequired("dst")
-
 	cmdOsFile.AddCommand(cmdOsFileRead)
-
-	cmdOsFileWrite.Flags().StringP("dst", "d", "", "destination path in device")
-	cmdOsFileWrite.MarkFlagRequired("dst")
-
 	cmdOsFile.AddCommand(cmdOsFileWrite)
+	cmdOsFile.AddCommand(cmdOsFileMove)
 }
 
 var cmdOsFile = &cobra.Command{
@@ -48,28 +44,44 @@ var cmdOsFileWrite = &cobra.Command{
 	RunE:  cmdOsFileWriteRunE,
 }
 
+var cmdOsFileMove = &cobra.Command{
+	Use:   "move",
+	Short: "move file in remote device",
+	RunE:  cmdOsFileMoveRunE,
+}
+
 type fileBaseParams struct {
-	address  string
+	osBaseParams
 	srcPath  string
+	dstPath  string
 	fileMode os.FileMode
 	timeout  time.Duration
 }
 
 func getFileBaseParams(cmd *cobra.Command) (params fileBaseParams, err error) {
-	params.address, err = cmd.Flags().GetString("address")
+	params.osBaseParams, err = getOsBaseParams(cmd)
 	if err != nil {
 		return
 	}
+
 	params.srcPath, err = cmd.Flags().GetString("src")
 	if err != nil {
-		fmt.Println("srcPath error")
+		return
+	}
+
+	params.dstPath, err = cmd.Flags().GetString("dst")
+	if err != nil {
 		return
 	}
 
 	fileModeRaw, err := cmd.Flags().GetUint32("mode")
 	if err != nil {
+		return
+	}
+	if fileModeRaw == 0 {
 		fileModeRaw = uint32(defaultFileModeRaw)
 	}
+
 	params.fileMode = os.FileMode(fileModeRaw)
 
 	timeoutMs, err := cmd.Flags().GetUint("timeout")
@@ -87,15 +99,11 @@ func cmdOsFileReadRunE(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	dstPath, err := cmd.Flags().GetString("dst")
-	if err != nil {
-		return
-	}
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device", ""},
 		{"Address", params.address},
 		{"Source file (device)", params.srcPath},
-		{"Destination file (host)", dstPath},
+		{"Destination file (host)", params.dstPath},
 		{"File mode", fmt.Sprintf("%o (%v)", params.fileMode, params.fileMode)},
 	}).Render()
 
@@ -126,7 +134,7 @@ func cmdOsFileReadRunE(cmd *cobra.Command, args []string) (err error) {
 		return fmt.Errorf("read error. Hash mismatch: %s != %s", dataHash, hash)
 	}
 
-	err = os.WriteFile(dstPath, data, params.fileMode)
+	err = os.WriteFile(params.dstPath, data, params.fileMode)
 	if err != nil {
 		return err
 	}
@@ -141,16 +149,11 @@ func cmdOsFileWriteRunE(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	dstPath, err := cmd.Flags().GetString("dst")
-	if err != nil {
-		return
-	}
-
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device", ""},
 		{"Address", params.address},
 		{"Source file (host)", params.srcPath},
-		{"Destination file (device)", dstPath},
+		{"Destination file (device)", params.dstPath},
 		{"File mode", fmt.Sprintf("%o (%v)", params.fileMode, params.fileMode)},
 	}).Render()
 
@@ -170,13 +173,48 @@ func cmdOsFileWriteRunE(cmd *cobra.Command, args []string) (err error) {
 
 	srcBytesHash := Sha256B64(srcBytes)
 
-	dstBytesHash, err := idefixgo.FileWrite(ic, params.address, dstPath, srcBytes, params.fileMode, params.timeout)
+	dstBytesHash, err := idefixgo.FileWrite(ic, params.address, params.dstPath, srcBytes, params.fileMode, params.timeout)
 	if err != nil {
 		return err
 	}
 
 	if srcBytesHash != dstBytesHash {
 		return fmt.Errorf("write error. Resulting hash mismatch: %s != %s", srcBytesHash, dstBytesHash)
+	}
+
+	return
+}
+
+func cmdOsFileMoveRunE(cmd *cobra.Command, args []string) (err error) {
+	params, err := getFileBaseParams(cmd)
+	if err != nil {
+		return
+	}
+
+	dstPath, err := cmd.Flags().GetString("dst")
+	if err != nil {
+		return
+	}
+
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Device", ""},
+		{"Address", params.address},
+		{"Source file (device)", params.srcPath},
+		{"Destination file (device)", dstPath},
+	}).Render()
+
+	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
+		return nil
+	}
+
+	ic, err := getConnectedClient()
+	if err != nil {
+		return err
+	}
+
+	err = idefixgo.Move(ic, params.address, params.srcPath, dstPath, params.timeout)
+	if err != nil {
+		return err
 	}
 
 	return
