@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"syscall"
-	"time"
 
 	idefixgo "github.com/nayarsystems/idefix-go"
 	"github.com/pterm/pterm"
@@ -15,16 +15,30 @@ var defaultFileModeRaw uint32 = 0744
 
 func init() {
 	cmdOsFile.PersistentFlags().StringP("src", "s", "", "source path")
-	cmdOsFile.PersistentFlags().StringP("dst", "d", "", "destination path")
-	cmdOsFile.PersistentFlags().Uint32P("mode", "m", 0, fmt.Sprintf("file mode (default 0%o)", defaultFileModeRaw))
-	cmdOsFile.MarkPersistentFlagRequired("src")
-	cmdOsFile.MarkPersistentFlagRequired("dst")
 
 	cmdOs.AddCommand(cmdOsFile)
 
+	cmdOsFileRead.PersistentFlags().StringP("dst", "d", "", "destination path")
+	cmdOsFileRead.PersistentFlags().Uint32P("mode", "m", 0, fmt.Sprintf("file mode (default 0%o)", defaultFileModeRaw))
+	cmdOsFileRead.MarkPersistentFlagRequired("src")
+	cmdOsFileRead.MarkPersistentFlagRequired("dst")
 	cmdOsFile.AddCommand(cmdOsFileRead)
+
+	cmdOsFileWrite.PersistentFlags().StringP("dst", "d", "", "destination path")
+	cmdOsFileWrite.PersistentFlags().Uint32P("mode", "m", 0, fmt.Sprintf("file mode (default 0%o)", defaultFileModeRaw))
+	cmdOsFileWrite.MarkPersistentFlagRequired("src")
+	cmdOsFileWrite.MarkPersistentFlagRequired("dst")
 	cmdOsFile.AddCommand(cmdOsFileWrite)
+
+	cmdOsFileMove.PersistentFlags().StringP("dst", "d", "", "destination path")
+	cmdOsFileMove.PersistentFlags().Uint32P("mode", "m", 0, fmt.Sprintf("file mode (default 0%o)", defaultFileModeRaw))
+	cmdOsFileMove.MarkPersistentFlagRequired("src")
+	cmdOsFileMove.MarkPersistentFlagRequired("dst")
 	cmdOsFile.AddCommand(cmdOsFileMove)
+
+	cmdOsFileSha256.PersistentFlags().StringP("file", "f", "", "file to get SHA256 hash")
+	cmdOsFileSha256.MarkPersistentFlagRequired("file")
+	cmdOsFile.AddCommand(cmdOsFileSha256)
 }
 
 var cmdOsFile = &cobra.Command{
@@ -50,15 +64,20 @@ var cmdOsFileMove = &cobra.Command{
 	RunE:  cmdOsFileMoveRunE,
 }
 
+var cmdOsFileSha256 = &cobra.Command{
+	Use:   "sha256",
+	Short: "get SHA256 hash of file in remote device",
+	RunE:  cmdOsFileSha256RunE,
+}
+
 type fileBaseParams struct {
 	osBaseParams
 	srcPath  string
 	dstPath  string
 	fileMode os.FileMode
-	timeout  time.Duration
 }
 
-func getFileBaseParams(cmd *cobra.Command) (params fileBaseParams, err error) {
+func getRWFileBaseParams(cmd *cobra.Command) (params fileBaseParams, err error) {
 	params.osBaseParams, err = getOsBaseParams(cmd)
 	if err != nil {
 		return
@@ -84,17 +103,11 @@ func getFileBaseParams(cmd *cobra.Command) (params fileBaseParams, err error) {
 
 	params.fileMode = os.FileMode(fileModeRaw)
 
-	timeoutMs, err := cmd.Flags().GetUint("timeout")
-	if err != nil {
-		return
-	}
-	params.timeout = time.Duration(timeoutMs) * time.Millisecond
-
 	return
 }
 
 func cmdOsFileReadRunE(cmd *cobra.Command, args []string) (err error) {
-	params, err := getFileBaseParams(cmd)
+	params, err := getRWFileBaseParams(cmd)
 	if err != nil {
 		return
 	}
@@ -144,7 +157,7 @@ func cmdOsFileReadRunE(cmd *cobra.Command, args []string) (err error) {
 }
 
 func cmdOsFileWriteRunE(cmd *cobra.Command, args []string) (err error) {
-	params, err := getFileBaseParams(cmd)
+	params, err := getRWFileBaseParams(cmd)
 	if err != nil {
 		return
 	}
@@ -186,7 +199,7 @@ func cmdOsFileWriteRunE(cmd *cobra.Command, args []string) (err error) {
 }
 
 func cmdOsFileMoveRunE(cmd *cobra.Command, args []string) (err error) {
-	params, err := getFileBaseParams(cmd)
+	params, err := getRWFileBaseParams(cmd)
 	if err != nil {
 		return
 	}
@@ -217,5 +230,44 @@ func cmdOsFileMoveRunE(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
+	return
+}
+
+func cmdOsFileSha256RunE(cmd *cobra.Command, args []string) (err error) {
+	params, err := getOsBaseParams(cmd)
+	if err != nil {
+		return
+	}
+
+	file, err := cmd.Flags().GetString("file")
+	if err != nil {
+		return
+	}
+
+	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+		{"Device", ""},
+		{"Address", params.address},
+		{"File", file},
+	}).Render()
+
+	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
+		return nil
+	}
+
+	ic, err := getConnectedClient()
+	if err != nil {
+		return err
+	}
+
+	hash, err := idefixgo.FileSHA256(ic, params.address, file, params.timeout)
+	if err != nil {
+		return err
+	}
+	// print hash in hex
+	fmt.Printf("HEX: %x\n", hash)
+
+	// print hash in b64
+	hashB64 := base64.StdEncoding.EncodeToString(hash)
+	fmt.Println("B64: " + hashB64)
 	return
 }

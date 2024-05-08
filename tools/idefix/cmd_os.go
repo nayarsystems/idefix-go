@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +20,7 @@ var cmdOs = &cobra.Command{
 
 type osBaseParams struct {
 	address string
+	timeout time.Duration
 }
 
 func getOsBaseParams(cmd *cobra.Command) (params osBaseParams, err error) {
@@ -25,5 +28,11 @@ func getOsBaseParams(cmd *cobra.Command) (params osBaseParams, err error) {
 	if err != nil {
 		return
 	}
+
+	timeoutMs, err := cmd.Flags().GetUint("timeout")
+	if err != nil {
+		return
+	}
+	params.timeout = time.Duration(timeoutMs) * time.Millisecond
 	return
 }
