@@ -8,10 +8,10 @@ import (
 
 func init() {
 	cmdMenhir.PersistentFlags().StringP("address", "a", "", "Device address")
-	cmdMenhir.MarkFlagRequired("address")
+	cmdMenhir.MarkPersistentFlagRequired("address")
 
 	cmdMenhir.PersistentFlags().StringP("instance", "i", "", "menhir instance")
-	cmdMenhir.MarkFlagRequired("instance")
+	cmdMenhir.MarkPersistentFlagRequired("instance")
 
 	rootCmd.AddCommand(cmdMenhir)
 }
