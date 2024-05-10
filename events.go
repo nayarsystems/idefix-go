@@ -62,16 +62,3 @@ func (c *Client) GetEventByUID(uid string, timeout time.Duration) (*m.EventsGetU
 	}
 	return resp, nil
 }
-
-func (c *Client) GetSchema(hash string, timeout time.Duration) (*m.SchemaGetResponseMsg, error) {
-	msg := m.SchemaGetMsg{
-		Hash:  hash,
-		Check: false,
-	}
-	resp := &m.SchemaGetResponseMsg{}
-	err := c.Call2("idefix", &m.Message{To: "schemas.get", Data: &msg}, resp, timeout)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}

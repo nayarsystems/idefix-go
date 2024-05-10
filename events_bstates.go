@@ -53,15 +53,34 @@ type BstatesSource struct {
 // domain -> address -> schema -> meta-hash -> source of states
 type GetBstatesResult = map[string]map[string]map[string]map[string]*BstatesSource
 
-// Params:
-// ic: idefix client;
-// p: call parameters;
-// stateMap: state map to fill;
+func (c *Client) GetSchema(hash string, timeout time.Duration) (*messages.SchemaGetResponseMsg, error) {
+	msg := messages.SchemaGetMsg{
+		Hash:  hash,
+		Check: false,
+	}
+	resp := &messages.SchemaGetResponseMsg{}
+	err := c.Call2("idefix", &messages.Message{To: "schemas.get", Data: &msg}, resp, timeout)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// GetBstates pulls bstates blobs from cloud
+// Parameters:
+// - idefix client
+//
+// - call parameters
+//
+// - state map to fill
 //
 // Returns:
-// number of states read;
-// CID;
-// error;
+//
+// - number of states read
+//
+// - Continuation ID (CID)
+//
+// - error
 func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (totalBlobs uint, cid string, err error) {
 	if p.UID != "" {
 		var res *messages.EventsGetUIDResponseMsg
@@ -248,19 +267,10 @@ func BenchmarkBstates(blob *BstatesBlob, bstates []*Bstate) {
 	fmt.Printf("state size (B): %d\n", stateSize)
 	uncompressedSize := stateSize * len(states)
 	fmt.Printf("total states size (B): %d\n", uncompressedSize)
-
 	fmt.Printf("received blob size (B): %d (%.2f %%)\n", len(blob.Raw), float32(len(blob.Raw))/float32(uncompressedSize)*100)
 
-	// pipeline := ""
-	// size, err := GetSizeUsingNewPipeline(states, pipeline)
-	// if err != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// 	return
-	// }
-	// fmt.Printf("blob size using pipeline \"%s\": %d (%.2f %%)\n", pipeline, size, float32(size)/float32(uncompressedSize)*100)
-
 	pipeline := "z"
-	size, err := GetSizeUsingNewPipeline(states, pipeline)
+	size, err := getSizeUsingNewPipeline(states, pipeline)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
@@ -268,7 +278,7 @@ func BenchmarkBstates(blob *BstatesBlob, bstates []*Bstate) {
 	fmt.Printf("blob size using pipeline \"%s\": %d (%.2f %%)\n", pipeline, size, float32(size)/float32(uncompressedSize)*100)
 
 	pipeline = "t:z"
-	size, err = GetSizeUsingNewPipeline(states, pipeline)
+	size, err = getSizeUsingNewPipeline(states, pipeline)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
@@ -277,8 +287,8 @@ func BenchmarkBstates(blob *BstatesBlob, bstates []*Bstate) {
 
 }
 
-func GetSizeUsingNewPipeline(states []*be.State, pipeline string) (size uint, err error) {
-	schema, err := UpdateSchemaPipeline(states[0].GetSchema(), pipeline)
+func getSizeUsingNewPipeline(states []*be.State, pipeline string) (size uint, err error) {
+	schema, err := updateSchemaPipeline(states[0].GetSchema(), pipeline)
 	if err != nil {
 		return
 	}
@@ -314,7 +324,7 @@ func GetSizeUsingNewPipeline(states []*be.State, pipeline string) (size uint, er
 	return uint(len(blob)), nil
 }
 
-func UpdateSchemaPipeline(schema *be.StateSchema, pipeline string) (newSchema *be.StateSchema, err error) {
+func updateSchemaPipeline(schema *be.StateSchema, pipeline string) (newSchema *be.StateSchema, err error) {
 	schemaMsi := schema.ToMsi()
 	schemaMsi["encoderPipeline"] = pipeline
 	var newSchemaRaw []byte
