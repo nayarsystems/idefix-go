@@ -21,7 +21,6 @@ func init() {
 	cmdEventGet.PersistentFlags().String("since", "1970", "Query events that happened since this timestamp")
 	cmdEventGet.PersistentFlags().Uint("limit", 100, "Limit the number of query results")
 	cmdEventGet.PersistentFlags().String("cid", "", "Use a continuationID to get the following results of a previous request")
-	cmdEventGet.PersistentFlags().Bool("all", false, "Query all the items")
 	cmdEventGet.PersistentFlags().String("timeout", "20s", "If there are no events, wait until some arrive")
 	cmdEventGet.PersistentFlags().StringP("address", "a", "", "Filter by the indicated address")
 	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")

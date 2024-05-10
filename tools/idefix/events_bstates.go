@@ -15,6 +15,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type getBstatesCmdParams struct {
+	apiParams         *idf.GetBstatesParams
+	infinitePolling   bool
+	fieldNameRegex    *regexp.Regexp
+	fieldNameRegexStr string
+	benchmark         bool
+	fieldAlign        bool
+	fieldAlignHs      bool
+	hideBlobs         bool
+	csvDir            string
+}
+
 func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	ic, err := getConnectedClient()
 	if err != nil {
@@ -26,38 +38,42 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	if bp, err = parseGetEventsBaseParams(cmd, args); err != nil {
 		return err
 	}
-	p := idf.GetBstatesParams{
-		UID:           bp.UID,
-		Domain:        bp.Domain,
-		Since:         bp.Since,
-		Limit:         bp.Limit,
-		Cid:           bp.Cid,
-		AddressFilter: bp.AddressFilter,
-		MetaFilter:    bp.MetaFilter,
-		Timeout:       bp.Timeout,
+	cmdParams := getBstatesCmdParams{
+		apiParams: &idf.GetBstatesParams{
+			UID:           bp.UID,
+			Domain:        bp.Domain,
+			Since:         bp.Since,
+			Limit:         bp.Limit,
+			Cid:           bp.Cid,
+			AddressFilter: bp.AddressFilter,
+			MetaFilter:    bp.MetaFilter,
+			Timeout:       bp.Timeout,
+		},
+		infinitePolling: bp.Continue,
 	}
-	p.ForceTsField, _ = cmd.Flags().GetString("ts-field")
-	p.RawTsFieldYearOffset, _ = cmd.Flags().GetUint("ts-field-offset")
-	p.RawTsFieldFactor, _ = cmd.Flags().GetFloat32("ts-field-factor")
-	fieldNameRegexStr, _ := cmd.Flags().GetString("field-match")
-	fieldNameRegex, err := regexp.Compile(fieldNameRegexStr)
+
+	cmdParams.apiParams.ForceTsField, _ = cmd.Flags().GetString("ts-field")
+	cmdParams.apiParams.RawTsFieldYearOffset, _ = cmd.Flags().GetUint("ts-field-offset")
+	cmdParams.apiParams.RawTsFieldFactor, _ = cmd.Flags().GetFloat32("ts-field-factor")
+	cmdParams.fieldNameRegexStr, _ = cmd.Flags().GetString("field-match")
+	cmdParams.fieldNameRegex, err = regexp.Compile(cmdParams.fieldNameRegexStr)
 	if err != nil {
 		return err
 	}
-	benchmark, _ := cmd.Flags().GetBool("benchmark")
-	fieldAlign, _ := cmd.Flags().GetBool("field-align")
-	fieldAlignHs, _ := cmd.Flags().GetBool("field-align-hs")
-	hideBlobs, _ := cmd.Flags().GetBool("hide-blobs")
-	csvDir, _ := cmd.Flags().GetString("csvdir")
-	if csvDir != "" {
+	cmdParams.benchmark, _ = cmd.Flags().GetBool("benchmark")
+	cmdParams.fieldAlign, _ = cmd.Flags().GetBool("field-align")
+	cmdParams.fieldAlignHs, _ = cmd.Flags().GetBool("field-align-hs")
+	cmdParams.hideBlobs, _ = cmd.Flags().GetBool("hide-blobs")
+	cmdParams.csvDir, _ = cmd.Flags().GetString("csvdir")
+	if cmdParams.csvDir != "" {
 		return fmt.Errorf("csvdir: not implemented")
 	}
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start()
 	if bp.UID == "" {
-		err = cmdBstatesGetMultipleBlobs(spinner, ic, bp, p, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+		err = cmdBstatesGetMultipleBlobs(spinner, ic, &cmdParams)
 	} else {
-		err = cmdBstatesGetSingleBlob(spinner, ic, bp, p, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+		err = cmdBstatesGetSingleBlob(spinner, ic, &cmdParams)
 	}
 	if err != nil {
 		spinner.Fail()
@@ -70,35 +86,21 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 func cmdBstatesGetSingleBlob(
 	spinner *pterm.SpinnerPrinter,
 	ic *idf.Client,
-	bp *GetEventsBaseParams,
-	p idf.GetBstatesParams,
-	fieldNameRegex *regexp.Regexp,
-	fieldNameRegexStr string,
-	benchmark bool,
-	fieldAlign bool,
-	fieldAlignHs bool,
-	hideBlobs bool) (err error) {
-	spinner.UpdateText(fmt.Sprintf("Query bstates events of blob %s (timeout: %v)", p.UID, p.Timeout))
+	p *getBstatesCmdParams) (err error) {
+	spinner.UpdateText(fmt.Sprintf("Query bstates events of blob %s (timeout: %v)", p.apiParams.UID, p.apiParams.Timeout))
 	res := idf.GetBstatesResult{}
-	_, _, err = idf.GetBstates(ic, &p, res)
+	_, _, err = idf.GetBstates(ic, p.apiParams, res)
 	if err != nil {
 		return err
 	}
-	showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	showEvents(res, p)
 	return
 }
 
 func cmdBstatesGetMultipleBlobs(
 	spinner *pterm.SpinnerPrinter,
 	ic *idf.Client,
-	bp *GetEventsBaseParams,
-	p idf.GetBstatesParams,
-	fieldNameRegex *regexp.Regexp,
-	fieldNameRegexStr string,
-	benchmark bool,
-	fieldAlign bool,
-	fieldAlignHs bool,
-	hideBlobs bool) (err error) {
+	p *getBstatesCmdParams) (err error) {
 
 	res := idf.GetBstatesResult{}
 	keepPolling := true
@@ -106,13 +108,13 @@ func cmdBstatesGetMultipleBlobs(
 	nReq := 0
 	var domainText string
 	var addressText string
-	if bp.Domain != "" {
-		domainText = bp.Domain
+	if p.apiParams.Domain != "" {
+		domainText = p.apiParams.Domain
 	} else {
 		domainText = "*"
 	}
-	if bp.AddressFilter != "" {
-		addressText = bp.AddressFilter
+	if p.apiParams.AddressFilter != "" {
+		addressText = p.apiParams.AddressFilter
 	} else {
 		addressText = "*"
 	}
@@ -120,29 +122,29 @@ func cmdBstatesGetMultipleBlobs(
 	var newBlobs uint
 	var totalBlobs uint
 	for keepPolling {
-		spinner.UpdateText(fmt.Sprintf("Query bstates events (domain: %s, address: %s): req. num: %d (timeout: %v, limit: %d, cid: %s, since: %v), new: %d, total: %d", domainText, addressText, nReq, p.Timeout, p.Limit, p.Cid, p.Since, newBlobs, totalBlobs))
-		newBlobs, p.Cid, err = idf.GetBstates(ic, &p, res)
+		spinner.UpdateText(fmt.Sprintf("Query bstates events (domain: %s, address: %s): req. num: %d (timeout: %v, limit: %d, cid: %s, since: %v), new: %d, total: %d", domainText, addressText, nReq, p.apiParams.Timeout, p.apiParams.Limit, p.apiParams.Cid, p.apiParams.Since, newBlobs, totalBlobs))
+		newBlobs, p.apiParams.Cid, err = idf.GetBstates(ic, p.apiParams, res)
 		if err != nil && !ie.ErrTimeout.Is(err) {
 			return err
 		}
 
-		if bp.Continue {
-			showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+		if p.infinitePolling {
+			showEvents(res, p)
 			// Reinitialize res to avoid appending the same events
 			res = idf.GetBstatesResult{}
-			if p.Cid == "" {
-				p.Cid = lastCID
+			if p.apiParams.Cid == "" {
+				p.apiParams.Cid = lastCID
 			}
-			lastCID = p.Cid
+			lastCID = p.apiParams.Cid
 		}
 
 		totalBlobs += newBlobs
 		nReq++
-		keepPolling = rootctx.Err() == nil && bp.Continue
+		keepPolling = rootctx.Err() == nil && p.infinitePolling
 	}
 
-	if !bp.Continue {
-		showEvents(res, bp, fieldNameRegex, fieldNameRegexStr, benchmark, fieldAlign, fieldAlignHs, hideBlobs)
+	if !p.infinitePolling {
+		showEvents(res, p)
 	}
 	if rootctx.Err() == context.Canceled {
 		return nil
@@ -172,13 +174,7 @@ func getEventRow(stateIdx int, fieldsNames []string, state *idf.Bstate, delta ma
 
 func showEvents(
 	res idf.GetBstatesResult,
-	p *GetEventsBaseParams,
-	fieldNameRegex *regexp.Regexp,
-	fieldNameRegexStr string,
-	benchmark bool,
-	fieldAlign bool,
-	fieldAlignHs bool,
-	hideBlobs bool) {
+	p *getBstatesCmdParams) {
 	var err error
 	for domain, domainMap := range res {
 		for address, addressMap := range domainMap {
@@ -217,19 +213,19 @@ func showEvents(
 						fieldNames = append(fieldNames, f.Name)
 					}
 					var matchedFields []string
-					if fieldNameRegexStr != ".*" {
+					if p.fieldNameRegexStr != ".*" {
 						for i := len(deltas) - 1; i >= 0; i-- {
 							d := deltas[i]
 							newD := map[string]interface{}{}
 							for f, v := range d {
-								if fieldNameRegex.MatchString(f) {
+								if p.fieldNameRegex.MatchString(f) {
 									newD[f] = v
 								}
 							}
 							deltas[i] = newD
 						}
 						for _, fname := range fieldNames {
-							if fieldNameRegex.MatchString(fname) {
+							if p.fieldNameRegex.MatchString(fname) {
 								matchedFields = append(matchedFields, fname)
 							}
 						}
@@ -238,7 +234,7 @@ func showEvents(
 					}
 					sort.Strings(matchedFields)
 
-					if !hideBlobs {
+					if !p.hideBlobs {
 						for blobIdx, blob := range statesSource.Blobs {
 							bh := table.NewWriter()
 							bh.SetOutputMirror(os.Stdout)
@@ -256,7 +252,7 @@ func showEvents(
 
 							blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
 							blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
-							if fieldAlign {
+							if p.fieldAlign {
 								for i, d := range blobDeltas {
 									if len(d) > 0 {
 										r, err := getEventRow(i, matchedFields, blobStates[i], d)
@@ -265,7 +261,7 @@ func showEvents(
 											continue
 										}
 										t.AppendRow(r)
-										if fieldAlignHs {
+										if p.fieldAlignHs {
 											t.AppendSeparator()
 										}
 									}
@@ -281,7 +277,7 @@ func showEvents(
 									fmt.Printf("%v: %s\n", blobStates[i].Timestamp, string(je))
 								}
 							}
-							if benchmark {
+							if p.benchmark {
 								//fmt.Printf("\n << BLOB STATS >>\n")
 								fmt.Printf("\n\n")
 								idf.BenchmarkBstates(blob, blobStates)
@@ -297,7 +293,7 @@ func showEvents(
 							header = append(header, fname)
 						}
 						t.AppendHeader(header)
-						if fieldAlign {
+						if p.fieldAlign {
 							for i, d := range deltas {
 								if len(d) > 0 {
 									r, err := getEventRow(i, matchedFields, states[i], d)
@@ -306,7 +302,7 @@ func showEvents(
 										continue
 									}
 									t.AppendRow(r)
-									if fieldAlignHs {
+									if p.fieldAlignHs {
 										t.AppendSeparator()
 									}
 								}
