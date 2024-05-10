@@ -39,6 +39,7 @@ func init() {
 	cmdEventGetBevents.Flags().Bool("field-align", false, "Try to align all field's values in the same column")
 	cmdEventGetBevents.Flags().Bool("field-align-hs", false, "Add row separator (used when field-align is true)")
 	cmdEventGetBevents.Flags().Bool("hide-blobs", false, "Do not group states per blob (show all states in the same list)")
+	cmdEventGetBevents.Flags().StringSlice("field-alias", []string{}, "Adds a field alias using the format 'field1=alias1,field2=alias2'")
 	cmdEventGet.AddCommand(cmdEventGetBevents)
 
 	rootCmd.AddCommand(cmdEvent)

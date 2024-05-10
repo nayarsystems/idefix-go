@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	idf "github.com/nayarsystems/idefix-go"
@@ -25,6 +26,7 @@ type getBstatesCmdParams struct {
 	fieldAlignHs      bool
 	hideBlobs         bool
 	csvDir            string
+	fieldAliasMap     map[string]string
 }
 
 func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
@@ -50,6 +52,7 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 			Timeout:       bp.Timeout,
 		},
 		infinitePolling: bp.Continue,
+		fieldAliasMap:   map[string]string{},
 	}
 
 	cmdParams.apiParams.ForceTsField, _ = cmd.Flags().GetString("ts-field")
@@ -67,6 +70,16 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	cmdParams.csvDir, _ = cmd.Flags().GetString("csvdir")
 	if cmdParams.csvDir != "" {
 		return fmt.Errorf("csvdir: not implemented")
+	}
+
+	// Get field aliases from flags (flag field-alias is a list of key=value pairs)
+	fieldAliases, _ := cmd.Flags().GetStringSlice("field-alias")
+	for _, pairStr := range fieldAliases {
+		pair := strings.Split(pairStr, "=")
+		if len(pair) != 2 {
+			return fmt.Errorf("field-alias: invalid format")
+		}
+		cmdParams.fieldAliasMap[pair[0]] = pair[1]
 	}
 
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start()
@@ -172,6 +185,15 @@ func getEventRow(stateIdx int, fieldsNames []string, state *idf.Bstate, delta ma
 	return
 }
 
+func getActualField(p *getBstatesCmdParams, fieldName string) (new string) {
+	if alias, ok := p.fieldAliasMap[fieldName]; ok {
+		new = alias
+	} else {
+		new = fieldName
+	}
+	return
+}
+
 func showEvents(
 	res idf.GetBstatesResult,
 	p *getBstatesCmdParams) {
@@ -232,8 +254,28 @@ func showEvents(
 					} else {
 						matchedFields = fieldNames
 					}
-					sort.Strings(matchedFields)
 
+					actualMatchedFields := []string{}
+					for _, f := range matchedFields {
+						actualMatchedFields = append(actualMatchedFields, getActualField(p, f))
+					}
+					sort.Strings(actualMatchedFields)
+					sortedMatchedFields := make([]string, len(matchedFields))
+					for i, f := range matchedFields {
+						//get index of f in actualMatchedFields and put it in the same index in sortedMatchedFields
+						idx := -1
+						for i, af := range actualMatchedFields {
+							if af == getActualField(p, f) {
+								idx = i
+								break
+							}
+						}
+						if idx == -1 {
+							idx = i
+						}
+						sortedMatchedFields[idx] = f
+					}
+					matchedFields = sortedMatchedFields
 					if !p.hideBlobs {
 						for blobIdx, blob := range statesSource.Blobs {
 							bh := table.NewWriter()
@@ -246,7 +288,7 @@ func showEvents(
 							t.SetOutputMirror(os.Stdout)
 							header := table.Row{"TS"}
 							for _, fname := range matchedFields {
-								header = append(header, fname)
+								header = append(header, getActualField(p, fname))
 							}
 							t.AppendHeader(header)
 
@@ -290,7 +332,7 @@ func showEvents(
 						t.SetOutputMirror(os.Stdout)
 						header := table.Row{"TS"}
 						for _, fname := range matchedFields {
-							header = append(header, fname)
+							header = append(header, getActualField(p, fname))
 						}
 						t.AppendHeader(header)
 						if p.fieldAlign {
