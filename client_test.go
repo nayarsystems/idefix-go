@@ -134,3 +134,28 @@ func TestConnectionHandler(t *testing.T) {
 
 	require.Equal(t, []ConnectionStatus{Connected, Disconnected, Connected}, statuses)
 }
+
+func TestNormalizeAddress(t *testing.T) {
+	tests := []struct {
+		address string
+		want    string
+	}{
+		{
+			address: "test",
+			want:    "test",
+		},
+		{
+			address: "Test123",
+			want:    "Test123",
+		},
+		{
+			address: "test@nayarsystems.com",
+			want:    "1e2a1b041444207c",
+		},
+	}
+
+	for _, tt := range tests {
+		got := normalizeAddress(tt.address)
+		require.Equal(t, tt.want, got)
+	}
+}

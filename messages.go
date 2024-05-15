@@ -140,7 +140,7 @@ func (c *Client) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	if msiData, ok := tm.Data.(map[string]interface{}); ok {
 		err := normalize.DecodeTypes(msiData)
 		if err != nil {
-			// fmt.Println("error decoding mqtt message", err)
+			// fmt.Println("error decoding mqtt message", err, msiData)
 			return
 		}
 	}

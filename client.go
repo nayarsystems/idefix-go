@@ -3,10 +3,12 @@ package idefixgo
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"regexp"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -198,4 +200,13 @@ func randSessionID() (string, error) {
 func (c *Client) connectionLostHandler(client mqtt.Client, err error) {
 	c.setState(Disconnected)
 	c.cancelFunc()
+}
+
+func NormalizeAddress(address string) string {
+	r := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	if !r.MatchString(address) {
+		hash := sha256.Sum256([]byte(address))
+		return hex.EncodeToString(hash[:])[:16]
+	}
+	return address
 }

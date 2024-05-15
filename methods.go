@@ -2,10 +2,11 @@ package idefixgo
 
 import (
 	"fmt"
+	"time"
+
 	ie "github.com/nayarsystems/idefix-go/errors"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix-go/minips"
-	"time"
 )
 
 func (c *Client) Publish(remoteAddress string, msg *m.Message) error {

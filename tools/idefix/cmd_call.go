@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
+	idf "github.com/nayarsystems/idefix-go"
 	m "github.com/nayarsystems/idefix-go/messages"
+	"github.com/nayarsystems/idefix-go/normalize"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -45,6 +47,10 @@ func commandCall(deviceId string, topic string, amap map[string]interface{}, tim
 		spinner.Fail()
 		return fmt.Errorf(ret.Err)
 	} else {
+		if m, ok := ret.Data.(map[string]interface{}); ok {
+			normalize.EncodeTypes(m, &normalize.EncodeTypesOpts{BytesToB64: true})
+		}
+
 		rj, err := json.MarshalIndent(ret.Data, "", "  ")
 		if err != nil {
 			spinner.Fail()
@@ -97,6 +103,7 @@ func cmdCallRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	addr = idf.NormalizeAddress(addr)
 
 	amap := make(map[string]interface{})
 	if len(args) > 1 {
