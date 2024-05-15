@@ -86,6 +86,27 @@ func (m *AddressStatesGetResMsg) ParseMsi(input msi) (err error) {
 	return nil
 }
 
+type AddressConfigGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+}
+
+type AddressConfigGetResponseMsg struct {
+	// Address' config
+	Config []byte `json:"config" msgpack:"config" mapstructure:"config,omitempty"`
+}
+
+type AddressConfigUpdateMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Config to update
+	Config []byte `json:"config" msgpack:"config" mapstructure:"config,omitempty"`
+}
+
+type AddressConfigUpdateResponseMsg struct {
+}
+
 /************/
 /*  Events  */
 /************/

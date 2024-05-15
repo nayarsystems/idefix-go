@@ -67,6 +67,12 @@ const (
 	// TopicTransportAddressDomainGet is used to get the domain assigned to address
 	TopicTransportAddressDomainGet = TopicTransportIdefixPrefix + CmdAddressDomainGet
 
+	// TopicTransportAddressConfigGet is used to get the custom data for the given client
+	TopicTransportAddressConfigGet = TopicTransportIdefixPrefix + CmdAddressConfigGet
+
+	// TopicTransportAddressConfigUpdate is used to update the custom data for the given client
+	TopicTransportAddressConfigUpdate = TopicTransportIdefixPrefix + CmdAddressConfigUpdate
+
 	// TopicTransportEventsCreate is used to create a new event on the server linked to the source address' domain
 	TopicTransportEventsCreate = TopicTransportIdefixPrefix + CmdEventsCreate
 
@@ -150,6 +156,12 @@ const (
 
 	// CmdLocalRulesUpdate is used to update the local rules for the given client
 	CmdAddressTokenReset = "address.token.reset"
+
+	// CmdAddressCustomDataGet is used to get the custom data for the given client
+	CmdAddressConfigGet = "address.config.get"
+
+	// CmdAddressCustomDataUpdate is used to update the custom data for the given client
+	CmdAddressConfigUpdate = "address.config.update"
 
 	// CmdAddressDisable is used to restrict the access to an address
 	CmdAddressDisable = "address.disable"
