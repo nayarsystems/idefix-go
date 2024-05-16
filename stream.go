@@ -48,6 +48,10 @@ func (c *Client) NewStream(address string, topic string, capacity uint, payloadO
 		return nil, err
 	}
 
+	if res.StickyPayload != nil {
+		s.handleMsg(res.StickyPayload)
+	}
+
 	pubtopic := fmt.Sprintf("%s/%s", m.MqttPublicPrefix, res.PublicTopic)
 
 	c.client.Subscribe(pubtopic, 2, s.receiveMessage)
@@ -58,32 +62,35 @@ func (c *Client) NewStream(address string, topic string, capacity uint, payloadO
 	return s, nil
 }
 
+func (s *Stream) handleMsg(msg any) {
+	if s.payloadOnly {
+		s.buffer <- &m.Message{To: s.topic, Data: msg}
+		return
+	}
+
+	topic, err := ei.N(msg).M("s").String()
+	if err != nil {
+		topic = s.topic
+	}
+
+	payload, err := ei.N(msg).M("p").Raw()
+	if err != nil {
+		fmt.Println("Error getting payload", err)
+		return
+	}
+
+	s.buffer <- &m.Message{To: topic, Data: payload}
+}
+
 func (s *Stream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	if strings.HasPrefix(msg.Topic(), m.MqttPublicPrefix+"/") {
-		var tmp map[string]interface{}
+		var tmp any
 		err := msgpack.Unmarshal(msg.Payload(), &tmp)
 		if err != nil {
 			fmt.Println("Error unmarshalling message", err, msg.Payload())
 			return
 		}
-
-		if s.payloadOnly {
-			s.buffer <- &m.Message{To: s.topic, Data: tmp}
-			return
-		}
-
-		topic, err := ei.N(tmp).M("s").String()
-		if err != nil {
-			topic = s.topic
-		}
-
-		payload, err := ei.N(tmp).M("p").Raw()
-		if err != nil {
-			fmt.Println("Error getting payload", err)
-			return
-		}
-
-		s.buffer <- &m.Message{To: topic, Data: payload}
+		s.handleMsg(tmp)
 	}
 }
 
