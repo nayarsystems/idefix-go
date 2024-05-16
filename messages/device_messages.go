@@ -112,9 +112,10 @@ func (m *StreamSubMsg) ParseMsi(input msi) (err error) {
 }
 
 type StreamSubResMsg struct {
-	SubId       string `json:"id" msgpack:"id" mapstructure:"id"`
-	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
-	PayloadOnly bool   `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
+	SubId         string `json:"id" msgpack:"id" mapstructure:"id"`
+	PublicTopic   string `json:"pub" msgpack:"pub" mapstructure:"pub"`
+	PayloadOnly   bool   `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
+	StickyPayload any    `json:"sticky,omitempty" msgpack:"sticky,omitempty" mapstructure:"sticky,omitempty"`
 }
 
 type StreamUnsubMsg struct {
