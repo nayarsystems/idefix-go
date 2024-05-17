@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jaracil/ei"
-	"github.com/nayarsystems/idefix-go/messages"
 	"github.com/songgao/water"
 	"github.com/spf13/cobra"
 	"github.com/vishvananda/netlink"
@@ -54,7 +53,12 @@ func cmdTunRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	stream, err := ic.NewStream(addr, "tun.evt.frame", 100, true, time.Second*30)
+	subStream, err := ic.NewSubscriberStream(addr, "tun.evt.frame", 100, true, time.Second*30)
+	if err != nil {
+		return err
+	}
+
+	pubStream, err := ic.NewPublisherStream(addr, "tun.cmd.frame", 100, true, time.Second*30)
 	if err != nil {
 		return err
 	}
@@ -73,16 +77,16 @@ func cmdTunRunE(cmd *cobra.Command, args []string) error {
 				return
 			}
 			data := map[string]interface{}{"frame": b[:n]}
-			ic.Publish(addr, &messages.Message{To: "tun.cmd.frame", Data: data})
+			pubStream.Publish(data, "")
 		}
 	}()
 
 	fmt.Println("Connected")
 	for {
 		select {
-		case frame, ok := <-stream.Channel():
+		case frame, ok := <-subStream.Channel():
 			if !ok {
-				return fmt.Errorf("stream closed")
+				return fmt.Errorf("subStream closed")
 			}
 
 			framebytes, err := ei.N(frame.Data).M("frame").Bytes()
@@ -92,6 +96,12 @@ func cmdTunRunE(cmd *cobra.Command, args []string) error {
 			}
 
 			iface.Write(framebytes)
+
+		case <-pubStream.Context().Done():
+			return pubStream.Context().Err()
+
+		case <-subStream.Context().Done():
+			return subStream.Context().Err()
 
 		case <-ic.Context().Done():
 			return nil

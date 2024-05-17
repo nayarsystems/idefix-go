@@ -48,7 +48,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	s, err := ic.NewStream(addr, "sys.evt.log", 100, false, time.Minute*10)
+	s, err := ic.NewSubscriberStream(addr, "sys.evt.log", 100, false, time.Minute*10)
 	if err != nil {
 		log.Fatalln("Cannot open stream:", err)
 	}
@@ -77,9 +77,8 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 
 			fmt.Printf("[%d] %s\n", l, m)
 
-		case err = <-s.ErrChannel():
-			fmt.Println(err)
-			return nil
+		case <-s.Context().Done():
+			return s.Context().Err()
 
 		case <-ic.Context().Done():
 			return nil
@@ -103,7 +102,7 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	}
 	defer ic.Disconnect()
 
-	s, err := ic.NewStream(addr, args[0], 100, false, time.Minute*10)
+	s, err := ic.NewSubscriberStream(addr, args[0], 100, false, time.Minute*10)
 	if err != nil {
 		log.Fatalln("Cannot open stream:", err)
 	}
@@ -116,9 +115,8 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 		case k := <-s.Channel():
 			fmt.Printf("%v\n", k.Data)
 
-		case err = <-s.ErrChannel():
-			fmt.Println("error:", err)
-			return nil
+		case <-s.Context().Done():
+			return s.Context().Err()
 
 		case <-ic.Context().Done():
 			return nil
