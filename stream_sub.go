@@ -8,35 +8,34 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/jaracil/ei"
+	ie "github.com/nayarsystems/idefix-go/errors"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-type Stream struct {
+type SubscriberStream struct {
 	ctx         context.Context
-	cancel      context.CancelFunc
+	cancel      context.CancelCauseFunc
 	timeout     time.Duration
 	c           *Client
 	buffer      chan *m.Message
 	topic       string
 	address     string
-	errCh       chan error
 	subId       string
 	payloadOnly bool
 }
 
-func (c *Client) NewStream(address string, topic string, capacity uint, payloadOnly bool, timeout time.Duration) (*Stream, error) {
-	s := &Stream{
+func (c *Client) NewSubscriberStream(address string, topic string, capacity uint, payloadOnly bool, timeout time.Duration) (*SubscriberStream, error) {
+	s := &SubscriberStream{
 		address:     address,
 		timeout:     timeout,
 		topic:       topic,
 		c:           c,
 		buffer:      make(chan *m.Message, capacity),
-		errCh:       make(chan error, 1),
 		payloadOnly: payloadOnly,
 	}
 
-	s.ctx, s.cancel = context.WithCancel(c.ctx)
+	s.ctx, s.cancel = context.WithCancelCause(c.ctx)
 
 	res := m.StreamCreateSubResMsg{}
 	err := s.c.Call2(address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
@@ -62,7 +61,7 @@ func (c *Client) NewStream(address string, topic string, capacity uint, payloadO
 	return s, nil
 }
 
-func (s *Stream) handleMsg(msg any) {
+func (s *SubscriberStream) handleMsg(msg any) {
 	if s.payloadOnly {
 		s.buffer <- &m.Message{To: s.topic, Data: msg}
 		return
@@ -82,7 +81,7 @@ func (s *Stream) handleMsg(msg any) {
 	s.buffer <- &m.Message{To: topic, Data: payload}
 }
 
-func (s *Stream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
+func (s *SubscriberStream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	if strings.HasPrefix(msg.Topic(), m.MqttPublicPrefix+"/") {
 		var tmp any
 		err := msgpack.Unmarshal(msg.Payload(), &tmp)
@@ -94,8 +93,8 @@ func (s *Stream) receiveMessage(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
-func (s *Stream) keepalive() {
-	t := time.NewTicker(s.timeout / 2)
+func (s *SubscriberStream) keepalive() {
+	t := time.NewTicker(s.timeout / 4)
 	defer s.Close()
 
 	for {
@@ -108,28 +107,25 @@ func (s *Stream) keepalive() {
 				Timeout:     s.timeout,
 				PayloadOnly: s.payloadOnly,
 			}}, time.Second*5)
-			if err != nil {
-				select {
-				case s.errCh <- err:
-				default:
-				}
+			if err != nil && !ie.ErrTimeout.Is(err) {
+				s.cancel(err)
 				return
 			}
 		}
 	}
 }
 
-func (s *Stream) Channel() <-chan *m.Message {
+func (s *SubscriberStream) Channel() <-chan *m.Message {
 	return s.buffer
 }
 
-func (s *Stream) ErrChannel() <-chan error {
-	return s.errCh
+func (s *SubscriberStream) Context() context.Context {
+	return s.ctx
 }
 
-func (s *Stream) Close() error {
-	defer s.cancel()
-	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteUnsubscribe, Data: m.StreamCreateMsg{
+func (s *SubscriberStream) Close() error {
+	defer s.cancel(fmt.Errorf("closed by user"))
+	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteUnsubscribe, Data: m.StreamDeleteMsg{
 		Id: s.subId,
 	}}, time.Second*5)
 	if err != nil {
