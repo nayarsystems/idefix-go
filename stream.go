@@ -38,8 +38,8 @@ func (c *Client) NewStream(address string, topic string, capacity uint, payloadO
 
 	s.ctx, s.cancel = context.WithCancel(c.ctx)
 
-	res := m.StreamSubResMsg{}
-	err := s.c.Call2(address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamSubMsg{
+	res := m.StreamCreateSubResMsg{}
+	err := s.c.Call2(address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
 		TargetTopic: topic,
 		Timeout:     time.Second * 30,
 		PayloadOnly: s.payloadOnly,
@@ -56,7 +56,7 @@ func (c *Client) NewStream(address string, topic string, capacity uint, payloadO
 
 	c.client.Subscribe(pubtopic, 2, s.receiveMessage)
 
-	s.subId = res.SubId
+	s.subId = res.Id
 	go s.keepalive()
 
 	return s, nil
@@ -103,8 +103,8 @@ func (s *Stream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamSubMsg{
-				SubId:       s.subId,
+			_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
+				Id:          s.subId,
 				Timeout:     s.timeout,
 				PayloadOnly: s.payloadOnly,
 			}}, time.Second*5)
@@ -129,8 +129,8 @@ func (s *Stream) ErrChannel() <-chan error {
 
 func (s *Stream) Close() error {
 	defer s.cancel()
-	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteUnsubscribe, Data: m.StreamSubMsg{
-		SubId: s.subId,
+	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteUnsubscribe, Data: m.StreamCreateMsg{
+		Id: s.subId,
 	}}, time.Second*5)
 	if err != nil {
 		return err

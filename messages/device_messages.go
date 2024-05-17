@@ -90,20 +90,21 @@ type ExecResMsg struct {
 /*   Streams   */
 /***************/
 
-type StreamSubMsg struct {
-	SubId       string        `json:"id" msgpack:"id" mapstructure:"id"`
-	TargetTopic string        `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
-	PublicTopic string        `json:"pub" msgpack:"pub" mapstructure:"pub"`
-	PayloadOnly bool          `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
-	Timeout     time.Duration `json:"tout" msgpack:"tout" mapstructure:"tout"`
+type StreamCreateMsg struct {
+	Id             string        `json:"id" msgpack:"id" mapstructure:"id"`
+	TargetTopic    string        `json:"tgt" msgpack:"tgt" mapstructure:"tgt"`
+	PublicTopic    string        `json:"pub" msgpack:"pub" mapstructure:"pub"`
+	PayloadOnly    bool          `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
+	Timeout        time.Duration `json:"tout" msgpack:"tout" mapstructure:"tout"`
+	AllowSubtopics bool          `json:"ast,omitempty" msgpack:"ast,omitempty" mapstructure:"ast,omitempty"`
 }
 
-func (m *StreamSubMsg) ToMsi() (data msi, err error) {
+func (m *StreamCreateMsg) ToMsi() (data msi, err error) {
 	data, err = ToMsiGeneric(m, EncodeDurationToSecondsInt64Hook())
 	return data, err
 }
 
-func (m *StreamSubMsg) ParseMsi(input msi) (err error) {
+func (m *StreamCreateMsg) ParseMsi(input msi) (err error) {
 	err = ParseMsiGeneric(input, m, DecodeNumberToDurationHookFunc(time.Second))
 	if err != nil {
 		return err
@@ -111,22 +112,29 @@ func (m *StreamSubMsg) ParseMsi(input msi) (err error) {
 	return nil
 }
 
-type StreamSubResMsg struct {
-	SubId         string `json:"id" msgpack:"id" mapstructure:"id"`
+type StreamCreateSubResMsg struct {
+	Id            string `json:"id" msgpack:"id" mapstructure:"id"`
 	PublicTopic   string `json:"pub" msgpack:"pub" mapstructure:"pub"`
 	PayloadOnly   bool   `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
 	StickyPayload any    `json:"sticky,omitempty" msgpack:"sticky,omitempty" mapstructure:"sticky,omitempty"`
 }
 
-type StreamUnsubMsg struct {
-	SubId string `json:"id" msgpack:"id" mapstructure:"id"`
+type StreamCreatePubResMsg struct {
+	Id          string `json:"id" msgpack:"id" mapstructure:"id"`
+	PublicTopic string `json:"pub" msgpack:"pub" mapstructure:"pub"`
+	PayloadOnly bool   `json:"ponly" msgpack:"ponly" mapstructure:"ponly"`
 }
 
-type StreamUnsubResMsg struct {
+type StreamDeleteMsg struct {
+	Id string `json:"id" msgpack:"id" mapstructure:"id"`
+}
+
+type StreamDeleteResMsg struct {
 }
 
 type StreamMsg struct {
 	SourceTopic string `json:"s,omitempty" msgpack:"s,omitempty" mapstructure:"s,omitempty"`
+	Sticky      bool   `json:"sticky,omitempty" msgpack:"sticky,omitempty" mapstructure:"sticky,omitempty"`
 	Payload     any    `json:"p" msgpack:"p" mapstructure:"p"`
 }
 

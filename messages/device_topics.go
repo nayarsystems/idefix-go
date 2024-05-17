@@ -8,12 +8,16 @@ const (
 	// - response: StreamSubResMsg
 	TopicRemoteSubscribe = "streams.cmd.sub"
 
+	TopicRemoteStartPublisher = "streams.cmd.start_pub"
+
 	// TopicRemoteUnsubscribe is the prefix for remote unsubscription using public MQTT topic
 	//
 	// - message: StreamUnsubMsg
 	//
 	// - response: StreamUnsubResMsg
 	TopicRemoteUnsubscribe = "streams.cmd.unsub"
+
+	TopicRemoteStopPublisher = "streams.cmd.stop_pub"
 
 	// TopicCmdGetDevInfo is used to get the entire ENV for every device matched with the given mongo expression
 	//
