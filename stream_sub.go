@@ -53,7 +53,7 @@ func (c *Client) NewSubscriberStream(address string, topic string, capacity uint
 
 	pubtopic := fmt.Sprintf("%s/%s", m.MqttPublicPrefix, res.PublicTopic)
 
-	c.client.Subscribe(pubtopic, 2, s.receiveMessage)
+	c.client.Subscribe(pubtopic, 0, s.receiveMessage)
 
 	s.subId = res.Id
 	go s.keepalive()

@@ -68,7 +68,7 @@ func (s *PublisherStream) Publish(msg any, subtopic string) error {
 	if err != nil {
 		return err
 	}
-	token := s.c.client.Publish(s.publicTopic, 1, false, mqttPayload)
+	token := s.c.client.Publish(s.publicTopic, 0, false, mqttPayload)
 	token.Wait()
 	return token.Error()
 
