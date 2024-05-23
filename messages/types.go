@@ -12,26 +12,26 @@ import (
 /************/
 
 type DeviceInfo struct {
-	Address         string `mapstructure:"address"`
-	Product         string `mapstructure:"product"`
-	Board           string `mapstructure:"board"`
-	Version         string `mapstructure:"version"`
-	BootCnt         uint32 `mapstructure:"bootCnt"`
-	LauncherVersion string `mapstructure:"launcherVersion,omitempty"`
+	Address         string `mapstructure:"address" json:"address"`
+	Product         string `mapstructure:"product" json:"product"`
+	Board           string `mapstructure:"board" json:"board"`
+	Version         string `mapstructure:"version" json:"version"`
+	BootCnt         uint32 `mapstructure:"bootCnt" json:"bootCnt"`
+	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty"`
 }
 
 type SysInfo struct {
 	DeviceInfo          `mapstructure:"devInfo"`
-	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty"`
-	NumExecs            uint64        `mapstructure:"numExecs,omitempty"`
-	RollbackExec        bool          `mapstructure:"rollback,omitempty"`
-	SafeRunExec         bool          `mapstructure:"safeRun,omitempty"`
-	Uptime              time.Duration `mapstructure:"uptime,omitempty"`
-	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty"`
-	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty"`
-	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty"`
-	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty"`
-	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty"`
+	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty"`
+	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty"`
+	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty"`
+	SafeRunExec         bool          `mapstructure:"safeRun,omitempty" json:"safeRun,omitempty"`
+	Uptime              time.Duration `mapstructure:"uptime,omitempty" json:"uptime,omitempty"`
+	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty" json:"lastRunUptime,omitempty"`
+	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty" json:"lastRunExitCause,omitempty"`
+	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty" json:"lastRunExitCode,omitempty"`
+	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty" json:"lastRunExitIssuedBy,omitempty"`
+	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty" json:"lastRunExitIssuedAt,omitempty"`
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
