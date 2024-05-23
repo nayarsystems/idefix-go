@@ -203,7 +203,7 @@ func (c *Client) connectionLostHandler(client mqtt.Client, err error) {
 }
 
 func NormalizeAddress(address string) string {
-	r := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	r := regexp.MustCompile(`^[a-zA-Z0-9\-]+$`)
 	if !r.MatchString(address) {
 		hash := sha256.Sum256([]byte(address))
 		return hex.EncodeToString(hash[:])[:16]
