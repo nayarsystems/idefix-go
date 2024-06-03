@@ -16,20 +16,21 @@ idefix event get bstates -a ${address} --since="${date}" --timeout 60s --meta-fi
     --field-alias BOOT_COUNTER=00_BC \
     --field-alias EVENT_COUNTER=01_EC \
     --field-alias CSQ=02_CSQ \
-    --field-alias ACT=03_ACT \
-    --field-alias CPSI_SYSTEMMODE=04_SystemMode \
-    --field-alias OPERATOR=05_OPERATOR \
-    --field-alias CREG=06_CREG \
-    --field-alias CPSI_OPMODE=07_OperationMode \
-    --field-alias CPSI_MCC=08_MMC \
-    --field-alias CPSI_MNC=09_MMC \
-    --field-alias CPSI_CELLID=10_CELLID \
-    --field-alias CPSI_PCELLID=11_PCELLID \
-    --field-alias CPSI_SCELLID=12_SCELLID \
-    --field-alias CPSI_LAC_TAC=13_LAC_TAC \
-    --field-alias ICC=14_ICC \
-    --field-alias CPSI=15_CPSI \
-    --field-alias PPP=16_PPP \
-    --field-alias CLOUD=17_CLOUD \
-    --field-match '^(CPSI$|CPSI_(MNC|MCC|LAC_TAC|OPMODE|SYSTEMMODE|OPERATOR|CELLID|PCELLID|SCELLID)$|BOOT_COUNTER|EVENT_COUNTER|PRIORITY_EVENT|NOTHING_TO_SEND|CSQ|CREG$|ACT$|PPP|CLOUD|TUN|ICC$|IMEI$)' 
+    --field-alias OPERATOR=03_ACT \
+    --field-alias ACT=04_ACT \
+    --field-alias CPSI_SYSTEMMODE=05_SystemMode \
+    --field-alias OPERATOR=06_OPERATOR \
+    --field-alias CREG=07_CREG \
+    --field-alias CPSI_OPMODE=08_OperationMode \
+    --field-alias CPSI_MCC=09_MMC \
+    --field-alias CPSI_MNC=10_MMC \
+    --field-alias CPSI_CELLID=11_CELLID \
+    --field-alias CPSI_PCELLID=12_PCELLID \
+    --field-alias CPSI_SCELLID=13_SCELLID \
+    --field-alias CPSI_LAC_TAC=14_LAC_TAC \
+    --field-alias ICC=15_ICC \
+    --field-alias CPSI=16_CPSI \
+    --field-alias PPP=17_PPP \
+    --field-alias CLOUD=18_CLOUD \
+    --field-match '^(CPSI$|CPSI_(MNC|MCC|LAC_TAC|OPMODE|SYSTEMMODE|OPERATOR|CELLID|PCELLID|SCELLID)$|BOOT_COUNTER|EVENT_COUNTER|PRIORITY_EVENT|NOTHING_TO_SEND|CSQ|CREG$|ACT$|OPERATOR$|PPP|CLOUD|TUN|ICC$|IMEI$)' 
 
