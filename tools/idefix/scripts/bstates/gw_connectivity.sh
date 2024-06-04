@@ -23,14 +23,15 @@ idefix event get bstates -a ${address} --since="${date}" --timeout 60s --meta-fi
     --field-alias CREG=07_CREG \
     --field-alias CPSI_OPMODE=08_OperationMode \
     --field-alias CPSI_MCC=09_MMC \
-    --field-alias CPSI_MNC=10_MMC \
+    --field-alias CPSI_MNC=10_MNC \
     --field-alias CPSI_CELLID=11_CELLID \
     --field-alias CPSI_PCELLID=12_PCELLID \
     --field-alias CPSI_SCELLID=13_SCELLID \
     --field-alias CPSI_LAC_TAC=14_LAC_TAC \
     --field-alias ICC=15_ICC \
-    --field-alias CPSI=16_CPSI \
-    --field-alias PPP=17_PPP \
-    --field-alias CLOUD=18_CLOUD \
-    --field-match '^(CPSI$|CPSI_(MNC|MCC|LAC_TAC|OPMODE|SYSTEMMODE|OPERATOR|CELLID|PCELLID|SCELLID)$|BOOT_COUNTER|EVENT_COUNTER|PRIORITY_EVENT|NOTHING_TO_SEND|CSQ|CREG$|ACT$|OPERATOR$|PPP|CLOUD|TUN|ICC$|IMEI$)' 
+    --field-alias IMSI=16_IMSI \
+    --field-alias CPSI=17_CPSI \
+    --field-alias PPP=18_PPP \
+    --field-alias CLOUD=19_CLOUD \
+    --field-match '^(CPSI$|CPSI_(MNC|MCC|LAC_TAC|OPMODE|SYSTEMMODE|OPERATOR|CELLID|PCELLID|SCELLID)$|BOOT_COUNTER|EVENT_COUNTER|PRIORITY_EVENT|NOTHING_TO_SEND|CSQ|CREG$|ACT$|OPERATOR$|PPP|CLOUD|TUN|ICC$|IMSI$|IMEI$)' 
 
