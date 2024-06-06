@@ -7,6 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//	"module1": {
+//		"prop1": "prop1-value",
+//	},
 func Test_SysInfoResMsg(t *testing.T) {
 	input := SysInfoResMsg{
 		SysInfo: SysInfo{
@@ -17,9 +20,12 @@ func Test_SysInfoResMsg(t *testing.T) {
 			Uptime:              time.Second * 123,
 			LastRunUptime:       time.Second * 12345,
 		},
-		Report: map[string]map[string]interface{}{
-			"module1": {
-				"prop1": "prop1-value",
+		Report: map[string]SysInfoReportMsg{
+			"moduleA-1": {
+				Class: "moduleA",
+				State: map[string]any{
+					"prop1": "prop1-value",
+				},
 			},
 		},
 	}
