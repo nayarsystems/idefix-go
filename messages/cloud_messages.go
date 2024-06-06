@@ -63,6 +63,9 @@ type AddressDomainGetMsg struct {
 /************/
 
 type EventMsg struct {
+	// SourceId is the unique identifier of the source of the event in the device
+	SourceId string `bson:"sourceId,omitempty" json:"sourceId,omitempty" msgpack:"sourceId,omitempty" mapstructure:"sourceId,omitempty"`
+
 	// UID must be provided by the client, and must be a unique identifier
 	UID string `bson:"uid" json:"uid" msgpack:"uid" mapstructure:"uid,omitempty" validate:"required"`
 
