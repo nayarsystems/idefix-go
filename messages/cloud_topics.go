@@ -49,6 +49,9 @@ const (
 	// TopicTransportEnvGet is the environment get function
 	TopicTransportEnvGet = TopicTransportIdefixPrefix + CmdEnvGet
 
+	// TopicTransportAddressStatesGet is used to get last state map of a client
+	TopicTransportAddressStatesGet = TopicTransportIdefixPrefix + CmdAddressStatesGet
+
 	// TopicTransportLocalRulesGet is used to get the local rules for the given client
 	TopicTransportAddressRulesGet = TopicTransportIdefixPrefix + CmdAddressRulesGet
 
@@ -132,6 +135,9 @@ const (
 
 	// CmdEnvGet is the environment get function
 	CmdEnvGet = "env.get"
+
+	// CmdAddressStatesGet is used to get the last state map of an address
+	CmdAddressStatesGet = "address.states.get"
 
 	// CmdAddressGetGroups is used to get the groups of an address
 	CmdAddressGetGroups = "address.groups.get"

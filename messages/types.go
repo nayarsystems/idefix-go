@@ -55,6 +55,39 @@ func (m *SysInfo) ParseMsi(input msi) (err error) {
 }
 
 /*************/
+/*  States   */
+/*************/
+
+type StateEntry struct {
+	Date       time.Time      `json:"date" msgpack:"date" mapstructure:"date" bson:"date"`
+	BlobId     string         `json:"blobId" msgpack:"blobId" mapstructure:"blobId" bson:"blobId"`
+	BlobMeta   map[string]any `json:"blobMeta" msgpack:"blobMeta" mapstructure:"blobMeta" bson:"blobMeta"`
+	SchemaId   string         `json:"schemaId" msgpack:"schemaId" mapstructure:"schemaId" bson:"schemaId"`
+	SchemaMeta map[string]any `json:"schemaMeta" msgpack:"schemaMeta" mapstructure:"schemaMeta" bson:"schemaMeta"`
+	State      map[string]any `json:"state" msgpack:"state" mapstructure:"state" bson:"state"`
+}
+
+func (m *StateEntry) ToMsi() (data msi, err error) {
+	data, err = ToMsiGeneric(m,
+		mapstructure.ComposeEncodeFieldMapHookFunc(
+			EncodeDurationToSecondsInt64Hook(),
+			EncodeTimeToUnixMilliHook()))
+
+	return data, err
+}
+
+func (m *StateEntry) ParseMsi(input msi) (err error) {
+	err = ParseMsiGeneric(input, m,
+		mapstructure.ComposeDecodeHookFunc(
+			DecodeNumberToDurationHookFunc(time.Second),
+			DecodeUnixMilliToTimeHookFunc()))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*************/
 /*  Domains  */
 /*************/
 

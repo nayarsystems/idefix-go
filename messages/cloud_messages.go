@@ -3,6 +3,7 @@ package messages
 import (
 	"time"
 
+	"github.com/jaracil/ei"
 	"github.com/nayarsystems/mapstructure"
 )
 
@@ -56,6 +57,33 @@ type AddressAccessRulesUpdateResponseMsg struct {
 type AddressDomainGetMsg struct {
 	// Address to query
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+}
+
+type AddressStatesGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+}
+
+type AddressStatesGetResMsg struct {
+	States map[string]*StateEntry `json:"states" msgpack:"states" mapstructure:"states"`
+}
+
+func (m *AddressStatesGetResMsg) ParseMsi(input msi) (err error) {
+	statesRaw, err := ei.N(input).M("states").MapStr()
+	if err != nil {
+		return err
+	}
+	m.States = make(map[string]*StateEntry)
+	for k, v := range statesRaw {
+		var se StateEntry
+		err = ParseMsg(v, &se)
+		if err != nil {
+			return err
+		}
+		m.States[k] = &se
+
+	}
+	return nil
 }
 
 /************/
