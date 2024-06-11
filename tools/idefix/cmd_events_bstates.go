@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jaracil/ei"
 	"github.com/jedib0t/go-pretty/v6/table"
 	idf "github.com/nayarsystems/idefix-go"
 	ie "github.com/nayarsystems/idefix-go/errors"
@@ -68,9 +71,6 @@ func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
 	cmdParams.fieldAlignHs, _ = cmd.Flags().GetBool("field-align-hs")
 	cmdParams.hideBlobs, _ = cmd.Flags().GetBool("hide-blobs")
 	cmdParams.csvDir, _ = cmd.Flags().GetString("csvdir")
-	if cmdParams.csvDir != "" {
-		return fmt.Errorf("csvdir: not implemented")
-	}
 
 	// Get field aliases from flags (flag field-alias is a list of key=value pairs)
 	fieldAliases, _ := cmd.Flags().GetStringSlice("field-alias")
@@ -276,6 +276,46 @@ func showEvents(
 						sortedMatchedFields[idx] = f
 					}
 					matchedFields = sortedMatchedFields
+
+					if p.csvDir != "" {
+						// Create CSV directory
+						if _, err := os.Stat(p.csvDir); os.IsNotExist(err) {
+							os.Mkdir(p.csvDir, os.ModePerm)
+						}
+						schemaIdBytes, err := base64.StdEncoding.DecodeString(schema)
+						if err != nil {
+							return
+						}
+						schemaIdHex := fmt.Sprintf("%x", schemaIdBytes)
+						// Write CSV files
+						csvFile, err := os.Create(fmt.Sprintf("%s/%s_%s_%s.csv", p.csvDir, domain, address, schemaIdHex[:8]))
+						if err != nil {
+							return
+						}
+						defer csvFile.Close()
+						w := csv.NewWriter(csvFile)
+						defer w.Flush()
+						csvHeader := []string{"TS"}
+						for _, fname := range matchedFields {
+							csvHeader = append(csvHeader, getActualField(p, fname))
+						}
+						csvRecords := [][]string{csvHeader}
+						for i, d := range deltas {
+							if len(d) > 0 {
+								r, err := getEventRow(i, matchedFields, states[i], d)
+								if err != nil {
+									return
+								}
+								csvRow := []string{ei.N(r[0]).StringZ()}
+								for _, v := range r[1:] {
+									csvRow = append(csvRow, ei.N(v).StringZ())
+								}
+								csvRecords = append(csvRecords, csvRow)
+							}
+						}
+						w.WriteAll(csvRecords)
+					}
+
 					if !p.hideBlobs {
 						for blobIdx, blob := range statesSource.Blobs {
 							bh := table.NewWriter()
@@ -294,6 +334,7 @@ func showEvents(
 
 							blobDeltas := deltas[blobStarts[blobIdx]:blobEnds[blobIdx]]
 							blobStates := states[blobStarts[blobIdx]:blobEnds[blobIdx]]
+
 							if p.fieldAlign {
 								for i, d := range blobDeltas {
 									if len(d) > 0 {
