@@ -2,6 +2,7 @@ package minips
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -38,6 +39,7 @@ func TestMinips(t *testing.T) {
 
 	close(ch2)
 	mp.registerChannel("test2", ch2)
+	fmt.Println("This should panic & recover:")
 	mp.Publish("test2", "hola") // This will panic->recover
 
 	mp.unregisterChannel("test2", ch2)
@@ -110,4 +112,15 @@ func TestSubscriber(t *testing.T) {
 	ns := mp.NewSubscriber(1, "test")
 	_, err = ns.WaitOne(time.Duration(time.Millisecond * 100))
 	require.Error(t, err)
+}
+
+func TestGlobalSubscriber(t *testing.T) {
+	mp := NewMinips[int](context.Background())
+
+	s := mp.NewSubscriber(10, "")
+	mp.Publish("test1", 123)
+
+	n, err := s.WaitOne(time.Duration(time.Second))
+	require.NoError(t, err)
+	require.Equal(t, 123, n)
 }
