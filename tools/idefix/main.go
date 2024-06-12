@@ -7,9 +7,10 @@ import (
 	"os/signal"
 	"time"
 
+	"runtime/debug"
+
 	idf "github.com/nayarsystems/idefix-go"
 	"github.com/spf13/cobra"
-	"runtime/debug"
 )
 
 var rootctx context.Context
@@ -60,7 +61,8 @@ func main() {
 	handleInterrupts(cancel)
 
 	rootCmd.PersistentFlags().StringP("config", "c", "default", "idefix-go config file for connection settings")
-	rootCmd.PersistentFlags().UintP("timeout", "", 10000, "global timeout in milliseconds")
+	rootCmd.PersistentFlags().Uint("timeout", 30000, "global timeout in milliseconds")
+	rootCmd.PersistentFlags().String("session", "", "session ID")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -76,6 +78,11 @@ func getConnectedClient() (*idf.Client, error) {
 	client, err := idf.NewClientFromFile(rootctx, configName)
 	if err != nil {
 		return nil, err
+	}
+
+	sessionID, err := rootCmd.Flags().GetString("session")
+	if err == nil {
+		client.SetSessionID(sessionID)
 	}
 
 	err = client.Connect()
