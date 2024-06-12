@@ -16,6 +16,7 @@ func init() {
 	cmdLog.MarkFlagRequired("address")
 
 	rootCmd.AddCommand(cmdCall)
+	rootCmd.AddCommand(cmdListen)
 }
 
 var cmdCall = &cobra.Command{
@@ -105,4 +106,38 @@ func cmdCallRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	return commandCall(addr, args[0], amap, getTimeout(cmd))
+}
+
+var cmdListen = &cobra.Command{
+	Use:   "listen",
+	Short: "Wait for messages",
+	RunE:  cmdListenRunE,
+}
+
+func cmdListenRunE(cmd *cobra.Command, args []string) error {
+	ic, err := getConnectedClient()
+	if err != nil {
+		return err
+	}
+
+	topic := ""
+	if len(args) > 0 {
+		topic = args[0]
+	}
+
+	sub := ic.NewSubscriber(100, topic)
+	defer sub.Close()
+
+	spinner, _ := pterm.DefaultSpinner.WithShowTimer(true).Start(fmt.Sprintf(
+		"Waiting for messages on topic %q", topic))
+	defer spinner.Stop()
+
+	for {
+		select {
+		case msg := <-sub.Channel():
+			fmt.Printf("\nTo: %s, Res: %s, Err: %v, Data: %v\n", msg.To, msg.Res, msg.Err, msg.Data)
+		case <-rootctx.Done():
+			return nil
+		}
+	}
 }
