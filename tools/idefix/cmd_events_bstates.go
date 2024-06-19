@@ -304,6 +304,7 @@ func showEvents(
 						// Write CSV files
 						fileName := fmt.Sprintf("%s/%s_%s_%s.csv", p.csvDir, domain, address, schemaIdHex[:8])
 						// check if file already exists on map
+						csvRecords := [][]string{}
 						var csvCtx *csvFileCtx
 						var ok bool
 						if csvCtx, ok = csvMap[fileName]; !ok {
@@ -314,12 +315,12 @@ func showEvents(
 							}
 							csvCtx.writer = csv.NewWriter(csvCtx.file)
 							csvMap[fileName] = csvCtx
+							csvHeader := []string{"TS"}
+							for _, fname := range matchedFields {
+								csvHeader = append(csvHeader, getActualField(p, fname))
+							}
+							csvRecords = [][]string{csvHeader}
 						}
-						csvHeader := []string{"TS"}
-						for _, fname := range matchedFields {
-							csvHeader = append(csvHeader, getActualField(p, fname))
-						}
-						csvRecords := [][]string{csvHeader}
 						for i, d := range deltas {
 							if len(d) > 0 {
 								r, err := getEventRow(i, matchedFields, states[i], d)
