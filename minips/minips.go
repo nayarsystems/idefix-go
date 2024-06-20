@@ -154,6 +154,7 @@ func (mp *Minips[T]) Publish(topic string, elem T) uint {
 	for {
 		match := topicSplitterRegexp.FindStringSubmatch(remainder)
 		if match == nil {
+			receivers += mp.publishTopic("", elem)
 			return receivers
 		}
 

@@ -85,9 +85,15 @@ func (c *Client) Connect() (err error) {
 		})
 	}
 
-	c.sessionID, err = randSessionID()
-	if err != nil {
-		return err
+	if c.sessionID == "" {
+		if c.opts.SessionID != "" {
+			c.sessionID = c.opts.SessionID
+		} else {
+			c.sessionID, err = randSessionID()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	opts.SetClientID(c.sessionID)
 
@@ -114,6 +120,10 @@ func (c *Client) Connect() (err error) {
 
 	c.setState(Connected)
 	return nil
+}
+
+func (c *Client) SetSessionID(sessionID string) {
+	c.sessionID = sessionID
 }
 
 func (c *Client) Disconnect() {
