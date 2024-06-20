@@ -20,8 +20,15 @@ type DeviceInfo struct {
 	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty"`
 }
 
+type ConfigMeta struct {
+	MainFile       string `json:"mainFile" mapstructure:"mainFile" msgpack:"mainFile"`
+	MainFileSha256 string `json:"mainFileSha256" mapstructure:"mainFileSha256" msgpack:"mainFileSha256"`
+	Dirty          bool   `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
+}
+
 type SysInfo struct {
 	DeviceInfo          `mapstructure:"devInfo"`
+	ConfigMeta          `mapstructure:"configMeta"`
 	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty"`
 	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty"`
 	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty"`

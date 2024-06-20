@@ -15,7 +15,7 @@ import (
 
 func init() {
 	cmdCall.Flags().StringP("address", "a", "", "Device address")
-	cmdLog.MarkFlagRequired("address")
+	cmdCall.MarkFlagRequired("address")
 
 	rootCmd.AddCommand(cmdCall)
 	rootCmd.AddCommand(cmdListen)
