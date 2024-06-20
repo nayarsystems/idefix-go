@@ -82,8 +82,11 @@ const (
 	// TopicTransportEventsCreate is used to create a new event on the server linked to the source address' domain
 	TopicTransportSchemasCreate = TopicTransportIdefixPrefix + CmdSchemasCreate
 
-	// TopicTransportEventsGet is used to get all events from a domain, since a timestamp
+	// TopicTransportSchemasGet is used to get one schema
 	TopicTransportSchemasGet = TopicTransportIdefixPrefix + CmdSchemasGet
+
+	// TopicTransportSessionDelete is used to delete a session (logout)
+	TopicTransportSessionDelete = TopicTransportIdefixPrefix + CmdSessionDelete
 
 	// Mqtt prefix for idefix project
 	MqttIdefixPrefix = "ifx"
@@ -180,4 +183,6 @@ const (
 
 	// CmdEventsGet is used to get all events from a domain, since a timestamp
 	CmdSchemasGet = "schemas.get"
+
+	CmdSessionDelete = "session.delete"
 )

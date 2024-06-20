@@ -19,6 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type csvFileCtx struct {
+	file   *os.File
+	writer *csv.Writer
+}
+
+var csvMap map[string]*csvFileCtx = make(map[string]*csvFileCtx)
+
 type getBstatesCmdParams struct {
 	apiParams         *idf.GetBstatesParams
 	infinitePolling   bool
@@ -33,6 +40,13 @@ type getBstatesCmdParams struct {
 }
 
 func cmdEventGetBstatesRunE(cmd *cobra.Command, args []string) error {
+	csvMap = make(map[string]*csvFileCtx)
+	defer func() {
+		for _, f := range csvMap {
+			f.writer.Flush()
+			f.file.Close()
+		}
+	}()
 	ic, err := getConnectedClient()
 	if err != nil {
 		return err
@@ -288,18 +302,25 @@ func showEvents(
 						}
 						schemaIdHex := fmt.Sprintf("%x", schemaIdBytes)
 						// Write CSV files
-						csvFile, err := os.Create(fmt.Sprintf("%s/%s_%s_%s.csv", p.csvDir, domain, address, schemaIdHex[:8]))
-						if err != nil {
-							return
+						fileName := fmt.Sprintf("%s/%s_%s_%s.csv", p.csvDir, domain, address, schemaIdHex[:8])
+						// check if file already exists on map
+						csvRecords := [][]string{}
+						var csvCtx *csvFileCtx
+						var ok bool
+						if csvCtx, ok = csvMap[fileName]; !ok {
+							csvCtx = &csvFileCtx{}
+							csvCtx.file, err = os.Create(fileName)
+							if err != nil {
+								return
+							}
+							csvCtx.writer = csv.NewWriter(csvCtx.file)
+							csvMap[fileName] = csvCtx
+							csvHeader := []string{"TS"}
+							for _, fname := range matchedFields {
+								csvHeader = append(csvHeader, getActualField(p, fname))
+							}
+							csvRecords = [][]string{csvHeader}
 						}
-						defer csvFile.Close()
-						w := csv.NewWriter(csvFile)
-						defer w.Flush()
-						csvHeader := []string{"TS"}
-						for _, fname := range matchedFields {
-							csvHeader = append(csvHeader, getActualField(p, fname))
-						}
-						csvRecords := [][]string{csvHeader}
 						for i, d := range deltas {
 							if len(d) > 0 {
 								r, err := getEventRow(i, matchedFields, states[i], d)
@@ -313,7 +334,7 @@ func showEvents(
 								csvRecords = append(csvRecords, csvRow)
 							}
 						}
-						w.WriteAll(csvRecords)
+						csvCtx.writer.WriteAll(csvRecords)
 					}
 
 					if !p.hideBlobs {

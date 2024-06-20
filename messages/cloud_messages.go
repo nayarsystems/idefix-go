@@ -382,3 +382,16 @@ type GroupRemoveMsg struct {
 }
 type GroupRemoveResponseMsg struct {
 }
+
+type SessionDeleteMsg struct {
+	// Session to delete
+	Session string `json:"session" msgpack:"session" mapstructure:"session"`
+
+	// Address to delete sessions from
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+}
+
+type SessionDeleteResponseMsg struct {
+	// Sessions deleted
+	Sessions int `json:"sessionsDeleted,omitempty" msgpack:"sessionsDeleted,omitempty" mapstructure:"sessionsDeleted"`
+}
