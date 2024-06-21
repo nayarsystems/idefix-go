@@ -19,6 +19,13 @@ const (
 
 	TopicRemoteStopPublisher = "streams.cmd.stop_pub"
 
+	// TopicCmdSyncConfig is used to force the device to sync its configuration
+	//
+	// - message: SyncConfigReqMsg
+	//
+	// - response: SyncConfigResponseMsg
+	TopicCmdSyncConfig = "sys.cmd.sync_config"
+
 	// TopicCmdGetDevInfo is used to get the entire ENV for every device matched with the given mongo expression
 	//
 	// - message: DevListReqMsg

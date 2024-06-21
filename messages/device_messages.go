@@ -268,9 +268,9 @@ type ListDirResMsg struct {
 	Files []*FileInfo
 }
 
-/******************/
-/*   Idefix update  */
-/******************/
+/*******************/
+/*  Idefix update  */
+/*******************/
 
 const (
 	UpdateTypeIdefixUpgrade   = 0
@@ -300,6 +300,13 @@ func (m *UpdateMsg) ParseMsi(input msi) (err error) {
 
 type UpdateResMsg struct {
 	UpdateMsg `mapstructure:",squash"`
+}
+
+type SyncConfigReqMsg struct {
+}
+
+type SyncConfigResponseMsg struct {
+	Result string `mapstructure:"res,omitempty" json:"res,omitempty" msgpack:"res,omitempty"`
 }
 
 /*******************/
