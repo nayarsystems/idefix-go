@@ -155,7 +155,7 @@ func TestNormalizeAddress(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := normalizeAddress(tt.address)
+		got := NormalizeAddress(tt.address)
 		require.Equal(t, tt.want, got)
 	}
 }
