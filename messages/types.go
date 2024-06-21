@@ -12,42 +12,46 @@ import (
 /************/
 
 type DeviceInfo struct {
-	Address         string `mapstructure:"address" json:"address"`
-	Product         string `mapstructure:"product" json:"product"`
-	Board           string `mapstructure:"board" json:"board"`
-	Version         string `mapstructure:"version" json:"version"`
-	BootCnt         uint32 `mapstructure:"bootCnt" json:"bootCnt"`
-	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty"`
+	Address         string `mapstructure:"address" json:"address" msgpack:"address"`
+	Product         string `mapstructure:"product" json:"product" msgpack:"product"`
+	Board           string `mapstructure:"board" json:"board" msgpack:"board"`
+	Version         string `mapstructure:"version" json:"version" msgpack:"version"`
+	BootCnt         uint32 `mapstructure:"bootCnt" json:"bootCnt" msgpack:"bootCnt"`
+	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty" msgpack:"launcherVersion,omitempty"`
 }
 
 type ConfigSyncInfo struct {
 	Msg   string `json:"msg,omitempty" mapstructure:"msg,omitempty" msgpack:"msg,omitempty"`
-	Error error  `json:"error,omitempty" mapstructure:"error,omitempty" msgpack:"error,omitempty"`
+	Error string `json:"error,omitempty" mapstructure:"error,omitempty" msgpack:"error,omitempty"`
 }
 
 type ConfigInfo struct {
-	MainFile       string         `json:"mainFile" mapstructure:"mainFile" msgpack:"mainFile"`
-	MainFileSha256 string         `json:"mainFileSha256" mapstructure:"mainFileSha256" msgpack:"mainFileSha256"`
+	MainFile       string         `json:"mainFile,omitempty" mapstructure:"mainFile,omitempty" msgpack:"mainFile,omitempty"`
+	MainFileSha256 string         `json:"mainFileSha256,omitempty" mapstructure:"mainFileSha256,omitempty" msgpack:"mainFileSha256,omitempty"`
 	Dirty          bool           `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
 	SyncInfo       ConfigSyncInfo `json:"syncInfo" mapstructure:"syncInfo" msgpack:"syncInfo"`
 }
 
 type SysInfo struct {
-	DeviceInfo          `mapstructure:"devInfo"`
-	ConfigInfo          ConfigInfo    `mapstructure:"configInfo"`
-	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty"`
-	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty"`
-	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty"`
-	SafeRunExec         bool          `mapstructure:"safeRun,omitempty" json:"safeRun,omitempty"`
-	Uptime              time.Duration `mapstructure:"uptime,omitempty" json:"uptime,omitempty"`
-	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty" json:"lastRunUptime,omitempty"`
-	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty" json:"lastRunExitCause,omitempty"`
-	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty" json:"lastRunExitCode,omitempty"`
-	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty" json:"lastRunExitIssuedBy,omitempty"`
-	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty" json:"lastRunExitIssuedAt,omitempty"`
+	// Update SysInfoVersion in ToMsi method if you change this struct
+	SysInfoVersion int `mapstructure:"sysInfoVersion,omitempty" json:"sysInfoVersion,omitempty" msgpack:"sysInfoVersion,omitempty"`
+
+	DeviceInfo          `mapstructure:"devInfo" json:"devInfo" msgpack:"devInfo"`
+	ConfigInfo          ConfigInfo    `mapstructure:"configInfo" json:"configInfo" msgpack:"configInfo"`
+	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty" msgpack:"launchErr,omitempty"`
+	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty" msgpack:"numExecs,omitempty"`
+	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty" msgpack:"rollback,omitempty"`
+	SafeRunExec         bool          `mapstructure:"safeRun,omitempty" json:"safeRun,omitempty" msgpack:"safeRun,omitempty"`
+	Uptime              time.Duration `mapstructure:"uptime,omitempty" json:"uptime,omitempty" msgpack:"uptime,omitempty"`
+	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty" json:"lastRunUptime,omitempty" msgpack:"lastRunUptime,omitempty"`
+	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty" json:"lastRunExitCause,omitempty" msgpack:"lastRunExitCause,omitempty"`
+	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty" json:"lastRunExitCode,omitempty" msgpack:"lastRunExitCode,omitempty"`
+	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty" json:"lastRunExitIssuedBy,omitempty" msgpack:"lastRunExitIssuedBy,omitempty"`
+	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty" json:"lastRunExitIssuedAt,omitempty" msgpack:"lastRunExitIssuedAt,omitempty"`
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
+	m.SysInfoVersion = 1
 	data, err = ToMsiGeneric(m,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
 			EncodeDurationToSecondsInt64Hook(),
