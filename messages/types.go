@@ -20,15 +20,21 @@ type DeviceInfo struct {
 	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty"`
 }
 
-type ConfigMeta struct {
-	MainFile       string `json:"mainFile" mapstructure:"mainFile" msgpack:"mainFile"`
-	MainFileSha256 string `json:"mainFileSha256" mapstructure:"mainFileSha256" msgpack:"mainFileSha256"`
-	Dirty          bool   `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
+type ConfigSyncInfo struct {
+	Msg   string `json:"msg,omitempty" mapstructure:"msg,omitempty" msgpack:"msg,omitempty"`
+	Error error  `json:"error,omitempty" mapstructure:"error,omitempty" msgpack:"error,omitempty"`
+}
+
+type ConfigInfo struct {
+	MainFile       string         `json:"mainFile" mapstructure:"mainFile" msgpack:"mainFile"`
+	MainFileSha256 string         `json:"mainFileSha256" mapstructure:"mainFileSha256" msgpack:"mainFileSha256"`
+	Dirty          bool           `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
+	SyncInfo       ConfigSyncInfo `json:"syncInfo" mapstructure:"syncInfo" msgpack:"syncInfo"`
 }
 
 type SysInfo struct {
 	DeviceInfo          `mapstructure:"devInfo"`
-	ConfigMeta          `mapstructure:"configMeta"`
+	ConfigInfo          ConfigInfo    `mapstructure:"configInfo"`
 	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty"`
 	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty"`
 	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty"`
