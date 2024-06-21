@@ -59,7 +59,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	if info.ConfigInfo.SyncInfo.Msg != "" {
 		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Msg
 	} else {
-		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Error.Error()
+		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Error
 	}
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device info", ""},
@@ -84,8 +84,11 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
 	}).Render()
 
-	if info.ConfigInfo.SyncInfo.Error != nil {
+	if info.ConfigInfo.SyncInfo.Error != "" {
 		pterm.Warning.Println("There was an error during configuration sync:", info.ConfigInfo.SyncInfo.Error)
+	}
+	if info.ConfigInfo.MainFile == "" {
+		pterm.Warning.Println("Running with default config (safe run)")
 	}
 	if info.ConfigInfo.Dirty {
 		pterm.Warning.Println("Configuration is dirty (main config file is merged with extra config files)")
