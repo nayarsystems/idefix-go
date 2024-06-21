@@ -55,6 +55,12 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot get the device info: %w", err)
 	}
+	var configSyncInfoMsg string
+	if info.ConfigInfo.SyncInfo.Msg != "" {
+		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Msg
+	} else {
+		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Error.Error()
+	}
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device info", ""},
 		{"Address", info.Address},
@@ -63,6 +69,9 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Boot counter", fmt.Sprintf("%d", info.BootCnt)},
 		{"Version", info.Version},
 		{"Launcher version", info.LauncherVersion},
+		{"Config file path", info.ConfigInfo.MainFile},
+		{"Config file sha256", info.ConfigInfo.MainFileSha256},
+		{"Config file status", configSyncInfoMsg},
 	}).Render()
 
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
@@ -75,6 +84,12 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
 	}).Render()
 
+	if info.ConfigInfo.SyncInfo.Error != nil {
+		pterm.Warning.Println("There was an error during configuration sync:", info.ConfigInfo.SyncInfo.Error)
+	}
+	if info.ConfigInfo.Dirty {
+		pterm.Warning.Println("Configuration is dirty (main config file is merged with extra config files)")
+	}
 	if info.RollbackExec {
 		pterm.Warning.Println("This is a rollback execution")
 	}
