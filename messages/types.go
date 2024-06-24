@@ -26,10 +26,10 @@ type ConfigSyncInfo struct {
 }
 
 type ConfigInfo struct {
-	MainFile       string         `json:"mainFile,omitempty" mapstructure:"mainFile,omitempty" msgpack:"mainFile,omitempty"`
-	MainFileSha256 string         `json:"mainFileSha256,omitempty" mapstructure:"mainFileSha256,omitempty" msgpack:"mainFileSha256,omitempty"`
-	Dirty          bool           `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
-	SyncInfo       ConfigSyncInfo `json:"syncInfo" mapstructure:"syncInfo" msgpack:"syncInfo"`
+	CloudFile       string         `json:"cloudFile,omitempty" mapstructure:"cloudFile,omitempty" msgpack:"cloudFile,omitempty"`
+	CloudFileSha256 string         `json:"cloudFileSha256,omitempty" mapstructure:"cloudFileSha256,omitempty" msgpack:"cloudFileSha256,omitempty"`
+	Dirty           bool           `json:"dirty" mapstructure:"dirty" msgpack:"dirty"`
+	SyncInfo        ConfigSyncInfo `json:"syncInfo,omitempty" mapstructure:"syncInfo,omitempty" msgpack:"syncInfo,omitempty"`
 }
 
 type SysInfo struct {
