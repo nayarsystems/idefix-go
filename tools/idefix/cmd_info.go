@@ -71,7 +71,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Launcher version", info.LauncherVersion},
 		{"Config file path", info.ConfigInfo.CloudFile},
 		{"Config file sha256", info.ConfigInfo.CloudFileSha256},
-		{"Config file status", configSyncInfoMsg},
+		{"Config file sync status", configSyncInfoMsg},
 	}).Render()
 
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
@@ -90,9 +90,12 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	if info.ConfigInfo.CloudFile == "" {
 		pterm.Warning.Println("There is no cloud config file configured")
 	} else {
-		if info.ConfigInfo.CloudFileSha256 == "" {
-			pterm.Warning.Println("The device is in has virgin state")
+		if info.ConfigInfo.CloudFileSha256 == Sha256B64([]byte{}) {
+			pterm.Warning.Println("The device has virgin state")
 		}
+	}
+	if info.SafeRunExec {
+		pterm.Warning.Println("This is a safe run execution")
 	}
 	if info.ConfigInfo.Dirty {
 		pterm.Warning.Println("Configuration is dirty (some extra configuration fragments were loaded)")

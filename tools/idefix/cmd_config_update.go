@@ -34,15 +34,29 @@ func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	if file == "" && !forceSync {
-		return fmt.Errorf("at least either a new configuration file or the --sync-now flag must be provided")
+	if file == "" {
+		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will empty the current configuration file from the client. Continue?"); !result {
+			return nil
+		}
+	} else {
+		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will update the current configuration file. Continue?"); !result {
+			return nil
+		}
 	}
 
-	spinner, err := pterm.DefaultSpinner.Start("connecting...")
+	spinner, err := pterm.DefaultSpinner.Start()
 	if err != nil {
 		return err
 	}
+	defer fmt.Println()
 	defer spinner.Stop()
+	defer func() {
+		if err != nil {
+			spinner.Fail(err.Error())
+		}
+	}()
+
+	spinner.UpdateText("connecting...")
 
 	ic, err := getConnectedClient()
 	if err != nil {
@@ -51,24 +65,28 @@ func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 	defer ic.Disconnect()
 	spinner.Success("connected")
 
+	newConfig := []byte{}
+
 	if file != "" {
-		newConfig, err := os.ReadFile(file)
+		newConfig, err = os.ReadFile(file)
 		if err != nil {
 			return fmt.Errorf("cannot read file %s: %w", file, err)
 		}
-
-		spinner.UpdateText("uploading configuration file...")
-		msg := &m.AddressConfigUpdateMsg{
-			Address: conf.address,
-			Config:  newConfig,
-		}
-		var res m.AddressConfigUpdateResponseMsg
-		err = ic.Call2(m.IdefixCmdPrefix, &m.Message{To: m.CmdAddressConfigUpdate, Data: msg}, &res, getTimeout(cmd))
-		if err != nil {
-			return fmt.Errorf("cannot upload client configuration: %w", err)
-		}
-		spinner.Success("configuration file uploaded successfully")
 	}
+	spinner.UpdateText("uploading configuration file...")
+
+	msg := &m.AddressConfigUpdateMsg{
+		Address: conf.address,
+		Config:  newConfig,
+	}
+
+	var res m.AddressConfigUpdateResponseMsg
+	err = ic.Call2(m.IdefixCmdPrefix, &m.Message{To: m.CmdAddressConfigUpdate, Data: msg}, &res, getTimeout(cmd))
+	if err != nil {
+		return fmt.Errorf("cannot upload client configuration: %w", err)
+	}
+
+	spinner.Success("configuration file uploaded successfully")
 
 	if forceSync {
 		spinner.UpdateText("force client to sync its configuration...")
@@ -79,6 +97,5 @@ func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		}
 		spinner.Success(syncRes.Result)
 	}
-	fmt.Println()
 	return nil
 }
