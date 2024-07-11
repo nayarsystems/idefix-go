@@ -107,6 +107,41 @@ type AddressConfigUpdateMsg struct {
 type AddressConfigUpdateResponseMsg struct {
 }
 
+type AddressAliasGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+}
+
+type AddressAliasGetResponseMsg struct {
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasAddMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Alias to add
+	Alias string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasAddResponseMsg struct {
+	// Alias to add
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasRemoveMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Alias to remove
+	Alias string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasRemoveResponseMsg struct {
+	// Alias to remove
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
 /************/
 /*  Events  */
 /************/

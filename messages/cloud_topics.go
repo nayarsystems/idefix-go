@@ -88,6 +88,15 @@ const (
 	// TopicTransportSessionDelete is used to delete a session (logout)
 	TopicTransportSessionDelete = TopicTransportIdefixPrefix + CmdSessionDelete
 
+	// TopicTransportAddressAliasGet is used to get the aliases assigned to an address
+	TopicTransportAddressAliasGet = TopicTransportIdefixPrefix + CmdAddressAliasGet
+
+	// TopicTransportAddressAliasAdd is used to add an alias to an address
+	TopicTransportAddressAliasAdd = TopicTransportIdefixPrefix + CmdAddressAliasAdd
+
+	// TopicTransportAddressAliasRemove is used to remove an alias from an address
+	TopicTransportAddressAliasRemove = TopicTransportIdefixPrefix + CmdAddressAliasRemove
+
 	// Mqtt prefix for idefix project
 	MqttIdefixPrefix = "ifx"
 
@@ -171,6 +180,15 @@ const (
 
 	// CmdAddressDomainGet is used to get the domain assigned to an address
 	CmdAddressDomainGet = "address.domain.get"
+
+	// CmdAddressAliasGet is used to get the aliases assigned to an address
+	CmdAddressAliasGet = "address.alias.get"
+
+	// CmdAddressAliasAdd is used to add an alias to an address
+	CmdAddressAliasAdd = "address.alias.add"
+
+	// CmdAddressAliasRemove is used to remove an alias from an address
+	CmdAddressAliasRemove = "address.alias.remove"
 
 	// CmdEventsCreate is used to create a new event on the server linked to the source address' domain
 	CmdEventsCreate = "events.create"
