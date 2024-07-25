@@ -22,7 +22,7 @@ func init() {
 	cmdUpdateCreate.Flags().StringP("source", "s", "", "Source")
 	cmdUpdateCreate.Flags().StringP("destination", "d", "", "Destination")
 	cmdUpdateCreate.Flags().StringP("output", "o", "", "Output")
-	cmdUpdateCreate.Flags().BoolP("rollback", "r", false, "Also include a patch for rollback")
+	cmdUpdateCreate.Flags().BoolP("rollback", "r", false, "Also include a rollback patch")
 	cmdUpdateCreate.MarkFlagRequired("source")
 	cmdUpdateCreate.MarkFlagRequired("destination")
 	cmdUpdate.AddCommand(cmdUpdateCreate)
@@ -37,25 +37,24 @@ func init() {
 	cmdUpdate.AddCommand(cmdUpdateApply)
 
 	cmdUpdateSendPatch.Flags().StringP("patch", "p", "", "Patch file")
-	cmdUpdateSendPatch.Flags().BoolP("rollback", "r", false, "Also either send (it depends on rollback-type param) a rollback patch (.patch) or request to save a backup file as rollback file (.bin)")
-	cmdUpdateSendPatch.Flags().String("rollback-type", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
 	cmdUpdateSendPatch.MarkFlagRequired("patch")
+	cmdUpdateSendPatch.Flags().String("rollback-type", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
 	cmdUpdateSend.AddCommand(cmdUpdateSendPatch)
 
 	cmdUpdateSendFile.Flags().StringP("file", "f", "", "Update file")
 	cmdUpdateSendFile.MarkFlagRequired("file")
-	cmdUpdateSendFile.Flags().BoolP("rollback", "r", false, "Also request device to save a rollback file (full .bin)")
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
 	cmdUpdateSend.PersistentFlags().String("reason", "", "Optinal reason for update")
-	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
-	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
-	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
-	cmdUpdateSend.PersistentFlags().Bool("check-tr", false, "Check transport link after upgrade")
+	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 300, "Indicates the duration of the test execution in seconds")
+	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 60, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
+	cmdUpdateSend.PersistentFlags().Bool("check-ppp", true, "Check ppp link after upgrade")
+	cmdUpdateSend.PersistentFlags().Bool("check-tr", true, "Check transport link after upgrade")
 	cmdUpdateSend.PersistentFlags().Uint("stop-countdown", 10, "Stop countdown before stopping idefix in seconds")
 	cmdUpdateSend.PersistentFlags().Uint("halt-timeout", 10, "Halt timeout in seconds")
 	cmdUpdateSend.PersistentFlags().StringP("upgrade-path", "", "", "Alternative upgrade file's path (absolute or relative to idefix binary)")
+	cmdUpdateSend.PersistentFlags().BoolP("no-rollback", "", false, "Do not send/request a rollback file")
 	cmdUpdateSend.PersistentFlags().StringP("rollback-path", "", "", "Alternative rollback file's path (absolute or relative to idefix binary)")
 	cmdUpdate.AddCommand(cmdUpdateSend)
 
@@ -200,10 +199,13 @@ func getUpdateParams(cmd *cobra.Command) (p *updateParams, err error) {
 	if err != nil {
 		return
 	}
-	p.createRollback, err = cmd.Flags().GetBool("rollback")
+
+	noRollback, err := cmd.Flags().GetBool("no-rollback")
 	if err != nil {
 		return
 	}
+	p.createRollback = !noRollback
+
 	p.alternativeUpgradePath, err = cmd.Flags().GetString("upgrade-path")
 	if err != nil {
 		return
