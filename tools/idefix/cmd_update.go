@@ -56,6 +56,7 @@ func init() {
 	cmdUpdateSend.PersistentFlags().StringP("upgrade-path", "", "", "Alternative upgrade file's path (absolute or relative to idefix binary)")
 	cmdUpdateSend.PersistentFlags().BoolP("no-rollback", "", false, "Do not send/request a rollback file")
 	cmdUpdateSend.PersistentFlags().StringP("rollback-path", "", "", "Alternative rollback file's path (absolute or relative to idefix binary)")
+	cmdUpdateSend.PersistentFlags().UintP("timeout", "", 120000, "timeout in milliseconds")
 	cmdUpdate.AddCommand(cmdUpdateSend)
 
 	rootCmd.AddCommand(cmdUpdate)

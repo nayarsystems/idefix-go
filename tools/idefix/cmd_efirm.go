@@ -25,7 +25,7 @@ func init() {
 	cmdEfirmUpdate.Flags().StringP("usb-port", "p", "", "This is the usb tag assigned to the device's current usb path. Idefix must recognize this tag (e.g: 'P0' could be a tag for the usb path '3-1.1'). 'usb-port' and 'usb-path' are mutually exclusive and not all devices will require them")
 	cmdEfirmUpdate.Flags().StringP("usb-path", "P", "", "This is the device's usb path (e.g: '3-1.1'). 'usb-port' and 'usb-path' are mutually exclusive and not all devices will require them")
 	cmdEfirmUpdate.Flags().StringP("file-type", "t", "", "This is the update file type ('bin', 'uf2', 'elf', 'tar', etc.). If omitted, file's extension will be used to infer the file type. This parameter will be omitted if the file type is not recognized")
-	cmdEfirmUpdate.Flags().UintP("timeout", "", 60000, "timeout in milliseconds")
+	cmdEfirmUpdate.Flags().UintP("timeout", "", 120000, "timeout in milliseconds")
 	cmdEfirm.AddCommand(cmdEfirmUpdate)
 
 	rootCmd.AddCommand(cmdEfirm)
