@@ -12,6 +12,6 @@ type ClientOptions struct {
 	Token     string                 `json:"token"`
 	Meta      map[string]interface{} `json:"meta,omitempty"`
 	SessionID string                 `json:"session,omitempty"`
-
-	vp *viper.Viper
+	Groups    []string               `json:"groups,omitempty"`
+	vp        *viper.Viper
 }

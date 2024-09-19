@@ -17,6 +17,7 @@ type LoginMsg struct {
 	Token    string                 `json:"token" msgpack:"token" mapstructure:"token,omitempty"`
 	Time     int64                  `json:"time" msgpack:"time" mapstructure:"time,omitempty"`
 	Meta     map[string]interface{} `json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
+	Groups   []string               `json:"groups" msgpack:"groups" mapstructure:"groups,omitempty"`
 }
 
 /********************/

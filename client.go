@@ -169,6 +169,7 @@ func (c *Client) login() (err error) {
 		Encoding: c.opts.Encoding,
 		Meta:     c.opts.Meta,
 		Time:     time.Now().UnixMilli(),
+		Groups:   c.opts.Groups,
 	}
 
 	tm := &m.Message{
