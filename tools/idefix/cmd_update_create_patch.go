@@ -86,14 +86,19 @@ func createPatch(oldpath string, newpath string) ([]byte, string, string, error)
 	if err != nil {
 		return []byte{}, "", "", err
 	}
-
 	srchash := sha256.Sum256(srcbytes)
+	if err := storeFileBackup(srcbytes); err != nil {
+		return []byte{}, "", "", err
+	}
 
 	dstbytes, err := os.ReadFile(newpath)
 	if err != nil {
 		return []byte{}, "", "", err
 	}
 	dsthash := sha256.Sum256(dstbytes)
+	if err := storeFileBackup(dstbytes); err != nil {
+		return []byte{}, "", "", err
+	}
 
 	d, err := bsdiff.Bytes(srcbytes, dstbytes)
 	if err != nil {

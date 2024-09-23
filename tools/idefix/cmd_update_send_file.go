@@ -103,6 +103,9 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
 	}
+	if err := storeFileBackup(updatebytes); err != nil {
+		return err
+	}
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("sending upgrade env file...")
 	defer spinner.Stop()
 

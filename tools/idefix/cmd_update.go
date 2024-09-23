@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -329,4 +331,27 @@ func KB(bytes uint64) string {
 func Sha256B64(bytes []byte) string {
 	hash := sha256.Sum256(bytes)
 	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+func storeFileBackup(fileContent []byte) error {
+	ucd, err := os.UserCacheDir()
+	if err != nil {
+		ucd = "$HOME"
+	}
+
+	dstFolder := filepath.Join(ucd, "idefix", "updates")
+	if err := os.MkdirAll(dstFolder, 0755); err != nil {
+		return err
+	}
+
+	hash := sha256.Sum256(fileContent)
+	hashStr := hex.EncodeToString(hash[:])
+
+	backupPath := filepath.Join(dstFolder, hashStr)
+
+	if _, err := os.Stat(backupPath); err == nil {
+		return nil
+	}
+
+	return os.WriteFile(backupPath, fileContent, 0644)
 }
