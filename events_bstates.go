@@ -14,25 +14,35 @@ import (
 	"github.com/nayarsystems/idefix-go/messages"
 )
 
+// GetBstatesParams defines the parameters used to retrieve a list of Bstates from the remote system.
+// Each field corresponds to a specific filter or setting for the request, allowing for flexible
+// querying of Bstates based on various criteria.
 type GetBstatesParams struct {
-	UID                  string
-	Domain               string
-	Since                time.Time
-	Limit                uint
-	Cid                  string
-	AddressFilter        string
-	MetaFilter           eval.CompiledExpr
-	Timeout              time.Duration
-	ForceTsField         string
-	RawTsFieldYearOffset uint
-	RawTsFieldFactor     float32
+	UID                  string            // Unique identifier for the event.
+	Domain               string            // Specifies the domain from which to retrieve.
+	Since                time.Time         // A timestamp indicating the starting point for retrieving Bstates; only Bstates after this time will be returned.
+	Limit                uint              // The maximum number of results to return in the response.
+	Cid                  string            // ContinuationID lets you get following results after your last request.
+	AddressFilter        string            // An optional filter to limit results based on specific addresses.
+	MetaFilter           eval.CompiledExpr // A compiled expression used to filter results based on metadata criteria.
+	Timeout              time.Duration     // The maximum duration to wait for the request to complete before timing out.
+	ForceTsField         string            // Specifies the field used for the timestamp if needed, overriding default behavior.
+	RawTsFieldYearOffset uint              // An optional offset to apply to the year field in raw timestamp data.
+	RawTsFieldFactor     float32           // A scaling factor applied to the raw timestamp data for accurate representation.
 }
 
+// Bstate represents a single snapshot of the state of a device at a specific point in time.
+// It consists of a timestamp indicating when the snapshot was recorded and the actual state data.
+// For more information see Bstates documentation: https://github.com/nayarsystems/bstates
 type Bstate struct {
 	Timestamp time.Time
 	State     *be.State
 }
 
+// BstatesBlob represents a collection of Bstates along with associated metadata.
+// It contains information about the unique identifier of the user, the timestamp
+// when the collection was created, the actual states, and the raw byte data
+// representing the compressed queue of states.
 type BstatesBlob struct {
 	UID       string
 	Timestamp time.Time
@@ -40,6 +50,8 @@ type BstatesBlob struct {
 	Raw       []byte
 }
 
+// BstatesSource represents a source of Bstates that includes metadata and a collection of
+// BstatesBlob instances. It provides contextual information for processing the Bstates.
 type BstatesSource struct {
 	Meta    map[string]interface{}
 	MetaRaw string
@@ -51,8 +63,19 @@ type BstatesSource struct {
 }
 
 // domain -> address -> schema -> meta-hash -> source of states
+
+// GetBstatesResult represents the result of retrieving bstate information
+// from the Idefix system. It is structured as a nested map to provide
+// easy access to bstate sources.
 type GetBstatesResult = map[string]map[string]map[string]map[string]*BstatesSource
 
+// GetSchema retrieves the schema associated with the provided hash from the Idefix service.
+//
+// This method sends a request to the Idefix service to fetch the schema by hash.
+// It uses a message structure that specifies the hash and whether to perform a check.
+//
+// If the request is successful, the function returns the response containing the schema information.
+// If an error occurs during the request, it returns nil along with the error.
 func (c *Client) GetSchema(hash string, timeout time.Duration) (*messages.SchemaGetResponseMsg, error) {
 	msg := messages.SchemaGetMsg{
 		Hash:  hash,
@@ -66,21 +89,15 @@ func (c *Client) GetSchema(hash string, timeout time.Duration) (*messages.Schema
 	return resp, nil
 }
 
-// GetBstates pulls bstates blobs from cloud
-// Parameters:
-// - idefix client
+// GetBstates retrieves bstates events from cloud based on the provided parameters.
 //
-// - call parameters
+// If a UID is specified in the parameters, the function first fetches the event associated with that UID.
+// It then populates the provided state map with the states extracted from the event. If no states are found,
+// an error is returned indicating that the event is not based on bstates.
 //
-// - state map to fill
+// If no UID is specified, the function retrieves bstates using the provided parameters and populates the state map accordingly.
 //
-// Returns:
-//
-// - number of states read
-//
-// - Continuation ID (CID)
-//
-// - error
+// The function returns the total number of blobs processed, the continuation ID, and any error encountered during the process.
 func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (totalBlobs uint, cid string, err error) {
 	if p.UID != "" {
 		var res *messages.EventsGetUIDResponseMsg
@@ -254,6 +271,12 @@ func fillStateMap(ic *Client, events []*messages.Event, p *GetBstatesParams, sta
 	return
 }
 
+// BenchmarkBstates measures and compares the sizes of BstatesBlob against different compression pipelines.
+//
+// This function takes a BstatesBlob and a list of Bstates, extracts the state data, and calculates the uncompressed size.
+// It then compares this size with the compressed sizes produced by two different pipelines ("gzip" and "transposed + gzip").
+// The results are printed, including the number of states, the uncompressed size, the raw blob size, and the compressed blob sizes.
+// If there are no states to process, the function returns immediately.
 func BenchmarkBstates(blob *BstatesBlob, bstates []*Bstate) {
 	states := []*be.State{}
 	for _, s := range bstates {
@@ -375,6 +398,10 @@ func evalMeta(meta map[string]interface{}, expr eval.CompiledExpr) (bool, error)
 	return false, nil
 }
 
+// GetDeltaStates processes a slice of Bstate objects and retrieves the delta states
+// represented as a slice of maps. Each Bstate contains a State that is processed to
+// derive the delta states, which are useful for tracking changes between different
+// states over time.
 func GetDeltaStates(in []*Bstate) ([]map[string]interface{}, error) {
 	var states []*be.State
 	for _, bs := range in {
