@@ -11,6 +11,9 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+// PublisherStream represents a stream for publishing messages to a specific topic.
+// It manages the context, timeout, and associated client details for effective message
+// publishing.
 type PublisherStream struct {
 	ctx         context.Context
 	cancel      context.CancelCauseFunc
@@ -23,6 +26,14 @@ type PublisherStream struct {
 	publicTopic string
 }
 
+// NewPublisherStream creates a new PublisherStream instance for publishing messages
+// to a specified topic on the remote system. It initializes the necessary context,
+// establishes the publisher connection, and configures the stream based on provided
+// parameters.
+//
+// This function connects to the specified address, sets up the necessary context,
+// and sends a request to start publishing on the specified topic. It also manages
+// the lifetime of the PublisherStream through context cancellation
 func (c *Client) NewPublisherStream(address string, topic string, capacity uint, payloadOnly bool, timeout time.Duration) (*PublisherStream, error) {
 	s := &PublisherStream{
 		address:     address,
@@ -52,6 +63,11 @@ func (c *Client) NewPublisherStream(address string, topic string, capacity uint,
 	return s, nil
 }
 
+// Publish sends a message to a specific subtopic of the PublisherStream's main topic.
+//
+// The method determines whether to publish only the payload or to wrap it in a
+// StreamMsg structure based on the payloadOnly flag. If payloadOnly is true,
+// the message is sent directly; otherwise, it is encapsulated within a StreamMsg.
 func (s *PublisherStream) Publish(msg any, subtopic string) error {
 	targetTopic := fmt.Sprintf("%s.%s", s.topic, subtopic)
 
@@ -96,10 +112,20 @@ func (s *PublisherStream) keepalive() {
 	}
 }
 
+// Context returns the context associated with the PublisherStream.
+// This context can be used to manage the lifecycle of the stream,
+// allowing for cancellation and timeout control.
 func (s *PublisherStream) Context() context.Context {
 	return s.ctx
 }
 
+// Close terminates the PublisherStream, releasing any associated resources.
+// It cancels the context of the stream and sends a request to the remote
+// system to stop the publisher associated with this stream.
+//
+// The method sends a message to the specified address with the command
+// to stop the publisher identified by the stream's ID. It waits for a
+// response, timing out after five seconds if no response is received.
 func (s *PublisherStream) Close() error {
 	defer s.cancel(fmt.Errorf("closed by user"))
 	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteStopPublisher, Data: m.StreamDeleteMsg{

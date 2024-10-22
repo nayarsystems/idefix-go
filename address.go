@@ -6,6 +6,8 @@ import (
 	m "github.com/nayarsystems/idefix-go/messages"
 )
 
+// Attempts to retrieve the domain assigned to the given address.
+// The operation may timeout if it doesn't complete within the specified duration.
 func (c *Client) GetAddressDomain(address string, timeout time.Duration) (*m.Domain, error) {
 	msg := m.AddressDomainGetMsg{
 		Address: address,

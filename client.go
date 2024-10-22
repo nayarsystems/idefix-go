@@ -17,6 +17,8 @@ import (
 	"github.com/nayarsystems/idefix-go/minips"
 )
 
+// ConnectionStatus represents the current connection state of the Client.
+// It is used to indicate whether the Client is connected to the MQTT broker or not.
 type ConnectionStatus int64
 
 const (
@@ -24,8 +26,12 @@ const (
 	Connected
 )
 
+// ConnectionStatusHandler is a function type that defines a handler for connection status changes
+// in the [Client]. This handler is called whenever the connection status of the [Client] changes,
+// allowing users to implement custom behavior based on the new status.
 type ConnectionStatusHandler func(*Client, ConnectionStatus)
 
+// Client represents a connection to Idefix, providing methods to interact with. It encapsulates the context, configuration, and connection details necessary for operation.
 type Client struct {
 	pctx                    context.Context
 	ctx                     context.Context
@@ -39,6 +45,7 @@ type Client struct {
 	ConnectionStatusHandler ConnectionStatusHandler
 }
 
+// NewClient returns a new [Client] with the options and the context given
 func NewClient(pctx context.Context, opts *ClientOptions) *Client {
 	c := &Client{
 		opts: opts,
@@ -48,6 +55,7 @@ func NewClient(pctx context.Context, opts *ClientOptions) *Client {
 	return c
 }
 
+// NewClientFromFile returns a new [Client] with the context given and the options readen from a config file given
 func NewClientFromFile(pctx context.Context, configFile string) (*Client, error) {
 	opts, err := ReadConfig(configFile)
 	if err != nil {
@@ -62,6 +70,18 @@ func NewClientFromFile(pctx context.Context, configFile string) (*Client, error)
 	return c, nil
 }
 
+// Connect establishes a connection to the MQTT broker. This method must be called
+// when the client is in the Disconnected state. If the client is already connected,
+// an error will be returned.
+//
+// The Connect method initializes the MQTT client with the provided options,
+// including the broker address, credentials, and optional TLS configuration if
+// a CA certificate is provided. It generates a unique session ID if one is not
+// specified in the options.
+//
+// Upon successful connection, it subscribes to the client's designated
+// response topic and performs a login operation. The connection state is then
+// updated to Connected.
 func (c *Client) Connect() (err error) {
 	if c.connectionState != Disconnected {
 		return ie.ErrAlreadyExists
@@ -124,20 +144,28 @@ func (c *Client) Connect() (err error) {
 	return nil
 }
 
+// SetSessionID sets the sessionID for a client
 func (c *Client) SetSessionID(sessionID string) {
 	c.sessionID = sessionID
 }
 
+// Disconnect gracefully terminates the connection to the MQTT broker.
+// This method changes the client's state to Disconnected and invokes
+// the cancel function associated with the client's context, which
+// may trigger any pending operations or goroutines related to the
+// client's connection.
 func (c *Client) Disconnect() {
 	c.setState(Disconnected)
 	c.cancelFunc()
 	c.client.Disconnect(200)
 }
 
+// Returns the client context
 func (c *Client) Context() context.Context {
 	return c.ctx
 }
 
+// Sets the connection status to the client and updates the [ConnectionStatusHandler] if initialized
 func (c *Client) setState(cs ConnectionStatus) {
 	if c.connectionState == cs {
 		return
@@ -150,6 +178,7 @@ func (c *Client) setState(cs ConnectionStatus) {
 	}
 }
 
+// Returns the connection status of a given client.
 func (c *Client) Status() ConnectionStatus {
 	return c.connectionState
 }
@@ -203,6 +232,7 @@ func (c *Client) connectionLostHandler(client mqtt.Client, err error) {
 	c.cancelFunc()
 }
 
+// Given an address, this method will return a valid address. If the provided address is valid, the returned address will be the same. Otherwise, if the given address contains characters other than numbers, letters, or dashes, this method will generate the SHA256 hash of that address and return the first 16 characters.
 func NormalizeAddress(address string) string {
 	r := regexp.MustCompile(`^[a-zA-Z0-9\-]+$`)
 	if !r.MatchString(address) {

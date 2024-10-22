@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ReadConfig function reads the config from the filename given and returns the [ClientOptions] struct with the config data added. File to read must be in current directory or in $HOME/.idefix.
 func ReadConfig(name string) (*ClientOptions, error) {
 	c := &ClientOptions{
 		Meta: make(map[string]interface{}),
@@ -49,6 +50,11 @@ func ReadConfig(name string) (*ClientOptions, error) {
 	return c, nil
 }
 
+// UpdateConfig updates the configuration of the specified client. This function
+// should only be called after the [ReadConfig] function has been executed successfully.
+//
+// Upon successful updating of the configuration, the changes are persisted by calling
+// the WriteConfig method on the configuration provider.
 func UpdateConfig(c *ClientOptions) error {
 	if c.vp == nil {
 		return fmt.Errorf("must ReadConfig first")
