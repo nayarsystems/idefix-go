@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -61,6 +62,13 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	} else {
 		configSyncInfoMsg = info.ConfigInfo.SyncInfo.Error
 	}
+	cloudFileSha256, err := base64.StdEncoding.DecodeString(info.ConfigInfo.CloudFileSha256)
+	if err != nil {
+		return fmt.Errorf("cannot decode cloud file sha256: %w", err)
+	}
+
+	cloudFileSha256Hex := fmt.Sprintf("%x", cloudFileSha256)
+
 	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
 		{"Device info", ""},
 		{"Address", info.Address},
@@ -70,7 +78,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Version", info.Version},
 		{"Launcher version", info.LauncherVersion},
 		{"Config file path", info.ConfigInfo.CloudFile},
-		{"Config file sha256", info.ConfigInfo.CloudFileSha256},
+		{"Config file sha256", cloudFileSha256Hex},
 		{"Config file sync status", configSyncInfoMsg},
 	}).Render()
 
