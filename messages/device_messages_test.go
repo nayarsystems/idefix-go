@@ -13,6 +13,7 @@ import (
 func Test_SysInfoResMsg(t *testing.T) {
 	input := SysInfoResMsg{
 		SysInfo: SysInfo{
+			SysInfoVersion: 1,
 			DeviceInfo: DeviceInfo{
 				Address: "random-address",
 			},
