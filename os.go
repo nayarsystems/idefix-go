@@ -1,7 +1,7 @@
 package idefixgo
 
 import (
-	"encoding/base64"
+	"encoding/hex"
 	"os"
 	"time"
 
@@ -35,7 +35,7 @@ const (
 
 // FileWrite uploads data to a file at the specified path on the remote system. It sends a request
 // using the client's Call2 method, including the file's path, content, and mode for the file's
-// permissions. Upon successful upload, the function returns the base64-encoded SHA256 hash of
+// permissions. Upon successful upload, the function returns the hex representation of the hash (sha256) of
 // the data or an error if the write operation fails.
 func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
 	msg := &m.FileWriteMsg{
@@ -45,7 +45,7 @@ func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, 
 	}
 	resp := &m.FileWriteResMsg{}
 	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
-	hash = base64.StdEncoding.EncodeToString(resp.Hash)
+	hash = hex.EncodeToString(resp.Hash)
 	return
 }
 
@@ -75,16 +75,13 @@ func FileSHA256(ic *Client, address, path string, tout time.Duration) (hash []by
 	return
 }
 
-// FileSHA256b64 computes the SHA256 hash of a file located at the specified path on the remote system
-// and returns it as a base64-encoded string. It first calls [FileSHA256] to obtain the raw hash bytes.
-// If successful, the raw hash is then encoded into a base64 string. The function returns the base64
-// string representation of the hash or an error if the hash computation fails.
-func FileSHA256b64(ic *Client, address, path string, tout time.Duration) (hash string, err error) {
-	hashRaw, err := FileSHA256(ic, address, path, tout)
+// Like FileSHA256, but returns the hash as a hex string.
+func FileSHA256Hex(ic *Client, address, path string, tout time.Duration) (hashHex string, err error) {
+	hash, err := FileSHA256(ic, address, path, tout)
 	if err != nil {
-		return "", err
+		return
 	}
-	hash = base64.StdEncoding.EncodeToString(hashRaw)
+	hashHex = hex.EncodeToString(hash)
 	return
 }
 
