@@ -257,7 +257,7 @@ func sendEnvFile(ic *idefixgo.Client, addr string, p *updateParams, envFilePath 
 	if err != nil {
 		return err
 	}
-	envFileHash := Sha256B64(envFileData)
+	envFileHash := Sha256Hex(envFileData)
 	receivedHash, err := idefixgo.FileWrite(ic, addr, envFilePath, envFileData, 0744, tout)
 	if err != nil {
 		return err
@@ -265,6 +265,15 @@ func sendEnvFile(ic *idefixgo.Client, addr string, p *updateParams, envFilePath 
 	if receivedHash != envFileHash {
 		return fmt.Errorf("received env hash (%s) != expected env hash (%s)", receivedHash, envFileHash)
 	}
+	return
+}
+
+func hexToB64(hexdata string) (b64data string, err error) {
+	raw, err := hex.DecodeString(hexdata)
+	if err != nil {
+		return
+	}
+	b64data = base64.StdEncoding.EncodeToString(raw)
 	return
 }
 
@@ -276,12 +285,22 @@ func buildEnvFile(p *updateParams, isRollback bool, srcHash, dstHash string) ([]
 		buf.WriteString(fmt.Sprintf("%s=%v\n", ENV_IDEFIX_PPP_CHECK, p.checkPPP))
 		buf.WriteString(fmt.Sprintf("%s=%v\n", ENV_IDEFIX_TRANSPORT_CHECK, p.checkTransport))
 	}
+
 	if srcHash != "" {
-		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_SRC_HASH, srcHash))
+		srcHashB64, err := hexToB64(srcHash)
+		if err != nil {
+			return nil, err
+		}
+		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_SRC_HASH, srcHashB64))
 	}
 	if dstHash != "" {
-		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_DST_HASH, dstHash))
+		dstHashB64, err := hexToB64(dstHash)
+		if err != nil {
+			return nil, err
+		}
+		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_DST_HASH, dstHashB64))
 	}
+
 	if isRollback && p.alternativeRollbackPath != "" {
 		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_FILE_PATH, getLauncherRelativePath(p.alternativeRollbackPath)))
 	}
@@ -331,6 +350,11 @@ func KB(bytes uint64) string {
 func Sha256B64(bytes []byte) string {
 	hash := sha256.Sum256(bytes)
 	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+func Sha256Hex(bytes []byte) string {
+	hash := sha256.Sum256(bytes)
+	return hex.EncodeToString(hash[:])
 }
 
 func storeFileBackup(fileContent []byte) error {

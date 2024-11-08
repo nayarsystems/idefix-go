@@ -98,7 +98,7 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 	if info.ConfigInfo.CloudFile == "" {
 		pterm.Warning.Println("There is no cloud config file configured")
 	} else {
-		if info.ConfigInfo.CloudFileSha256 == Sha256B64([]byte{}) {
+		if cloudFileSha256Hex == Sha256Hex([]byte{}) {
 			pterm.Warning.Println("The device has virgin state")
 		}
 	}

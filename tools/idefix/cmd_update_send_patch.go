@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -70,8 +70,8 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	srchash := base64.StdEncoding.EncodeToString(srchashRaw)
-	dsthash := base64.StdEncoding.EncodeToString(dsthashRaw)
+	srchash := hex.EncodeToString(srchashRaw)
+	dsthash := hex.EncodeToString(dsthashRaw)
 
 	upgradeEnvPath, rollbackEnvPath, upgradeBinPath, rollbackBinPath, exitType := getRawParams(p)
 
@@ -131,7 +131,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check idefix file hash
-	actualSrcHash, err := idefixgo.FileSHA256b64(ic, p.address, IdefixExecIdefixRelativePath, p.tout)
+	actualSrcHash, err := idefixgo.FileSHA256Hex(ic, p.address, IdefixExecIdefixRelativePath, p.tout)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	patchHash := Sha256B64(upgradePatch)
+	patchHash := Sha256Hex(upgradePatch)
 	spinner.UpdateText("sending upgrade patch file...")
 	receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, upgradePatch, 0744, p.tout)
 	if err != nil {
@@ -180,7 +180,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if p.rollbackType == "patch" {
-			patchHash := Sha256B64(rollbackPatch)
+			patchHash := Sha256Hex(rollbackPatch)
 			spinner.UpdateText("sending rollback patch file...")
 			receivedHash, err := idefixgo.FileWrite(ic, p.address, rollbackBinPath, rollbackPatch, 0744, p.tout)
 			if err != nil {

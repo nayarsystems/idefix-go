@@ -33,7 +33,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	upgradeEnvPath, rollbackEnvPath, upgradeBinPath, rollbackBinPath, exitType := getRawParams(p)
 
-	dsthash := Sha256B64(updatebytes)
+	dsthash := Sha256Hex(updatebytes)
 	upgradeBinPathMsg := upgradeBinPath
 	if !filepath.IsAbs(upgradeBinPathMsg) {
 		upgradeBinPathMsg = fmt.Sprintf("(relative to idefix binary) %s", upgradeBinPathMsg)
