@@ -118,10 +118,10 @@ type Domain struct {
 	// Variables added to the available environment during the rules execution
 	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 
-	// Creation time, hidden in Swagger
+	// Creation time
 	Creation time.Time `json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
 
-	// Last update time, hidden in Swagger
+	// Last update time
 	LastUpdate time.Time `json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty"`
 }
 
