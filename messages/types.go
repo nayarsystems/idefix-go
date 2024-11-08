@@ -119,10 +119,10 @@ type Domain struct {
 	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 
 	// Creation time, hidden in Swagger
-	Creation time.Time `json:"creation" msgpack:"creation" mapstructure:"-,omitempty" swagger:"-"`
+	Creation time.Time `json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
 
 	// Last update time, hidden in Swagger
-	LastUpdate time.Time `json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty" swagger:"-"`
+	LastUpdate time.Time `json:"lastUpdate" msgpack:"lastUpdate" mapstructure:"-,omitempty"`
 }
 
 func (m *Domain) ToMsi() (data msi, err error) {
