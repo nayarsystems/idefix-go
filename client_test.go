@@ -42,9 +42,7 @@ func setup() error {
 
 func createTestDomain(c *Client) {
 	domainCreateMsg := m.DomainCreateMsg{
-		Domain: m.Domain{
-			Domain: testDomain,
-		},
+		Domain: testDomain,
 	}
 	msg := &m.Message{
 		To:   m.CmdDomainCreate,

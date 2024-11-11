@@ -273,7 +273,13 @@ type DomainDeleteMsg struct {
 
 type DomainCreateMsg struct {
 	// Domain name
-	Domain `bson:",inline" mapstructure:",squash"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+
+	// Variables added to the available environment during the rules execution
+	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainCreateResponseMsg struct {
@@ -282,7 +288,14 @@ type DomainCreateResponseMsg struct {
 }
 
 type DomainUpdateMsg struct {
-	Domain `bson:",inline" mapstructure:",squash"`
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+
+	// Variables added to the available environment during the rules execution
+	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainUpdateResponseMsg struct {

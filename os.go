@@ -75,7 +75,9 @@ func FileSHA256(ic *Client, address, path string, tout time.Duration) (hash []by
 	return
 }
 
-// Like FileSHA256, but returns the hash as a hex string.
+// FileSHA256Hex computes the SHA256 hash of a file located at the specified path on the remote system
+// and returns it as a hex-encoded string. It first calls [FileSHA256] to obtain the raw hash bytes.
+// The function returns the hex string representation of the hash or an error if the hash computation fails.
 func FileSHA256Hex(ic *Client, address, path string, tout time.Duration) (hashHex string, err error) {
 	hash, err := FileSHA256(ic, address, path, tout)
 	if err != nil {
