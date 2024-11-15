@@ -86,7 +86,9 @@ func cmdDomainCreateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	msg := &m.DomainCreateMsg{
-		Domain: *domain,
+		Domain:      domain.Domain,
+		Env:         domain.Env,
+		AccessRules: domain.AccessRules,
 	}
 	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainCreate, msg, getTimeout(cmd))
 }
@@ -112,7 +114,9 @@ func cmdDomainUpdateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	msg := &m.DomainUpdateMsg{
-		Domain: *domain,
+		Domain:      domain.Domain,
+		Env:         domain.Env,
+		AccessRules: domain.AccessRules,
 	}
 	return commandCall2(m.IdefixCmdPrefix, m.CmdDomainUpdate, msg, getTimeout(cmd))
 }
