@@ -143,6 +143,42 @@ type AddressAliasRemoveResponseMsg struct {
 	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
 }
 
+type AddressEnvironmentGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+}
+
+type AddressEnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+}
+
+type AddressEnvironmentSetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment" validate:"required"`
+}
+
+type AddressEnvironmentSetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type AddressEnvironmentUnsetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+
+	// Keys to remove
+	Keys []string `json:"keys" msgpack:"keys" mapstructure:"keys" validate:"required"`
+}
+
+type AddressEnvironmentUnsetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
 /************/
 /*  Events  */
 /************/
@@ -279,7 +315,7 @@ type DomainCreateMsg struct {
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainCreateResponseMsg struct {
@@ -295,7 +331,7 @@ type DomainUpdateMsg struct {
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainUpdateResponseMsg struct {
@@ -346,6 +382,42 @@ type DomainListAddressesMsg struct {
 
 type DomainListAddressesResponseMsg struct {
 	Addresses map[string]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+}
+
+type DomainEnvironmentGetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+}
+
+type DomainEnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type DomainEnvironmentSetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+}
+
+type DomainEnvironmentSetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type DomainEnvironmentUnsetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Keys to remove
+	Keys []string `json:"keys" msgpack:"keys" mapstructure:"keys" validate:"required"`
+}
+
+type DomainEnvironmentUnsetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
 }
 
 /*************/
@@ -443,4 +515,26 @@ type SessionDeleteMsg struct {
 type SessionDeleteResponseMsg struct {
 	// Sessions deleted
 	Sessions int `json:"sessionsDeleted,omitempty" msgpack:"sessionsDeleted,omitempty" mapstructure:"sessionsDeleted"`
+}
+
+/*****************/
+/*  Environment  */
+/*****************/
+type EnvironmentGetMsg struct {
+	// Address to query environment of
+	Address string `json:"address,omitempty" msgpack:"address,omitempty" mapstructure:"address,omitempty"`
+
+	// Domain to query environment of
+	Domain string `json:"domain,omitempty" msgpack:"domain,omitempty" mapstructure:"domain,omitempty"`
+
+	// Keys to request
+	Keys []string `json:"keys,omitempty" msgpack:"keys,omitempty" mapstructure:"keys,omitempty"`
+}
+
+type EnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+
+	// Available keys
+	AvailableKeys []string `json:"availableKeys,omitempty" msgpack:"availableKeys,omitempty" mapstructure:"availableKeys,omitempty"`
 }
