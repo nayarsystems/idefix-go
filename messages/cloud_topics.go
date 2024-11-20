@@ -34,6 +34,15 @@ const (
 	// TopicTransportDomainTree list every nested domain under the specified domain
 	TopicTransportDomainTree = TopicTransportIdefixPrefix + CmdDomainTree
 
+	// TopicTransportDomainEnvironmentGet is used to get the environment variables for a domain
+	TopicTransportDomainEnvironmentGet = TopicTransportIdefixPrefix + CmdDomainEnvironmentGet
+
+	// TopicTransportDomainEnvironmentSet is used to set the environment variables for a domain
+	TopicTransportDomainEnvironmentSet = TopicTransportIdefixPrefix + CmdDomainEnvironmentSet
+
+	// TopicTransportDomainEnvironmentUnset is used to unset the environment variables for a domain
+	TopicTransportDomainEnvironmentUnset = TopicTransportIdefixPrefix + CmdDomainEnvironmentUnset
+
 	// TopicTransportAddToGroup: add an address to a group
 	TopicTransportAddToGroup = TopicTransportIdefixPrefix + CmdGroupAddAddress
 
@@ -48,6 +57,9 @@ const (
 
 	// TopicTransportEnvGet is the environment get function
 	TopicTransportEnvGet = TopicTransportIdefixPrefix + CmdEnvGet
+
+	// TopicTransportEnvironmentGet is the environment get function
+	TopicTransportEnvironmentGet = TopicTransportIdefixPrefix + CmdEnvironmentGet
 
 	// TopicTransportAddressStatesGet is used to get last state map of a client
 	TopicTransportAddressStatesGet = TopicTransportIdefixPrefix + CmdAddressStatesGet
@@ -72,6 +84,15 @@ const (
 
 	// TopicTransportAddressConfigUpdate is used to update the custom data for the given client
 	TopicTransportAddressConfigUpdate = TopicTransportIdefixPrefix + CmdAddressConfigUpdate
+
+	// TopicTransportAddressEnvironmentGet is used to update the custom data for the given client
+	TopicTransportAddressEnvironmentGet = TopicTransportIdefixPrefix + CmdAddressEnvironmentGet
+
+	// TopicTransportAddressEnvironmentGet is used to update the custom data for the given client
+	TopicTransportAddressEnvironmentSet = TopicTransportIdefixPrefix + CmdAddressEnvironmentSet
+
+	// TopicTransportAddressEnvironmentGet is used to update the custom data for the given client
+	TopicTransportAddressEnvironmentUnset = TopicTransportIdefixPrefix + CmdAddressEnvironmentUnset
 
 	// TopicTransportEventsCreate is used to create a new event on the server linked to the source address' domain
 	TopicTransportEventsCreate = TopicTransportIdefixPrefix + CmdEventsCreate
@@ -142,6 +163,15 @@ const (
 	// CmdDomainTree is the command to list all nested domains under a specific domain
 	CmdDomainTree = "domain.tree"
 
+	// CmdDomainEnvironmentGet is the command to retrieve the environment variables for a specific domain
+	CmdDomainEnvironmentGet = "domain.environment.get"
+
+	// CmdDomainEnvironmentSet is the command to set the environment variables for a specific domain
+	CmdDomainEnvironmentSet = "domain.environment.set"
+
+	// CmdDomainEnvironmentUnset is the command to unset the environment variables for a specific domain
+	CmdDomainEnvironmentUnset = "domain.environment.unset"
+
 	// CmdGroupAddAddress is the command to add an address to a group on a domain
 	CmdGroupAddAddress = "group.add"
 
@@ -152,7 +182,8 @@ const (
 	CmdGroupGetAddresses = "group.get"
 
 	// CmdEnvGet is the command to retrieve environment details
-	CmdEnvGet = "env.get"
+	CmdEnvGet         = "env.get"
+	CmdEnvironmentGet = "environment.get"
 
 	// CmdAddressStatesGet is the command to get the last known state map of a specific address
 	CmdAddressStatesGet = "address.states.get"
@@ -174,6 +205,15 @@ const (
 
 	// CmdAddressConfigUpdate is the command to update the custom configuration data for a specific address
 	CmdAddressConfigUpdate = "address.config.update"
+
+	// CmdAddressEnvironmentGet is the command to retrieve the environment variables for a specific address
+	CmdAddressEnvironmentGet = "address.environment.get"
+
+	// CmdAddressEnvironmentSet is the command to set the environment variables for a specific address
+	CmdAddressEnvironmentSet = "address.environment.set"
+
+	// CmdAddressEnvironmentUnset is the command to unset the environment variables for a specific address
+	CmdAddressEnvironmentUnset = "address.environment.unset"
 
 	// CmdAddressDisable is the command to restrict access to a specific address
 	CmdAddressDisable = "address.disable"
