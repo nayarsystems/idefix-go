@@ -109,11 +109,11 @@ func (s *SubscriberStream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
+			err := s.c.Call2(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
 				Id:          s.subId,
 				Timeout:     s.timeout,
 				PayloadOnly: s.payloadOnly,
-			}}, time.Second*5)
+			}}, nil, time.Second*5)
 			if err != nil && !ie.ErrTimeout.Is(err) {
 				s.cancel(err)
 				return
