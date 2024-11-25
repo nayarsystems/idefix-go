@@ -99,11 +99,11 @@ func (s *PublisherStream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteStartPublisher, Data: m.StreamCreateMsg{
+			err := s.c.Call2(s.address, &m.Message{To: m.TopicRemoteStartPublisher, Data: m.StreamCreateMsg{
 				Id:          s.pubId,
 				Timeout:     s.timeout,
 				PayloadOnly: s.payloadOnly,
-			}}, time.Second*5)
+			}}, nil, time.Second*5)
 			if err != nil && !ie.ErrTimeout.Is(err) {
 				s.cancel(err)
 				return
