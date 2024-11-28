@@ -81,7 +81,11 @@ func (s *SubscriberStream) handleMsg(msg any) {
 
 	payload, err := ei.N(msg).M("p").Raw()
 	if err != nil {
+		fmt.Printf("Received: %v\n", msg)
 		fmt.Println("Error getting payload", err)
+		//fmt.Printf("Guessed: type: %T", ei.N(msg).M("p"))
+		//fmt.Printf("Guessed: %v\n", ei.N(msg).M("p").BoolZ())
+
 		return
 	}
 
@@ -109,6 +113,7 @@ func (s *SubscriberStream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
+			fmt.Printf("keepalive: %v\n", s.timeout)
 			err := s.c.Call2(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
 				Id:          s.subId,
 				Timeout:     s.timeout,
