@@ -9,6 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// These are extracted from zerolog source to recolor the levels
+const (
+	// colorBlack   = 30
+	colorRed    = 31
+	colorGreen  = 32
+	colorYellow = 33
+	// colorBlue    = 34
+	colorMagenta = 35
+	colorCyan    = 36
+	// colorWhite   = 37
+
+	colorBold = 1
+	// colorDarkGray = 90
+)
+
 func init() {
 	cmdLog.Flags().StringP("address", "a", "", "Device address")
 	cmdLog.MarkFlagRequired("address")
@@ -30,6 +45,13 @@ var cmdStream = &cobra.Command{
 	Use:   "stream",
 	Short: "Stream device messages",
 	RunE:  cmdStreamRunE,
+}
+
+func colorize(s interface{}, c int, disabled bool) string {
+	if disabled {
+		return fmt.Sprintf("%s", s)
+	}
+	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
 }
 
 func cmdLogRunE(cmd *cobra.Command, args []string) error {
@@ -74,8 +96,30 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 				fmt.Println(err)
 				continue
 			}
+			noColor := false
 
-			fmt.Printf("[%d] %s\n", l, m)
+			l_str := ""
+
+			switch l {
+			case -1:
+				l_str = colorize("TRC", colorMagenta, noColor)
+			case 0:
+				l_str = colorize("DBG", colorCyan, noColor)
+			case 1:
+				l_str = colorize("INF", colorGreen, noColor)
+			case 2:
+				l_str = colorize("WRN", colorYellow, noColor)
+			case 3:
+				l_str = colorize(colorize("ERR", colorRed, noColor), colorBold, noColor)
+			case 4:
+				l_str = colorize(colorize("FTL", colorRed, noColor), colorBold, noColor)
+			case 5:
+				l_str = colorize(colorize("PNC", colorRed, noColor), colorBold, noColor)
+			default:
+				l_str = colorize("???", colorBold, noColor)
+			}
+
+			fmt.Printf("[%s] %s\n", l_str, m)
 
 		case <-s.Context().Done():
 			return s.Context().Err()
