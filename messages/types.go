@@ -18,6 +18,8 @@ type DeviceInfo struct {
 	Version         string `mapstructure:"version" json:"version" msgpack:"version"`
 	BootCnt         uint32 `mapstructure:"bootCnt" json:"bootCnt" msgpack:"bootCnt"`
 	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty" msgpack:"launcherVersion,omitempty"`
+	Kernel          string `mapstructure:"kernel,omitempty" json:"kernel,omitempty" msgpack:"kernel,omitempty"`
+	Distro          string `mapstructure:"distro,omitempty" json:"distro,omitempty" msgpack:"distro,omitempty"`
 }
 
 type ConfigSyncInfo struct {
