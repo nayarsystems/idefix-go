@@ -55,7 +55,7 @@ func (c *Client) NewSubscriberStream(address string, topic string, capacity uint
 	}
 
 	if res.StickyPayload != nil {
-		s.handleMsg(res.StickyPayload)
+		s.buffer <- &m.Message{To: s.topic, Data: res.StickyPayload}
 	}
 
 	pubtopic := fmt.Sprintf("%s/%s", m.MqttPublicPrefix, res.PublicTopic)
