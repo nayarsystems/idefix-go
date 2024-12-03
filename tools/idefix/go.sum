@@ -86,10 +86,8 @@ github.com/nayarsystems/buffer v0.1.1 h1:ioRQ9aza2bEvPnSJKNjPcjXHhvjtDJEPOqHZQ58
 github.com/nayarsystems/buffer v0.1.1/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
 github.com/nayarsystems/cacert-go v0.20240410.16 h1:Dr0/eB7RlEB4mLoXIm/vd5gtxYa+rNp1d4t3glJXtbY=
 github.com/nayarsystems/cacert-go v0.20240410.16/go.mod h1:0MaePawoggMTdfpTt2TFTrG9Rg11xGun/F/rytLrebA=
-github.com/nayarsystems/idefix-go v0.2.4-0.20241108155848-3886df6d4779 h1:xKsLW87O+N8qx2+o2CmbF4rZj/eHG8xfL1MZr8Uwg+c=
-github.com/nayarsystems/idefix-go v0.2.4-0.20241108155848-3886df6d4779/go.mod h1:B8AqnRLj+StUPNYIpEOqtCL6C194aqQQK0Ym5CCA5bY=
-github.com/nayarsystems/idefix-go v0.3.0 h1:K4j9cxKiyV05aJg8TO41Kk6VJCZE6fZj3+J2r70UL+0=
-github.com/nayarsystems/idefix-go v0.3.0/go.mod h1:B8AqnRLj+StUPNYIpEOqtCL6C194aqQQK0Ym5CCA5bY=
+github.com/nayarsystems/idefix-go v0.3.1-0.20241203075052-bf1786259be8 h1:cNbKBE81rYCSE4Z4qlZ/p82UPAVnLdjLPiOsyEACDe4=
+github.com/nayarsystems/idefix-go v0.3.1-0.20241203075052-bf1786259be8/go.mod h1:B8AqnRLj+StUPNYIpEOqtCL6C194aqQQK0Ym5CCA5bY=
 github.com/nayarsystems/idefix-go/minips v0.0.4 h1:pb0gfH3T921iW+AvatLQ93Ot+P/qBMlMN5620cVNXaM=
 github.com/nayarsystems/idefix-go/minips v0.0.4/go.mod h1:AkH3hDvXIn2HHdUNBJW9Rm8biMSn6vC2X1sbNivBZac=
 github.com/nayarsystems/mapstructure v0.0.0-20230919191513-e7445bf97909 h1:pVmFDfvUhUWgaaqu3F8FPKyJBgF315X41XM0nGH8hhY=
