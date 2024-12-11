@@ -128,7 +128,7 @@ func parseDomainFlags(cmd *cobra.Command) (domain *m.Domain, err error) {
 		return nil, err
 	}
 
-	env := make(map[string]interface{})
+	env := make(map[string]string)
 	senv, err := cmd.Flags().GetString("env")
 	if err != nil {
 		return nil, err
