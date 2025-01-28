@@ -124,3 +124,23 @@ func TestGlobalSubscriber(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 123, n)
 }
+
+func TestWaitWithContext(t *testing.T) {
+	mp := NewMinips[int](context.Background())
+
+	s := mp.NewSubscriber(10, "")
+	mp.Publish("test1", 123)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	n, err := s.WaitOneWithContext(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 123, n)
+	cancel()
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond)
+	n, err = s.WaitOneWithContext(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "timeout")
+	require.Equal(t, 0, n)
+	cancel()
+}
