@@ -226,6 +226,12 @@ type EventsGetMsg struct {
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
+
+	// NoPayload will not return the payload of the events
+	NoPayload bool `json:"noPayload" msgpack:"noPayload" mapstructure:"noPayload,omitempty"`
+
+	// Type will filter out events that do not match the type
+	Type string `json:"type" msgpack:"type" mapstructure:"type,omitempty"`
 }
 
 func (m *EventsGetMsg) ToMsi() (data msi, err error) {
