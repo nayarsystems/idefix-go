@@ -3,6 +3,7 @@ package idefixgo
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"io"
 	"strings"
@@ -15,6 +16,10 @@ import (
 )
 
 func (c *Client) sendMessage(tm *m.Message) (err error) {
+	return c.sendMessageWithContext(context.Background(), tm)
+}
+
+func (c *Client) sendMessageWithContext(ctx context.Context, tm *m.Message) (err error) {
 	var flags string
 	var marshaled bool
 	var marshalErr error
@@ -70,7 +75,11 @@ func (c *Client) sendMessage(tm *m.Message) (err error) {
 	}
 
 	msg := c.client.Publish(c.publishTopic(flags), 1, false, data)
-	msg.Wait()
+	select {
+	case <-msg.Done():
+	case <-ctx.Done():
+		return e.ErrTimeout
+	}
 	if msg.Error() != nil {
 		return e.ErrInternal.With(msg.Error().Error())
 	}
