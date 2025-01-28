@@ -521,10 +521,10 @@ type SessionDeleteResponseMsg struct {
 /*  Environment  */
 /*****************/
 type EnvironmentGetMsg struct {
-	// Address to query environment of
+	// Address to query environment of (empty for the current address)
 	Address string `json:"address,omitempty" msgpack:"address,omitempty" mapstructure:"address,omitempty"`
 
-	// Domain to query environment of
+	// Domain to query environment of (cannot be used with an address set)
 	Domain string `json:"domain,omitempty" msgpack:"domain,omitempty" mapstructure:"domain,omitempty"`
 
 	// Keys to request

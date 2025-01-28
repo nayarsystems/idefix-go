@@ -386,3 +386,52 @@ func (c *Client) SessionDelete(query *m.SessionDeleteMsg, ctx ...context.Context
 	err = c.Syscall(message, response, ctx...)
 	return
 }
+
+func (c *Client) AddressEnvironmentGet(query *m.AddressEnvironmentGetMsg, ctx ...context.Context) (response *m.AddressEnvironmentGetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdAddressEnvironmentGet, Data: query}
+	response = &m.AddressEnvironmentGetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) AddressEnvironmentSet(query *m.AddressEnvironmentSetMsg, ctx ...context.Context) (response *m.AddressEnvironmentSetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdAddressEnvironmentSet, Data: query}
+	response = &m.AddressEnvironmentSetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) AddressEnvironmentUnset(query *m.AddressEnvironmentUnsetMsg, ctx ...context.Context) (response *m.AddressEnvironmentUnsetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdAddressEnvironmentUnset, Data: query}
+	response = &m.AddressEnvironmentUnsetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) DomainEnvironmentGet(query *m.DomainEnvironmentGetMsg, ctx ...context.Context) (response *m.DomainEnvironmentGetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdDomainEnvironmentGet, Data: query}
+	response = &m.DomainEnvironmentGetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) DomainEnvironmentSet(query *m.DomainEnvironmentSetMsg, ctx ...context.Context) (response *m.DomainEnvironmentSetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdDomainEnvironmentSet, Data: query}
+	response = &m.DomainEnvironmentSetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) DomainEnvironmentUnset(query *m.DomainEnvironmentUnsetMsg, ctx ...context.Context) (response *m.DomainEnvironmentUnsetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdDomainEnvironmentUnset, Data: query}
+	response = &m.DomainEnvironmentUnsetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
+func (c *Client) Environment(query *m.EnvironmentGetMsg, ctx ...context.Context) (response *m.EnvironmentGetResponseMsg, err error) {
+	message := &m.Message{To: m.CmdEnvironmentGet, Data: query}
+	response = &m.EnvironmentGetResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
