@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jaracil/ei"
 	ie "github.com/nayarsystems/idefix-go/errors"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix-go/minips"
@@ -165,6 +166,11 @@ func (c *Client) Syscall(message *m.Message, response any, ctx ...context.Contex
 	}
 
 	if response != nil {
+		if rrr, err := ei.N(ret.Data).Bool(); err == nil {
+			response = rrr
+			return nil
+		}
+
 		respMsi, err := m.GetMsi(ret.Data)
 		if err != nil {
 			return err
