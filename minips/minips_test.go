@@ -59,6 +59,18 @@ func TestMinipsInt(t *testing.T) {
 	require.Equal(t, 1, len(ch1))
 }
 
+func TestMinipsWildcardSubscriber(t *testing.T) {
+	mp := NewMinips[int](context.Background())
+
+	ch1 := make(chan int, 100)
+
+	mp.registerChannel("", ch1)
+
+	require.Equal(t, 0, len(ch1))
+	mp.Publish("test1.asdf.qwe", 123)
+	require.Equal(t, 1, len(ch1))
+}
+
 func TestMinipsUnregAll(t *testing.T) {
 	mp := NewMinips[int](context.Background())
 
