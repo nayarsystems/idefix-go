@@ -50,6 +50,10 @@ type SysInfo struct {
 	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty" json:"lastRunExitCode,omitempty" msgpack:"lastRunExitCode,omitempty"`
 	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty" json:"lastRunExitIssuedBy,omitempty" msgpack:"lastRunExitIssuedBy,omitempty"`
 	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty" json:"lastRunExitIssuedAt,omitempty" msgpack:"lastRunExitIssuedAt,omitempty"`
+
+	// Idefix exited abrubtly due to a critical error, power loss, etc.
+	// When this happens, modules are not stopped gracefully.
+	LastRunExitAbrubt bool `mapstructure:"lastRunExitAbrubt,omitempty" json:"lastRunExitAbrubt,omitempty" msgpack:"lastRunExitAbrubt,omitempty"`
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
