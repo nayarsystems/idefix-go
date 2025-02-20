@@ -33,7 +33,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	upgradeEnvPath, rollbackEnvPath, upgradeBinPath, rollbackBinPath, exitType := getRawParams(p)
 
-	dsthash := Sha256B64(updatebytes)
+	dsthash := Sha256Hex(updatebytes)
 	upgradeBinPathMsg := upgradeBinPath
 	if !filepath.IsAbs(upgradeBinPathMsg) {
 		upgradeBinPathMsg = fmt.Sprintf("(relative to idefix binary) %s", upgradeBinPathMsg)
@@ -102,6 +102,9 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 
 	if result, _ := pterm.DefaultInteractiveConfirm.Show(); !result {
 		return nil
+	}
+	if err := storeFileBackup(updatebytes); err != nil {
+		return err
 	}
 	spinner, _ := pterm.DefaultSpinner.WithShowTimer(false).Start("sending upgrade env file...")
 	defer spinner.Stop()

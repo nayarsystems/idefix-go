@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -22,7 +24,7 @@ func init() {
 	cmdUpdateCreate.Flags().StringP("source", "s", "", "Source")
 	cmdUpdateCreate.Flags().StringP("destination", "d", "", "Destination")
 	cmdUpdateCreate.Flags().StringP("output", "o", "", "Output")
-	cmdUpdateCreate.Flags().BoolP("rollback", "r", false, "Also include a patch for rollback")
+	cmdUpdateCreate.Flags().BoolP("rollback", "r", false, "Also include a rollback patch")
 	cmdUpdateCreate.MarkFlagRequired("source")
 	cmdUpdateCreate.MarkFlagRequired("destination")
 	cmdUpdate.AddCommand(cmdUpdateCreate)
@@ -37,26 +39,26 @@ func init() {
 	cmdUpdate.AddCommand(cmdUpdateApply)
 
 	cmdUpdateSendPatch.Flags().StringP("patch", "p", "", "Patch file")
-	cmdUpdateSendPatch.Flags().BoolP("rollback", "r", false, "Also either send (it depends on rollback-type param) a rollback patch (.patch) or request to save a backup file as rollback file (.bin)")
-	cmdUpdateSendPatch.Flags().String("rollback-type", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
 	cmdUpdateSendPatch.MarkFlagRequired("patch")
+	cmdUpdateSendPatch.Flags().String("rollback-type", "bin", "Type of rollback file: bin (request backup file),patch (send rollback patch)")
 	cmdUpdateSend.AddCommand(cmdUpdateSendPatch)
 
 	cmdUpdateSendFile.Flags().StringP("file", "f", "", "Update file")
 	cmdUpdateSendFile.MarkFlagRequired("file")
-	cmdUpdateSendFile.Flags().BoolP("rollback", "r", false, "Also request device to save a rollback file (full .bin)")
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
 	cmdUpdateSend.PersistentFlags().String("reason", "", "Optinal reason for update")
-	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 60, "Indicates the duration of the test execution in seconds")
-	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 10, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
-	cmdUpdateSend.PersistentFlags().Bool("check-ppp", false, "Check ppp link after upgrade")
-	cmdUpdateSend.PersistentFlags().Bool("check-tr", false, "Check transport link after upgrade")
+	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 300, "Indicates the duration of the test execution in seconds")
+	cmdUpdateSend.PersistentFlags().Uint("healthy-secs", 60, "Only used if at least one check is enabled. Indicates the minimum number of seconds positively validating the checks")
+	cmdUpdateSend.PersistentFlags().Bool("check-ppp", true, "Check ppp link after upgrade")
+	cmdUpdateSend.PersistentFlags().Bool("check-tr", true, "Check transport link after upgrade")
 	cmdUpdateSend.PersistentFlags().Uint("stop-countdown", 10, "Stop countdown before stopping idefix in seconds")
 	cmdUpdateSend.PersistentFlags().Uint("halt-timeout", 10, "Halt timeout in seconds")
 	cmdUpdateSend.PersistentFlags().StringP("upgrade-path", "", "", "Alternative upgrade file's path (absolute or relative to idefix binary)")
+	cmdUpdateSend.PersistentFlags().BoolP("no-rollback", "", false, "Do not send/request a rollback file")
 	cmdUpdateSend.PersistentFlags().StringP("rollback-path", "", "", "Alternative rollback file's path (absolute or relative to idefix binary)")
+	cmdUpdateSend.PersistentFlags().UintP("timeout", "", 120000, "timeout in milliseconds")
 	cmdUpdate.AddCommand(cmdUpdateSend)
 
 	rootCmd.AddCommand(cmdUpdate)
@@ -200,10 +202,13 @@ func getUpdateParams(cmd *cobra.Command) (p *updateParams, err error) {
 	if err != nil {
 		return
 	}
-	p.createRollback, err = cmd.Flags().GetBool("rollback")
+
+	noRollback, err := cmd.Flags().GetBool("no-rollback")
 	if err != nil {
 		return
 	}
+	p.createRollback = !noRollback
+
 	p.alternativeUpgradePath, err = cmd.Flags().GetString("upgrade-path")
 	if err != nil {
 		return
@@ -252,7 +257,7 @@ func sendEnvFile(ic *idefixgo.Client, addr string, p *updateParams, envFilePath 
 	if err != nil {
 		return err
 	}
-	envFileHash := Sha256B64(envFileData)
+	envFileHash := Sha256Hex(envFileData)
 	receivedHash, err := idefixgo.FileWrite(ic, addr, envFilePath, envFileData, 0744, tout)
 	if err != nil {
 		return err
@@ -260,6 +265,15 @@ func sendEnvFile(ic *idefixgo.Client, addr string, p *updateParams, envFilePath 
 	if receivedHash != envFileHash {
 		return fmt.Errorf("received env hash (%s) != expected env hash (%s)", receivedHash, envFileHash)
 	}
+	return
+}
+
+func hexToB64(hexdata string) (b64data string, err error) {
+	raw, err := hex.DecodeString(hexdata)
+	if err != nil {
+		return
+	}
+	b64data = base64.StdEncoding.EncodeToString(raw)
 	return
 }
 
@@ -271,12 +285,22 @@ func buildEnvFile(p *updateParams, isRollback bool, srcHash, dstHash string) ([]
 		buf.WriteString(fmt.Sprintf("%s=%v\n", ENV_IDEFIX_PPP_CHECK, p.checkPPP))
 		buf.WriteString(fmt.Sprintf("%s=%v\n", ENV_IDEFIX_TRANSPORT_CHECK, p.checkTransport))
 	}
+
 	if srcHash != "" {
-		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_SRC_HASH, srcHash))
+		srcHashB64, err := hexToB64(srcHash)
+		if err != nil {
+			return nil, err
+		}
+		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_SRC_HASH, srcHashB64))
 	}
 	if dstHash != "" {
-		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_DST_HASH, dstHash))
+		dstHashB64, err := hexToB64(dstHash)
+		if err != nil {
+			return nil, err
+		}
+		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_DST_HASH, dstHashB64))
 	}
+
 	if isRollback && p.alternativeRollbackPath != "" {
 		buf.WriteString(fmt.Sprintf("%s=%v\n", PARAM_UPDATE_FILE_PATH, getLauncherRelativePath(p.alternativeRollbackPath)))
 	}
@@ -326,4 +350,32 @@ func KB(bytes uint64) string {
 func Sha256B64(bytes []byte) string {
 	hash := sha256.Sum256(bytes)
 	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+func Sha256Hex(bytes []byte) string {
+	hash := sha256.Sum256(bytes)
+	return hex.EncodeToString(hash[:])
+}
+
+func storeFileBackup(fileContent []byte) error {
+	ucd, err := os.UserCacheDir()
+	if err != nil {
+		ucd = "$HOME"
+	}
+
+	dstFolder := filepath.Join(ucd, "idefix", "updates")
+	if err := os.MkdirAll(dstFolder, 0755); err != nil {
+		return err
+	}
+
+	hash := sha256.Sum256(fileContent)
+	hashStr := hex.EncodeToString(hash[:])
+
+	backupPath := filepath.Join(dstFolder, hashStr)
+
+	if _, err := os.Stat(backupPath); err == nil {
+		return nil
+	}
+
+	return os.WriteFile(backupPath, fileContent, 0644)
 }

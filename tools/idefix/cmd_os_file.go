@@ -136,13 +136,13 @@ func cmdOsFileReadRunE(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	hash, err := idefixgo.FileSHA256b64(ic, params.address, params.srcPath, params.timeout)
+	hash, err := idefixgo.FileSHA256Hex(ic, params.address, params.srcPath, params.timeout)
 	if err != nil {
 		return err
 	}
 
 	// Check hash of data
-	dataHash := Sha256B64(data)
+	dataHash := Sha256Hex(data)
 	if dataHash != hash {
 		return fmt.Errorf("read error. Hash mismatch: %s != %s", dataHash, hash)
 	}
@@ -184,7 +184,7 @@ func cmdOsFileWriteRunE(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	srcBytesHash := Sha256B64(srcBytes)
+	srcBytesHash := Sha256Hex(srcBytes)
 
 	dstBytesHash, err := idefixgo.FileWrite(ic, params.address, params.dstPath, srcBytes, params.fileMode, params.timeout)
 	if err != nil {

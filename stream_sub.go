@@ -13,6 +13,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+// SubscriberStream manages the state and operations for a subscription to a message stream.
 type SubscriberStream struct {
 	ctx         context.Context
 	cancel      context.CancelCauseFunc
@@ -25,6 +26,12 @@ type SubscriberStream struct {
 	payloadOnly bool
 }
 
+// NewSubscriberStream creates a new SubscriberStream for the specified topic.
+// It establishes a connection to the remote address and subscribes to the provided topic.
+//
+// The SubscriberStream allows the client to receive messages published to the specified topic.
+// It can handle both payload-only messages and full message structures based on the
+// value of the payloadOnly parameter.
 func (c *Client) NewSubscriberStream(address string, topic string, capacity uint, payloadOnly bool, timeout time.Duration) (*SubscriberStream, error) {
 	s := &SubscriberStream{
 		address:     address,
@@ -40,7 +47,7 @@ func (c *Client) NewSubscriberStream(address string, topic string, capacity uint
 	res := m.StreamCreateSubResMsg{}
 	err := s.c.Call2(address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
 		TargetTopic: topic,
-		Timeout:     time.Second * 30,
+		Timeout:     timeout,
 		PayloadOnly: s.payloadOnly,
 	}}, &res, time.Second*5)
 	if err != nil {
@@ -48,7 +55,7 @@ func (c *Client) NewSubscriberStream(address string, topic string, capacity uint
 	}
 
 	if res.StickyPayload != nil {
-		s.handleMsg(res.StickyPayload)
+		s.buffer <- &m.Message{To: s.topic, Data: res.StickyPayload}
 	}
 
 	pubtopic := fmt.Sprintf("%s/%s", m.MqttPublicPrefix, res.PublicTopic)
@@ -102,11 +109,11 @@ func (s *SubscriberStream) keepalive() {
 		case <-s.ctx.Done():
 			return
 		case <-t.C:
-			_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
+			err := s.c.Call2(s.address, &m.Message{To: m.TopicRemoteSubscribe, Data: m.StreamCreateMsg{
 				Id:          s.subId,
 				Timeout:     s.timeout,
 				PayloadOnly: s.payloadOnly,
-			}}, time.Second*5)
+			}}, nil, time.Second*5)
 			if err != nil && !ie.ErrTimeout.Is(err) {
 				s.cancel(err)
 				return
@@ -115,14 +122,17 @@ func (s *SubscriberStream) keepalive() {
 	}
 }
 
+// Channel returns a read-only channel that streams messages from the subscriber.
 func (s *SubscriberStream) Channel() <-chan *m.Message {
 	return s.buffer
 }
 
+// Context returns the context of a given SubscriberStream
 func (s *SubscriberStream) Context() context.Context {
 	return s.ctx
 }
 
+// Close terminates the 'SubscriberStream' by canceling the stream and unsubscribing from the remote topic.
 func (s *SubscriberStream) Close() error {
 	defer s.cancel(fmt.Errorf("closed by user"))
 	_, err := s.c.Call(s.address, &m.Message{To: m.TopicRemoteUnsubscribe, Data: m.StreamDeleteMsg{

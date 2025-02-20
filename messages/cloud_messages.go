@@ -17,6 +17,7 @@ type LoginMsg struct {
 	Token    string                 `json:"token" msgpack:"token" mapstructure:"token,omitempty"`
 	Time     int64                  `json:"time" msgpack:"time" mapstructure:"time,omitempty"`
 	Meta     map[string]interface{} `json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
+	Groups   []string               `json:"groups" msgpack:"groups" mapstructure:"groups,omitempty"`
 }
 
 /********************/
@@ -105,6 +106,41 @@ type AddressConfigUpdateMsg struct {
 }
 
 type AddressConfigUpdateResponseMsg struct {
+}
+
+type AddressAliasGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+}
+
+type AddressAliasGetResponseMsg struct {
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasAddMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Alias to add
+	Alias string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasAddResponseMsg struct {
+	// Alias to add
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasRemoveMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty"`
+
+	// Alias to remove
+	Alias string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
+}
+
+type AddressAliasRemoveResponseMsg struct {
+	// Alias to remove
+	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
 }
 
 /************/
@@ -237,7 +273,13 @@ type DomainDeleteMsg struct {
 
 type DomainCreateMsg struct {
 	// Domain name
-	Domain `bson:",inline" mapstructure:",squash"`
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+
+	// Variables added to the available environment during the rules execution
+	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainCreateResponseMsg struct {
@@ -246,7 +288,14 @@ type DomainCreateResponseMsg struct {
 }
 
 type DomainUpdateMsg struct {
-	Domain `bson:",inline" mapstructure:",squash"`
+	// Domain name
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Access rules (javascript snippet by default) to be applied to every message reaching an address in this domain
+	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
+
+	// Variables added to the available environment during the rules execution
+	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainUpdateResponseMsg struct {
