@@ -198,6 +198,10 @@ type EventMsg struct {
 
 	// Payload is the raw data of the event
 	Payload interface{} `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty" validate:"required"`
+
+	// Domain is optional and can be used to create an event in a specific domain.
+	// If left empty, the event will be created in the assigned domain of the address
+	Domain string `bson:"domain" json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
 type EventResponseMsg struct {
