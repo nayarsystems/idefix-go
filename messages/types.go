@@ -34,16 +34,36 @@ type ConfigInfo struct {
 	SyncInfo        ConfigSyncInfo `json:"syncInfo,omitempty" mapstructure:"syncInfo,omitempty" msgpack:"syncInfo,omitempty"`
 }
 
+type RunMode int
+
+const (
+	RunModeUnknown RunMode = iota
+	RunModeNormal
+	RunModeBatteryPanic
+)
+
+func (r RunMode) String() string {
+	switch r {
+	case RunModeNormal:
+		return "normal"
+	case RunModeBatteryPanic:
+		return "battery panic"
+	}
+	return "unknown"
+}
+
 type SysInfo struct {
 	// Update SysInfoVersion in ToMsi method if you change this struct
 	SysInfoVersion int `mapstructure:"sysInfoVersion,omitempty" json:"sysInfoVersion,omitempty" msgpack:"sysInfoVersion,omitempty"`
 
-	DeviceInfo          `mapstructure:"devInfo" json:"devInfo" msgpack:"devInfo"`
-	ConfigInfo          ConfigInfo    `mapstructure:"configInfo" json:"configInfo" msgpack:"configInfo"`
-	LauncherErrorMsg    string        `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty" msgpack:"launchErr,omitempty"`
-	NumExecs            uint64        `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty" msgpack:"numExecs,omitempty"`
-	RollbackExec        bool          `mapstructure:"rollback,omitempty" json:"rollback,omitempty" msgpack:"rollback,omitempty"`
+	DeviceInfo       `mapstructure:"devInfo" json:"devInfo" msgpack:"devInfo"`
+	ConfigInfo       ConfigInfo `mapstructure:"configInfo" json:"configInfo" msgpack:"configInfo"`
+	LauncherErrorMsg string     `mapstructure:"launchErr,omitempty" json:"launchErr,omitempty" msgpack:"launchErr,omitempty"`
+	NumExecs         uint64     `mapstructure:"numExecs,omitempty" json:"numExecs,omitempty" msgpack:"numExecs,omitempty"`
+	RollbackExec     bool       `mapstructure:"rollback,omitempty" json:"rollback,omitempty" msgpack:"rollback,omitempty"`
+	// TODO: SafeRunExec could be a "RunMode" (?)
 	SafeRunExec         bool          `mapstructure:"safeRun,omitempty" json:"safeRun,omitempty" msgpack:"safeRun,omitempty"`
+	RunMode             RunMode       `mapstructure:"runMode,omitempty" json:"runMode,omitempty" msgpack:"runMode,omitempty"`
 	Uptime              time.Duration `mapstructure:"uptime,omitempty" json:"uptime,omitempty" msgpack:"uptime,omitempty"`
 	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty" json:"lastRunUptime,omitempty" msgpack:"lastRunUptime,omitempty"`
 	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty" json:"lastRunExitCause,omitempty" msgpack:"lastRunExitCause,omitempty"`
@@ -54,6 +74,9 @@ type SysInfo struct {
 	// Idefix exited abrubtly due to a critical error, power loss, etc.
 	// When this happens, modules are not stopped gracefully.
 	LastRunExitAbrubt bool `mapstructure:"lastRunExitAbrubt,omitempty" json:"lastRunExitAbrubt,omitempty" msgpack:"lastRunExitAbrubt,omitempty"`
+
+	// Idefix exited being in this mode
+	LastRunMode RunMode `mapstructure:"lastRunMode,omitempty" json:"lastRunMode,omitempty" msgpack:"lastRunMode,omitempty"`
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
