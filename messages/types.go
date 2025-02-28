@@ -65,6 +65,11 @@ type SysInfo struct {
 	SafeRunExec         bool          `mapstructure:"safeRun,omitempty" json:"safeRun,omitempty" msgpack:"safeRun,omitempty"`
 	RunMode             RunMode       `mapstructure:"runMode,omitempty" json:"runMode,omitempty" msgpack:"runMode,omitempty"`
 	Uptime              time.Duration `mapstructure:"uptime,omitempty" json:"uptime,omitempty" msgpack:"uptime,omitempty"`
+	ExitCalled          bool          `mapstructure:"exitCalled,omitempty" json:"exitCalled,omitempty" msgpack:"exitCalled,omitempty"`
+	ExitCountdown       time.Duration `mapstructure:"exitCountdown,omitempty" json:"exitCountdown,omitempty" msgpack:"exitCountdown,omitempty"`
+	ExitCause           string        `mapstructure:"exitCause,omitempty" json:"exitCause,omitempty" msgpack:"exitCause,omitempty"`
+	ExitCode            int           `mapstructure:"exitCode,omitempty" json:"exitCode,omitempty" msgpack:"exitCode,omitempty"`
+	ExitIssuedBy        string        `mapstructure:"exitIssuedBy,omitempty" json:"exitIssuedBy,omitempty" msgpack:"exitIssuedBy,omitempty"`
 	LastRunUptime       time.Duration `mapstructure:"lastRunUptime,omitempty" json:"lastRunUptime,omitempty" msgpack:"lastRunUptime,omitempty"`
 	LastRunExitCause    string        `mapstructure:"lastRunExitCause,omitempty" json:"lastRunExitCause,omitempty" msgpack:"lastRunExitCause,omitempty"`
 	LastRunExitCode     int           `mapstructure:"lastRunExitCode,omitempty" json:"lastRunExitCode,omitempty" msgpack:"lastRunExitCode,omitempty"`
