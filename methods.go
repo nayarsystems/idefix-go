@@ -235,7 +235,7 @@ func (c *Client) AddressConfigGet(query *m.AddressConfigGetMsg, ctx ...context.C
 	return
 }
 func (c *Client) AddressStatesGet(query *m.AddressStatesGetMsg, ctx ...context.Context) (response *m.AddressStatesGetResMsg, err error) {
-	message := &m.Message{To: m.CmdAddressConfigGet, Data: query}
+	message := &m.Message{To: m.CmdAddressStatesGet, Data: query}
 	response = &m.AddressStatesGetResMsg{}
 	err = c.Syscall(message, response, ctx...)
 	return
@@ -270,7 +270,7 @@ func (c *Client) AddressAliasRemove(query *m.AddressAliasRemoveMsg, ctx ...conte
 }
 
 func (c *Client) SchemaCreate(query *m.SchemaMsg, ctx ...context.Context) (response *m.SchemaResponseMsg, err error) {
-	message := &m.Message{To: m.CmdSchemasGet, Data: query}
+	message := &m.Message{To: m.CmdSchemasCreate, Data: query}
 	response = &m.SchemaResponseMsg{}
 	err = c.Syscall(message, response, ctx...)
 	return
@@ -379,12 +379,12 @@ func (c *Client) AddressGetGroups(query *m.AddressGetGroupsMsg, ctx ...context.C
 	return
 }
 
-func (c *Client) GroupRemove(query *m.GroupRemoveMsg, ctx ...context.Context) (response *m.GroupRemoveResponseMsg, err error) {
-	message := &m.Message{To: m.CmdGroupRemoveAddress, Data: query}
-	response = &m.GroupRemoveResponseMsg{}
-	err = c.Syscall(message, response, ctx...)
-	return
-}
+// func (c *Client) GroupRemove(query *m.GroupRemoveMsg, ctx ...context.Context) (response *m.GroupRemoveResponseMsg, err error) {
+// 	message := &m.Message{To: m.CmdGroupRemove, Data: query}
+// 	response = &m.GroupRemoveResponseMsg{}
+// 	err = c.Syscall(message, response, ctx...)
+// 	return
+// }
 
 func (c *Client) SessionDelete(query *m.SessionDeleteMsg, ctx ...context.Context) (response *m.SessionDeleteResponseMsg, err error) {
 	message := &m.Message{To: m.CmdSessionDelete, Data: query}
