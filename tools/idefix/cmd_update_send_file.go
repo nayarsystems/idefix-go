@@ -115,7 +115,7 @@ func cmdUpdateSendFileRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	spinner.UpdateText("sending upgrade bin file...")
-	receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, updatebytes, 0744, p.tout)
+	receivedHash, err := idefixgo.FileWriteInChunks(ic, p.address, upgradeBinPath, updatebytes, 1024*256, 0744, p.tout)
 	if err != nil {
 		return err
 	}
