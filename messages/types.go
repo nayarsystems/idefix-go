@@ -16,8 +16,11 @@ type DeviceInfo struct {
 	Product         string `mapstructure:"product" json:"product" msgpack:"product"`
 	Board           string `mapstructure:"board" json:"board" msgpack:"board"`
 	Version         string `mapstructure:"version" json:"version" msgpack:"version"`
+	Sha256          []byte `mapstructure:"sha256" json:"sha256" msgpack:"sha256"`
 	BootCnt         uint32 `mapstructure:"bootCnt" json:"bootCnt" msgpack:"bootCnt"`
 	LauncherVersion string `mapstructure:"launcherVersion,omitempty" json:"launcherVersion,omitempty" msgpack:"launcherVersion,omitempty"`
+	LauncherSha256  []byte `mapstructure:"launcherSha256,omitempty" json:"launcherSha256,omitempty" msgpack:"launcherSha256,omitempty"`
+	Arch            string `mapstructure:"arch,omitempty" json:"arch,omitempty" msgpack:"arch,omitempty"`
 	Kernel          string `mapstructure:"kernel,omitempty" json:"kernel,omitempty" msgpack:"kernel,omitempty"`
 	Distro          string `mapstructure:"distro,omitempty" json:"distro,omitempty" msgpack:"distro,omitempty"`
 }
