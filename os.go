@@ -41,15 +41,7 @@ const (
 // permissions. Upon successful upload, the function returns the hex representation of the hash (sha256) of
 // the data or an error if the write operation fails.
 func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
-	msg := &m.FileWriteMsg{
-		Path: path,
-		Data: data,
-		Mode: uint32(mode),
-	}
-	resp := &m.FileWriteResMsg{}
-	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
-	hash = hex.EncodeToString(resp.Hash)
-	return
+	return fileWriteInChunks(ic, address, path, data, 1024*512, 0744, tout)
 }
 
 // FileRead retrieves the contents of a file located at the specified path on the remote system.
@@ -185,9 +177,9 @@ func ShellExec(ic *Client, address, cmd string, tout time.Duration) (resp *m.Exe
 	return
 }
 
-// FileWriteInChunks writes data to a file on the remote system. It sends the data in chunks, to avoid saturating the network
+// fileWriteInChunks writes data to a file on the remote system. It sends the data in chunks, to avoid saturating the network
 // with large files. Chunks are stored on /tmp/ with a temporary name, then concatenates the chunks to create the final file.
-func FileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize int, mode os.FileMode, tout time.Duration) (hash string, err error) {
+func fileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize int, mode os.FileMode, tout time.Duration) (hash string, err error) {
 	if chunkSize == 0 {
 		chunkSize = 1024 * 512
 	}
@@ -205,7 +197,7 @@ func FileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize 
 	}
 
 	// Try to create the final file with the mode we need
-	_, err = FileWrite(ic, address, path, []byte{}, mode, tout)
+	_, err = fileWrite(ic, address, path, []byte{}, mode, tout)
 	if err != nil {
 		return "", err
 	}
@@ -235,7 +227,7 @@ func FileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize 
 			}
 		}
 
-		sentHash, err := FileWrite(ic, address, chunkPath, nextStep, mode, tout)
+		sentHash, err := fileWrite(ic, address, chunkPath, nextStep, mode, tout)
 		if err != nil {
 			return "", err
 		}
@@ -273,6 +265,18 @@ func FileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize 
 	}
 
 	return hash, nil
+}
+
+func fileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
+	msg := &m.FileWriteMsg{
+		Path: path,
+		Data: data,
+		Mode: uint32(mode),
+	}
+	resp := &m.FileWriteResMsg{}
+	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
+	hash = hex.EncodeToString(resp.Hash)
+	return
 }
 
 func sha256data(data []byte) (string, error) {
