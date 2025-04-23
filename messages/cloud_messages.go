@@ -143,6 +143,42 @@ type AddressAliasRemoveResponseMsg struct {
 	Alias []string `json:"alias" msgpack:"alias" mapstructure:"alias,omitempty"`
 }
 
+type AddressEnvironmentGetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+}
+
+type AddressEnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+}
+
+type AddressEnvironmentSetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment" validate:"required"`
+}
+
+type AddressEnvironmentSetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type AddressEnvironmentUnsetMsg struct {
+	// Address to query
+	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+
+	// Keys to remove
+	Keys []string `json:"keys" msgpack:"keys" mapstructure:"keys" validate:"required"`
+}
+
+type AddressEnvironmentUnsetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
 /************/
 /*  Events  */
 /************/
@@ -162,6 +198,10 @@ type EventMsg struct {
 
 	// Payload is the raw data of the event
 	Payload interface{} `bson:"payload" json:"payload" msgpack:"payload" mapstructure:"payload,omitempty" validate:"required"`
+
+	// Domain is optional and can be used to create an event in a specific domain.
+	// If left empty, the event will be created in the assigned domain of the address
+	Domain string `bson:"domain" json:"domain" msgpack:"domain" mapstructure:"domain,omitempty"`
 }
 
 type EventResponseMsg struct {
@@ -190,6 +230,12 @@ type EventsGetMsg struct {
 
 	// ContinuationID lets you get following results after your last request
 	ContinuationID string `json:"cid" msgpack:"cid" mapstructure:"cid,omitempty"`
+
+	// NoPayload will not return the payload of the events
+	NoPayload bool `json:"noPayload" msgpack:"noPayload" mapstructure:"noPayload,omitempty"`
+
+	// Type will filter out events that do not match the type
+	Type string `json:"type" msgpack:"type" mapstructure:"type,omitempty"`
 }
 
 func (m *EventsGetMsg) ToMsi() (data msi, err error) {
@@ -279,7 +325,7 @@ type DomainCreateMsg struct {
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainCreateResponseMsg struct {
@@ -295,7 +341,7 @@ type DomainUpdateMsg struct {
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" msgpack:"env" mapstructure:"env"`
 }
 
 type DomainUpdateResponseMsg struct {
@@ -346,6 +392,42 @@ type DomainListAddressesMsg struct {
 
 type DomainListAddressesResponseMsg struct {
 	Addresses map[string]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+}
+
+type DomainEnvironmentGetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+}
+
+type DomainEnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type DomainEnvironmentSetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+}
+
+type DomainEnvironmentSetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
+}
+
+type DomainEnvironmentUnsetMsg struct {
+	// Domain to query
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+
+	// Keys to remove
+	Keys []string `json:"keys" msgpack:"keys" mapstructure:"keys" validate:"required"`
+}
+
+type DomainEnvironmentUnsetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment" msgpack:"environment" mapstructure:"environment"`
 }
 
 /*************/
@@ -443,4 +525,26 @@ type SessionDeleteMsg struct {
 type SessionDeleteResponseMsg struct {
 	// Sessions deleted
 	Sessions int `json:"sessionsDeleted,omitempty" msgpack:"sessionsDeleted,omitempty" mapstructure:"sessionsDeleted"`
+}
+
+/*****************/
+/*  Environment  */
+/*****************/
+type EnvironmentGetMsg struct {
+	// Address to query environment of (empty for the current address)
+	Address string `json:"address,omitempty" msgpack:"address,omitempty" mapstructure:"address,omitempty"`
+
+	// Domain to query environment of (cannot be used with an address set)
+	Domain string `json:"domain,omitempty" msgpack:"domain,omitempty" mapstructure:"domain,omitempty"`
+
+	// Keys to request
+	Keys []string `json:"keys,omitempty" msgpack:"keys,omitempty" mapstructure:"keys,omitempty"`
+}
+
+type EnvironmentGetResponseMsg struct {
+	// Environment variables
+	Environment map[string]string `json:"environment,omitempty" msgpack:"environment,omitempty" mapstructure:"environment,omitempty"`
+
+	// Available keys
+	AvailableKeys []string `json:"availableKeys,omitempty" msgpack:"availableKeys,omitempty" mapstructure:"availableKeys,omitempty"`
 }

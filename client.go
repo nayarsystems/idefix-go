@@ -87,6 +87,14 @@ func (c *Client) Connect() (err error) {
 		return ie.ErrAlreadyExists
 	}
 
+	// If we are reusing this client on a second connection
+	// make sure that the client has been disconnected
+	// or connectionlosthandler might trigger after creating
+	// the new context, thus cancelling the wrong ctx
+	if c.client != nil {
+		c.Disconnect()
+	}
+
 	c.ctx, c.cancelFunc = context.WithCancel(c.pctx)
 
 	c.prefix = m.MqttIdefixPrefix

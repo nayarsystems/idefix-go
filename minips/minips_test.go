@@ -59,6 +59,18 @@ func TestMinipsInt(t *testing.T) {
 	require.Equal(t, 1, len(ch1))
 }
 
+func TestMinipsWildcardSubscriber(t *testing.T) {
+	mp := NewMinips[int](context.Background())
+
+	ch1 := make(chan int, 100)
+
+	mp.registerChannel("", ch1)
+
+	require.Equal(t, 0, len(ch1))
+	mp.Publish("test1.asdf.qwe", 123)
+	require.Equal(t, 1, len(ch1))
+}
+
 func TestMinipsUnregAll(t *testing.T) {
 	mp := NewMinips[int](context.Background())
 
@@ -123,4 +135,24 @@ func TestGlobalSubscriber(t *testing.T) {
 	n, err := s.WaitOne(time.Duration(time.Second))
 	require.NoError(t, err)
 	require.Equal(t, 123, n)
+}
+
+func TestWaitWithContext(t *testing.T) {
+	mp := NewMinips[int](context.Background())
+
+	s := mp.NewSubscriber(10, "")
+	mp.Publish("test1", 123)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	n, err := s.WaitOneWithContext(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 123, n)
+	cancel()
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond)
+	n, err = s.WaitOneWithContext(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "timeout")
+	require.Equal(t, 0, n)
+	cancel()
 }

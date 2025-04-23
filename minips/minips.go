@@ -36,10 +36,7 @@ func (s *Subscriber[T]) Channel() <-chan T {
 	return s.ch
 }
 
-func (s *Subscriber[T]) WaitOne(timeout time.Duration) (T, error) {
-	ctx, cancel := context.WithDeadline(s.mp.ctx, time.Now().Add(timeout))
-	defer cancel()
-
+func (s *Subscriber[T]) WaitOneWithContext(ctx context.Context) (T, error) {
 	var zeroT T
 	for {
 		select {
@@ -53,6 +50,13 @@ func (s *Subscriber[T]) WaitOne(timeout time.Duration) (T, error) {
 			return m, nil
 		}
 	}
+}
+
+func (s *Subscriber[T]) WaitOne(timeout time.Duration) (T, error) {
+	ctx, cancel := context.WithDeadline(s.mp.ctx, time.Now().Add(timeout))
+	defer cancel()
+
+	return s.WaitOneWithContext(ctx)
 }
 
 func (s *Subscriber[T]) Subscribe(topics ...string) error {

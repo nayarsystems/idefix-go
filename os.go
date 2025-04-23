@@ -1,8 +1,11 @@
 package idefixgo
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	m "github.com/nayarsystems/idefix-go/messages"
@@ -38,15 +41,7 @@ const (
 // permissions. Upon successful upload, the function returns the hex representation of the hash (sha256) of
 // the data or an error if the write operation fails.
 func FileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
-	msg := &m.FileWriteMsg{
-		Path: path,
-		Data: data,
-		Mode: uint32(mode),
-	}
-	resp := &m.FileWriteResMsg{}
-	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
-	hash = hex.EncodeToString(resp.Hash)
-	return
+	return fileWriteInChunks(ic, address, path, data, 1024*512, 0744, tout)
 }
 
 // FileRead retrieves the contents of a file located at the specified path on the remote system.
@@ -170,4 +165,124 @@ func ExitToUpdate(ic *Client, address string, updateType int, cause string, stop
 	resp = &m.UpdateResMsg{}
 	err = ic.Call2(address, &m.Message{To: "updater.cmd.update", Data: msg}, resp, tout)
 	return
+}
+
+// ShellExec sends a shell command to the remote address for execution.
+func ShellExec(ic *Client, address, cmd string, tout time.Duration) (resp *m.ExecResMsg, err error) {
+	msg := m.ExecReqMsg{
+		Cmd: cmd,
+	}
+	resp = &m.ExecResMsg{}
+	err = ic.Call2(address, &m.Message{To: TopicCmdExec, Data: msg}, resp, tout)
+	return
+}
+
+// fileWriteInChunks writes data to a file on the remote system. It sends the data in chunks, to avoid saturating the network
+// with large files. Chunks are stored on /tmp/ with a temporary name, then concatenates the chunks to create the final file.
+func fileWriteInChunks(ic *Client, address, path string, data []byte, chunkSize int, mode os.FileMode, tout time.Duration) (hash string, err error) {
+	if chunkSize == 0 {
+		chunkSize = 1024 * 512
+	}
+
+	finalHash, err := sha256data(data)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err = FileSHA256Hex(ic, address, path, time.Second*10)
+	if err == nil {
+		if hash == finalHash {
+			return hash, nil
+		}
+	}
+
+	// Try to create the final file with the mode we need
+	_, err = fileWrite(ic, address, path, []byte{}, mode, tout)
+	if err != nil {
+		return "", err
+	}
+
+	chunkPaths := []string{}
+	for offset := 0; offset < len(data); offset += chunkSize {
+		end := offset + chunkSize
+		if end > len(data) {
+			end = len(data)
+		}
+
+		nextStep := data[offset:end]
+
+		chunkPath := fmt.Sprintf("/tmp/.%s.chunk.%d", finalHash, offset)
+		chunkPaths = append(chunkPaths, chunkPath)
+
+		chunkHash, err := sha256data(nextStep)
+		if err != nil {
+			return "", err
+		}
+
+		hash, err := FileSHA256Hex(ic, address, chunkPath, time.Second*30)
+		if err == nil {
+			if hash == chunkHash {
+				fmt.Println("chunk already exists, skipping")
+				continue
+			}
+		}
+
+		sentHash, err := fileWrite(ic, address, chunkPath, nextStep, mode, tout)
+		if err != nil {
+			return "", err
+		}
+
+		if sentHash != chunkHash {
+			return "", fmt.Errorf("hash mismatch")
+		}
+	}
+
+	joinCmd := fmt.Sprintf("cat %s > %s", strings.Join(chunkPaths, " "), path)
+
+	resp, err := ShellExec(ic, address, joinCmd, time.Second*30)
+	if err != nil {
+		return "", err
+	}
+
+	if !resp.Success {
+		return "", fmt.Errorf("join command failed: %#v", resp)
+	}
+
+	hash, err = FileSHA256Hex(ic, address, path, time.Second*30)
+	if err != nil {
+		return "", err
+	}
+
+	if hash != finalHash {
+		return hash, fmt.Errorf("final hash mismatch")
+	}
+
+	for _, chunkPath := range chunkPaths {
+		err = Remove(ic, address, chunkPath, time.Second*30)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return hash, nil
+}
+
+func fileWrite(ic *Client, address, path string, data []byte, mode os.FileMode, tout time.Duration) (hash string, err error) {
+	msg := &m.FileWriteMsg{
+		Path: path,
+		Data: data,
+		Mode: uint32(mode),
+	}
+	resp := &m.FileWriteResMsg{}
+	err = ic.Call2(address, &m.Message{To: TopicCmdFileWrite, Data: msg}, resp, tout)
+	hash = hex.EncodeToString(resp.Hash)
+	return
+}
+
+func sha256data(data []byte) (string, error) {
+	hash := sha256.New()
+	if _, err := hash.Write(data); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }

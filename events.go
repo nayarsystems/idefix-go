@@ -38,6 +38,8 @@ func (c *Client) SendEvent(payload interface{}, hashSchema string, meta map[stri
 // The request includes a timeout duration, which is capped at 30 seconds if a larger value is provided.
 // If successful, the function returns the retrieved events encapsulated in an EventsGetResponseMsg.
 // If any error occurs, it returns an error.
+//
+// Deprecated: Use EventsGet instead.
 func (c *Client) GetEvents(domain, address string, since time.Time, limit uint, cid string, timeout time.Duration) (*m.EventsGetResponseMsg, error) {
 	msg := m.EventsGetMsg{
 		Address:        address,

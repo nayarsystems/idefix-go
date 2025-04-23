@@ -164,23 +164,13 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	patchHash := Sha256Hex(upgradePatch)
-
-	spinner.UpdateText("checking if upgrade patch was already sent (hash check)...")
-	remotePatchHash, err := idefixgo.FileSHA256Hex(ic, p.address, upgradeBinPath, p.tout)
+	spinner.UpdateText("sending upgrade patch file...")
+	receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, upgradePatch, 0744, p.tout)
 	if err != nil {
 		return err
 	}
-	if remotePatchHash != patchHash {
-		spinner.UpdateText("sending upgrade patch file...")
-		receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, upgradePatch, 0744, p.tout)
-		if err != nil {
-			return err
-		}
-		if receivedHash != patchHash {
-			return fmt.Errorf("received upgrade hash (%s) != expected upgrade hash (%s)", receivedHash, patchHash)
-		}
-	} else {
-		pterm.Info.Println("Patch was already sent, skipping...")
+	if receivedHash != patchHash {
+		return fmt.Errorf("received upgrade hash (%s) != expected upgrade hash (%s)", receivedHash, patchHash)
 	}
 
 	if p.createRollback {
@@ -190,7 +180,6 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if p.rollbackType == "patch" {
-			// TODO: check if rollback patch was already sent
 			patchHash := Sha256Hex(rollbackPatch)
 			spinner.UpdateText("sending rollback patch file...")
 			receivedHash, err := idefixgo.FileWrite(ic, p.address, rollbackBinPath, rollbackPatch, 0744, p.tout)

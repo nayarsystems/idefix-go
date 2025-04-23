@@ -153,7 +153,7 @@ type Domain struct {
 	AccessRules string `json:"accessRules" msgpack:"accessRules" mapstructure:"accessRules,omitempty"`
 
 	// Variables added to the available environment during the rules execution
-	Env map[string]interface{} `json:"env" msgpack:"env" mapstructure:"env"`
+	Env map[string]string `json:"env" msgpack:"env" mapstructure:"env"`
 
 	// Creation time
 	Creation time.Time `json:"creation" msgpack:"creation" mapstructure:"-,omitempty"`
