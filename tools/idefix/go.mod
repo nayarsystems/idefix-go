@@ -6,7 +6,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/nayarsystems/idefix-go v0.3.1-0.20250411101945-125df93d4836
+	github.com/nayarsystems/idefix-go v0.3.1-0.20250423153412-4f2661ae2add
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/vishvananda/netlink v1.1.0
 )
@@ -47,7 +47,7 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/nayarsystems/idefix-go/minips v0.0.4 // indirect
+	github.com/nayarsystems/idefix-go/minips v0.0.5-0.20250423152923-1c12591a61ba // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pterm/pterm v0.12.62
 	github.com/spf13/afero v1.11.0 // indirect
