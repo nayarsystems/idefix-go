@@ -165,7 +165,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 
 	patchHash := Sha256Hex(upgradePatch)
 	spinner.UpdateText("sending upgrade patch file...")
-	receivedHash, err := idefixgo.FileWriteInChunks(ic, p.address, upgradeBinPath, upgradePatch, 1024*256, 0744, p.tout)
+	receivedHash, err := idefixgo.FileWrite(ic, p.address, upgradeBinPath, upgradePatch, 0744, p.tout)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func cmdUpdateSendPatchRunE(cmd *cobra.Command, args []string) error {
 		if p.rollbackType == "patch" {
 			patchHash := Sha256Hex(rollbackPatch)
 			spinner.UpdateText("sending rollback patch file...")
-			receivedHash, err := idefixgo.FileWriteInChunks(ic, p.address, rollbackBinPath, rollbackPatch, 1024*256, 0744, p.tout)
+			receivedHash, err := idefixgo.FileWrite(ic, p.address, rollbackBinPath, rollbackPatch, 0744, p.tout)
 			if err != nil {
 				return err
 			}
