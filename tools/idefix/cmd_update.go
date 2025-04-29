@@ -47,6 +47,10 @@ func init() {
 	cmdUpdateSendFile.MarkFlagRequired("file")
 	cmdUpdateSend.AddCommand(cmdUpdateSendFile)
 
+	cmdUpdateSendCloud.Flags().StringP("file", "f", "", "Update file")
+	cmdUpdateSendCloud.MarkFlagRequired("file")
+	cmdUpdateSend.AddCommand(cmdUpdateSendCloud)
+
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")
 	cmdUpdateSend.PersistentFlags().String("reason", "", "Optinal reason for update")
 	cmdUpdateSend.PersistentFlags().Uint("stability-secs", 300, "Indicates the duration of the test execution in seconds")
@@ -96,6 +100,12 @@ var cmdUpdateSendFile = &cobra.Command{
 	Use:   "file",
 	Short: "Send a file",
 	RunE:  cmdUpdateSendFileRunE,
+}
+
+var cmdUpdateSendCloud = &cobra.Command{
+	Use:   "cloud",
+	Short: "Queue a file for update",
+	RunE:  cmdUpdateSendCloudRunE,
 }
 
 const (
