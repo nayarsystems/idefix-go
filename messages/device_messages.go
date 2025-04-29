@@ -42,9 +42,9 @@ type SysInfoReqMsg struct {
 }
 
 type SysInfoReportMsg struct {
-	Class    string         `bson:"class" json:"class" msgpack:"class" mapstructure:"class"`
-	ErrorMsg string         `bson:"errorMsg,omitempty" json:"errorMsg,omitempty" msgpack:"errorMsg,omitempty" mapstructure:"errorMsg,omitempty"`
-	State    map[string]any `bson:"state" json:"state" msgpack:"state" mapstructure:"state"`
+	Class string         `bson:"class" json:"class" msgpack:"class" mapstructure:"class"`
+	Error string         `bson:"error,omitempty" json:"error,omitempty" msgpack:"error,omitempty" mapstructure:"error,omitempty"`
+	State map[string]any `bson:"state" json:"state" msgpack:"state" mapstructure:"state"`
 }
 
 type SysInfoResMsg struct {
