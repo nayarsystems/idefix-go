@@ -79,9 +79,9 @@ type SysInfo struct {
 	LastRunExitIssuedBy string        `mapstructure:"lastRunExitIssuedBy,omitempty" json:"lastRunExitIssuedBy,omitempty" msgpack:"lastRunExitIssuedBy,omitempty"`
 	LastRunExitIssuedAt time.Time     `mapstructure:"lastRunExitIssuedAt,omitempty" json:"lastRunExitIssuedAt,omitempty" msgpack:"lastRunExitIssuedAt,omitempty"`
 
-	// Idefix exited abrubtly due to a critical error, power loss, etc.
+	// Idefix exited abruptly due to a critical error, power loss, etc.
 	// When this happens, modules are not stopped gracefully.
-	LastRunExitAbrubt bool `mapstructure:"lastRunExitAbrubt,omitempty" json:"lastRunExitAbrubt,omitempty" msgpack:"lastRunExitAbrubt,omitempty"`
+	LastRunExitAbrupt bool `mapstructure:"lastRunExitAbrupt,omitempty" json:"lastRunExitAbrupt,omitempty" msgpack:"lastRunExitAbrupt,omitempty"`
 
 	// Idefix exited being in this mode
 	LastRunMode RunMode `mapstructure:"lastRunMode,omitempty" json:"lastRunMode,omitempty" msgpack:"lastRunMode,omitempty"`

@@ -82,16 +82,28 @@ func cmdInfoRunE(cmd *cobra.Command, args []string) error {
 		{"Config file sync status", configSyncInfoMsg},
 	}).Render()
 
-	pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
-		{"Device status", ""},
-		{"Uptime", fmt.Sprintf("%v", info.Uptime)},
-		{"Last run uptime", fmt.Sprintf("%v", info.LastRunUptime)},
-		{"Last run exit cause", fmt.Sprintf("%v (exit code: %d)", info.LastRunExitCause, info.LastRunExitCode)},
-		{"Last run exit issued by", fmt.Sprintf("%v", info.LastRunExitIssuedBy)},
-		{"Last run exit issued at", fmt.Sprintf("%v", info.LastRunExitIssuedAt)},
-		{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
-	}).Render()
-
+	if !info.LastRunExitAbrupt &&
+		info.LastRunExitCause != "abrupt" { // We also check LastRunExitCause since old idefix versions do not set LastRunExitAbrupt flag
+		pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+			{"Device status", ""},
+			{"Uptime", fmt.Sprintf("%v", info.Uptime)},
+			{"Last run uptime", fmt.Sprintf("%v", info.LastRunUptime)},
+			{"Last run exit cause", fmt.Sprintf("%v (exit code: %d)", info.LastRunExitCause, info.LastRunExitCode)},
+			{"Last run exit issued by", fmt.Sprintf("%v", info.LastRunExitIssuedBy)},
+			{"Last run exit issued at", fmt.Sprintf("%v", info.LastRunExitIssuedAt)},
+			{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
+		}).Render()
+	} else {
+		pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+			{"Device status", ""},
+			{"Uptime", fmt.Sprintf("%v", info.Uptime)},
+			{"Execs since launcher started", fmt.Sprintf("%v", info.NumExecs)},
+		}).Render()
+		pterm.Warning.Println("Last run was abruptly terminated")
+	}
+	if info.LastRunMode == m.RunModeBatteryPanic {
+		pterm.Warning.Println("Device recovered from battery panic")
+	}
 	if info.ConfigInfo.SyncInfo.Error != "" {
 		pterm.Warning.Println("There was an error during configuration sync:", info.ConfigInfo.SyncInfo.Error)
 	}
