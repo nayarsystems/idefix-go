@@ -6,7 +6,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/nayarsystems/idefix-go v0.3.1-0.20250423153412-4f2661ae2add
+	github.com/nayarsystems/idefix-go v0.3.1-0.20250515084519-dc37fe567f76
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/vishvananda/netlink v1.1.0
 )
