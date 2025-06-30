@@ -6,7 +6,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/nayarsystems/idefix-go v0.3.1-0.20250515120512-b8ee0cd8f0c8
+	github.com/nayarsystems/idefix-go v0.3.1-0.20250630105820-01f638e58dc7
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/vishvananda/netlink v1.1.0
 )
@@ -23,7 +23,7 @@ require (
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/nayarsystems/bstates v0.6.0 // indirect
+	github.com/nayarsystems/bstates v0.7.3-0.20250630104636-49b59afc2929 // indirect
 	github.com/nayarsystems/buffer v0.1.1 // indirect
 	github.com/nayarsystems/mapstructure v0.0.0-20230919191513-e7445bf97909 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
