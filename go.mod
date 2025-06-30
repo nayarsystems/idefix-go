@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
-	github.com/nayarsystems/bstates v0.6.0
+	github.com/nayarsystems/bstates v0.7.3-0.20250630104636-49b59afc2929
 	github.com/nayarsystems/buffer v0.1.1
 	github.com/nayarsystems/cacert-go v0.20240410.16
 	github.com/nayarsystems/idefix-go/minips v0.0.5-0.20250423152923-1c12591a61ba

@@ -24,6 +24,8 @@ github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyua
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/nayarsystems/bstates v0.6.0 h1:9mhtaIRIMy318sj0b2CLkX2vaTcLrgnp8Z/PRE1ic2M=
 github.com/nayarsystems/bstates v0.6.0/go.mod h1:QCAUU+VsOBIDEoki7H62JDB8h+CJqZS2MA9rRWvspaM=
+github.com/nayarsystems/bstates v0.7.3-0.20250630104636-49b59afc2929 h1:89Rr2qXmGsxfKEYQteY6TeE6x9fOnjd7WlCrwgaQ3uA=
+github.com/nayarsystems/bstates v0.7.3-0.20250630104636-49b59afc2929/go.mod h1:QCAUU+VsOBIDEoki7H62JDB8h+CJqZS2MA9rRWvspaM=
 github.com/nayarsystems/buffer v0.1.1 h1:ioRQ9aza2bEvPnSJKNjPcjXHhvjtDJEPOqHZQ58vtI0=
 github.com/nayarsystems/buffer v0.1.1/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
 github.com/nayarsystems/cacert-go v0.20240410.16 h1:Dr0/eB7RlEB4mLoXIm/vd5gtxYa+rNp1d4t3glJXtbY=
