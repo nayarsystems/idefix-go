@@ -16,11 +16,12 @@ import (
 var rootctx context.Context
 var cancel context.CancelFunc
 var version string = getVersion()
+var buildFlagVersion = "unknown"
 
 // https://tip.golang.org/doc/go1.18#debug_buildinfo
 // https://blog.carlana.net/post/2023/golang-git-hash-how-to/
 func getVersion() (v string) {
-	v = "unknown"
+	v = buildFlagVersion
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return
