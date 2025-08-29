@@ -207,6 +207,7 @@ func (c *Client) login() (err error) {
 		Meta:     c.opts.Meta,
 		Time:     time.Now().UnixMilli(),
 		Groups:   c.opts.Groups,
+		NoCreate: c.opts.NoCreate,
 	}
 
 	tm := &m.Message{
