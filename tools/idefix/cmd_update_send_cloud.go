@@ -26,6 +26,11 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("address is required")
 	}
 
+	gsr2mgr, err := cmd.Flags().GetString("gsr2mgr")
+	if err != nil {
+		return err
+	}
+
 	updatefile, err := cmd.Flags().GetString("file")
 	if err != nil {
 		return err
@@ -47,19 +52,22 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	var ret gsr2mgrResponse
-	err = ic.Call2("gsr2mgr", &m.Message{To: "release.exists", Data: msg}, &ret, p.tout)
+	err = ic.Call2(gsr2mgr, &m.Message{To: "release.exists", Data: msg}, &ret, p.tout)
 	if err != nil {
 		return fmt.Errorf("gsr2mgr failure checking if exists: %w", err)
 	}
 
 	if ret.Version == "" {
-		err := gsr2mgrUploadBinary(ic, updatebytes, dsthash)
+		fmt.Printf("uploading binary with hash %s\n", dsthash)
+		err := gsr2mgrUploadBinary(ic, gsr2mgr, updatebytes, dsthash)
 		if err != nil {
 			return fmt.Errorf("gsr2mgr failure uploading: %w", err)
 		}
 	}
 
-	err = ic.Call2("gsr2mgr", &m.Message{To: "release.exists", Data: msg}, &ret, p.tout)
+	fmt.Printf("Binary uploaded to gsr2mgr with hash %s\n", dsthash)
+
+	err = ic.Call2(gsr2mgr, &m.Message{To: "release.exists", Data: msg}, &ret, p.tout)
 	if err != nil {
 		return fmt.Errorf("gsr2mgr failure checking if exists: %w", err)
 	}
@@ -67,13 +75,37 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	if ret.Version == "" {
 		return fmt.Errorf("gsr2mgr failure: no version found after upload")
 	}
+	// err = ic.Call2(gsr2mgr, &m.Message{To: "device.set_state",
+	// 	Data: map[string]any{"address": p.address, "state": "Normal"}}, &ret, p.tout)
+	// if err != nil {
+	// 	return fmt.Errorf("gsr2mgr failure ensuring normal state of device: %w", err)
+	// }
 
-	ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
-		Address:     p.address,
-		Environment: map[string]string{"gsr2mgr_idefix_version": ret.Version},
-	})
+	switch p.target {
+	case m.LauncherTargetExec:
+		// ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
+		// 	Address: p.address,
+		// 	Keys:    []string{"gsr2mgr_launcher_last_update"},
+		// })
+		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
+			Address:     p.address,
+			Environment: map[string]string{"gsr2mgr_launcher_version": ret.Version},
+		})
+	case m.IdefixTargetExec:
 
-	resp, err := ic.Call("gsr2mgr", &m.Message{To: "device.alive", Data: map[string]any{"address": p.address}}, p.tout)
+		// ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
+		// 	Address: p.address,
+		// 	Keys:    []string{"gsr2mgr_idefix_last_update"},
+		// })
+		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
+			Address:     p.address,
+			Environment: map[string]string{"gsr2mgr_idefix_version": ret.Version},
+		})
+	default:
+		return fmt.Errorf("unknown target %d", p.target)
+	}
+
+	resp, err := ic.Call(gsr2mgr, &m.Message{To: "device.alive", Data: map[string]any{"address": p.address}}, p.tout)
 	if err != nil {
 		return fmt.Errorf("gsr2mgr failure: %w", err)
 	}
@@ -84,14 +116,14 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func gsr2mgrUploadBinary(ic *idefixgo.Client, updatebytes []byte, dsthash string) error {
+func gsr2mgrUploadBinary(ic *idefixgo.Client, gsr2mgr string, updatebytes []byte, dsthash string) error {
 	fmt.Println("Uploading binary to gsr2mgr")
 	msg := map[string]any{
 		"data": updatebytes,
 		"hash": dsthash,
 	}
 
-	resp, err := ic.Call("gsr2mgr", &m.Message{To: "release.upload", Data: msg}, time.Minute*2)
+	resp, err := ic.Call(gsr2mgr, &m.Message{To: "release.upload", Data: msg}, time.Minute*2)
 	if err != nil {
 		return fmt.Errorf("gsr2mgr failure uploading: %w", err)
 	}
