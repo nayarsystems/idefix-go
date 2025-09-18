@@ -88,8 +88,8 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if resetToNormal {
-		err = ic.Call2(gsr2mgr, &m.Message{To: "device.set_state",
-			Data: map[string]any{"address": p.address, "state": "Normal"}}, &ret, p.tout)
+		_, err := ic.Call(gsr2mgr, &m.Message{To: "device.set_state",
+			Data: map[string]any{"address": p.address, "state": "Normal"}}, p.tout)
 		if err != nil {
 			return fmt.Errorf("gsr2mgr failure ensuring normal state of device: %w", err)
 		}
