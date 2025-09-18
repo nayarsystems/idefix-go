@@ -41,6 +41,16 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	resetToNormal, err := cmd.Flags().GetBool("gsr2mgr-reset")
+	if err != nil {
+		return err
+	}
+
+	forgetLastUpdate, err := cmd.Flags().GetBool("gsr2mgr-forget-last-result")
+	if err != nil {
+		return err
+	}
+
 	dsthash := Sha256Hex(updatebytes)
 
 	ic, err := getConnectedClient()
@@ -63,40 +73,47 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("gsr2mgr failure uploading: %w", err)
 		}
+		fmt.Printf("Binary uploaded to gsr2mgr with hash %s\n", dsthash)
+	} else {
+		fmt.Printf("Binary with hash %s already exists on gsr2mgr\n", dsthash)
 	}
-
-	fmt.Printf("Binary uploaded to gsr2mgr with hash %s\n", dsthash)
 
 	err = ic.Call2(gsr2mgr, &m.Message{To: "release.exists", Data: msg}, &ret, p.tout)
 	if err != nil {
-		return fmt.Errorf("gsr2mgr failure checking if exists: %w", err)
+		return fmt.Errorf("gsr2mgr failure checking release existence: %w", err)
 	}
 
 	if ret.Version == "" {
 		return fmt.Errorf("gsr2mgr failure: no version found after upload")
 	}
-	// err = ic.Call2(gsr2mgr, &m.Message{To: "device.set_state",
-	// 	Data: map[string]any{"address": p.address, "state": "Normal"}}, &ret, p.tout)
-	// if err != nil {
-	// 	return fmt.Errorf("gsr2mgr failure ensuring normal state of device: %w", err)
-	// }
+
+	if resetToNormal {
+		err = ic.Call2(gsr2mgr, &m.Message{To: "device.set_state",
+			Data: map[string]any{"address": p.address, "state": "Normal"}}, &ret, p.tout)
+		if err != nil {
+			return fmt.Errorf("gsr2mgr failure ensuring normal state of device: %w", err)
+		}
+	}
 
 	switch p.target {
 	case m.LauncherTargetExec:
-		// ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
-		// 	Address: p.address,
-		// 	Keys:    []string{"gsr2mgr_launcher_last_update"},
-		// })
+		if forgetLastUpdate {
+			ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
+				Address: p.address,
+				Keys:    []string{"gsr2mgr_launcher_last_update"},
+			})
+		}
 		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
 			Address:     p.address,
 			Environment: map[string]string{"gsr2mgr_launcher_version": ret.Version},
 		})
 	case m.IdefixTargetExec:
-
-		// ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
-		// 	Address: p.address,
-		// 	Keys:    []string{"gsr2mgr_idefix_last_update"},
-		// })
+		if forgetLastUpdate {
+			ic.AddressEnvironmentUnset(&m.AddressEnvironmentUnsetMsg{
+				Address: p.address,
+				Keys:    []string{"gsr2mgr_idefix_last_update"},
+			})
+		}
 		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
 			Address:     p.address,
 			Environment: map[string]string{"gsr2mgr_idefix_version": ret.Version},
