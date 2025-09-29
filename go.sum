@@ -22,8 +22,8 @@ github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0V
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
-github.com/nayarsystems/bstates v0.7.3-0.20250701115907-b7a7a89946b1 h1:si/7u/Cg8N6sedvT5QxWhzcTYQ9qVqwcsQZa7NqA2hs=
-github.com/nayarsystems/bstates v0.7.3-0.20250701115907-b7a7a89946b1/go.mod h1:QCAUU+VsOBIDEoki7H62JDB8h+CJqZS2MA9rRWvspaM=
+github.com/nayarsystems/bstates v0.9.0 h1:XnIDFR7iDFpzdXKbEc8RezT3UlboFJN10rBLin8NnHA=
+github.com/nayarsystems/bstates v0.9.0/go.mod h1:QCAUU+VsOBIDEoki7H62JDB8h+CJqZS2MA9rRWvspaM=
 github.com/nayarsystems/buffer v0.1.1 h1:ioRQ9aza2bEvPnSJKNjPcjXHhvjtDJEPOqHZQ58vtI0=
 github.com/nayarsystems/buffer v0.1.1/go.mod h1:O/MPQ7Ls2Feb/78IQ1qEdPYeUXX76I0YMfghSAUcprI=
 github.com/nayarsystems/cacert-go v0.20240410.16 h1:Dr0/eB7RlEB4mLoXIm/vd5gtxYa+rNp1d4t3glJXtbY=
