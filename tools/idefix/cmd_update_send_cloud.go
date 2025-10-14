@@ -41,12 +41,12 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resetToNormal, err := cmd.Flags().GetBool("gsr2mgr-reset")
+	forgetLastUpdate, err := cmd.Flags().GetBool("forget-last-update")
 	if err != nil {
 		return err
 	}
 
-	forgetLastUpdate, err := cmd.Flags().GetBool("gsr2mgr-forget-last-result")
+	hashAsVersion, err := cmd.Flags().GetBool("hash-as-version")
 	if err != nil {
 		return err
 	}
@@ -86,13 +86,9 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	if ret.Version == "" {
 		return fmt.Errorf("gsr2mgr failure: no version found after upload")
 	}
-
-	if resetToNormal {
-		_, err := ic.Call(gsr2mgr, &m.Message{To: "device.set_state",
-			Data: map[string]any{"address": p.address, "state": "Normal"}}, p.tout)
-		if err != nil {
-			return fmt.Errorf("gsr2mgr failure ensuring normal state of device: %w", err)
-		}
+	version := ret.Version
+	if hashAsVersion {
+		version = dsthash
 	}
 
 	switch p.target {
@@ -105,7 +101,7 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		}
 		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
 			Address:     p.address,
-			Environment: map[string]string{"gsr2mgr_launcher_version": ret.Version},
+			Environment: map[string]string{"gsr2mgr_launcher_version": version},
 		})
 	case m.IdefixTargetExec:
 		if forgetLastUpdate {
@@ -116,7 +112,7 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		}
 		ic.AddressEnvironmentSet(&m.AddressEnvironmentSetMsg{
 			Address:     p.address,
-			Environment: map[string]string{"gsr2mgr_idefix_version": ret.Version},
+			Environment: map[string]string{"gsr2mgr_idefix_version": version},
 		})
 	default:
 		return fmt.Errorf("unknown target %d", p.target)
