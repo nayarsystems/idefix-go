@@ -91,6 +91,8 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		version = dsthash
 	}
 
+	fmt.Printf("Setting %s target version for %s to %s\n", p.targetStr, p.address, version)
+
 	switch p.target {
 	case m.LauncherTargetExec:
 		if forgetLastUpdate {
@@ -126,6 +128,7 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("gsr2mgr failure: %s", resp.Err)
 	}
 
+	fmt.Printf("%s target version of %s successfully set to %s. Device will be updated (if it isn't already) as soon as possible\n", p.targetStr, p.address, version)
 	return nil
 }
 
