@@ -34,6 +34,14 @@ func cmdEnvironmentRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot specify both address and domain")
 	}
 
+	if address == "" && domain == "" {
+		ic, err := getConnectedClient()
+		if err != nil {
+			return err
+		}
+		address = ic.Address()
+	}
+
 	if address == "" && domain == "" && len(keys) == 0 {
 		return fmt.Errorf("either address, domain or keys must be specified")
 	}
