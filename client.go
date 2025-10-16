@@ -174,6 +174,11 @@ func (c *Client) Disconnect() {
 	c.client.Disconnect(200)
 }
 
+// Returns the client address
+func (c *Client) Address() string {
+	return c.opts.Address
+}
+
 // Returns the client context
 func (c *Client) Context() context.Context {
 	return c.ctx
