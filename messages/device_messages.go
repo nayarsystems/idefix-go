@@ -44,6 +44,7 @@ type SysInfoReqMsg struct {
 type SysInfoReportMsg struct {
 	Class string         `bson:"class" json:"class" msgpack:"class" mapstructure:"class"`
 	Error string         `bson:"error,omitempty" json:"error,omitempty" msgpack:"error,omitempty" mapstructure:"error,omitempty"`
+	Tags  map[string]any `bson:"tags,omitempty" json:"tags,omitempty" msgpack:"tags,omitempty" mapstructure:"tags,omitempty"`
 	State map[string]any `bson:"state" json:"state" msgpack:"state" mapstructure:"state"`
 }
 
