@@ -68,7 +68,7 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if ret.Version == "" {
-		fmt.Printf("uploading binary with hash %s\n", dsthash)
+		fmt.Printf("Uploading binary with hash %s\n", dsthash)
 		err := gsr2mgrUploadBinary(ic, gsr2mgr, updatebytes, dsthash)
 		if err != nil {
 			return fmt.Errorf("gsr2mgr failure uploading: %w", err)
@@ -133,7 +133,6 @@ func cmdUpdateSendCloudRunE(cmd *cobra.Command, args []string) error {
 }
 
 func gsr2mgrUploadBinary(ic *idefixgo.Client, gsr2mgr string, updatebytes []byte, dsthash string) error {
-	fmt.Println("Uploading binary to gsr2mgr")
 	msg := map[string]any{
 		"data": updatebytes,
 		"hash": dsthash,
