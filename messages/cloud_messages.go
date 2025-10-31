@@ -515,6 +515,19 @@ type GroupRemoveMsg struct {
 type GroupRemoveResponseMsg struct {
 }
 
+type SessionCreateMsg struct {
+	// Address to create session from
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+
+	// Groups to assign to the session
+	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+}
+
+type SessionCreateResponseMsg struct {
+	// Created session ID
+	Session string `json:"session" msgpack:"session" mapstructure:"session"`
+}
+
 type SessionDeleteMsg struct {
 	// Session to delete
 	Session string `json:"session" msgpack:"session" mapstructure:"session"`
