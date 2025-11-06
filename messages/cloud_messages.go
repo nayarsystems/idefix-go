@@ -521,6 +521,9 @@ type SessionCreateMsg struct {
 
 	// Groups to assign to the session
 	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+
+	// Session duration
+	Duration time.Duration `json:"duration" msgpack:"duration" mapstructure:"duration"`
 }
 
 type SessionCreateResponseMsg struct {
