@@ -72,10 +72,10 @@ func cmdJsNewRunE(cmd *cobra.Command, args []string) error {
 			"class":  "javascript",
 			"prefix": p.instance,
 			"params": map[string]any{
-				"js_code_class":       class,
-				"js_code_prefix":      name,
-				"js_code_params":      []any{config},
-				"js_track_heap_usage": trackHeap,
+				"jsClass":          class,
+				"jsPrefix":         name,
+				"jsParams":         []any{config},
+				"jsTrackHeapUsage": trackHeap,
 			},
 		},
 	}, p.timeout)

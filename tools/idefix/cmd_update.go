@@ -49,6 +49,9 @@ func init() {
 
 	cmdUpdateSendCloud.Flags().StringP("file", "f", "", "Update file")
 	cmdUpdateSendCloud.MarkFlagRequired("file")
+	cmdUpdateSendCloud.Flags().String("gsr2mgr", "gsr2mgr", "Address of the gsr2 manager service")
+	cmdUpdateSendCloud.Flags().Bool("forget-last-update", false, "Forget last update on gsr2mgr")
+	cmdUpdateSendCloud.Flags().Bool("hash-as-version", false, "Use the hash as version")
 	cmdUpdateSend.AddCommand(cmdUpdateSendCloud)
 
 	cmdUpdateSend.PersistentFlags().StringP("address", "a", "", "Device address")

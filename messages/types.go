@@ -42,15 +42,15 @@ type RunMode int
 const (
 	RunModeUnknown RunMode = iota
 	RunModeNormal
-	RunModeBatteryPanic
+	RunModeBatteryPanic = 3
 )
 
 func (r RunMode) String() string {
 	switch r {
-	case RunModeNormal:
-		return "normal"
 	case RunModeBatteryPanic:
 		return "battery panic"
+	case RunModeNormal:
+		return "normal"
 	}
 	return "unknown"
 }
@@ -88,7 +88,7 @@ type SysInfo struct {
 }
 
 func (m *SysInfo) ToMsi() (data msi, err error) {
-	m.SysInfoVersion = 1
+	m.SysInfoVersion = 2
 	data, err = ToMsiGeneric(m,
 		mapstructure.ComposeEncodeFieldMapHookFunc(
 			EncodeDurationToSecondsInt64Hook(),
@@ -104,6 +104,12 @@ func (m *SysInfo) ParseMsi(input msi) (err error) {
 			DecodeUnixMilliToTimeHookFunc()))
 	if err != nil {
 		return err
+	}
+	if m.SysInfoVersion < 2 {
+		// In version 2 RunModeBatteryPanic was changed from 2 to 3
+		if m.RunMode == 2 {
+			m.RunMode = RunModeBatteryPanic
+		}
 	}
 	return nil
 }

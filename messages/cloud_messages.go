@@ -18,6 +18,7 @@ type LoginMsg struct {
 	Time     int64                  `json:"time" msgpack:"time" mapstructure:"time,omitempty"`
 	Meta     map[string]interface{} `json:"meta" msgpack:"meta" mapstructure:"meta,omitempty"`
 	Groups   []string               `json:"groups" msgpack:"groups" mapstructure:"groups,omitempty"`
+	NoCreate bool                   `json:"no-create" msgpack:"no-create" mapstructure:"no-create,omitempty"`
 }
 
 /********************/

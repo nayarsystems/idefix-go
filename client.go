@@ -115,6 +115,10 @@ func (c *Client) Connect() (err error) {
 		})
 	}
 
+	if c.opts.SkipLogin && c.opts.SessionID == "" {
+		return ie.ErrInvalidParams.With("SkipLogin option requires a SessionID to be set")
+	}
+
 	if c.sessionID == "" {
 		if c.opts.SessionID != "" {
 			c.sessionID = c.opts.SessionID
@@ -144,8 +148,10 @@ func (c *Client) Connect() (err error) {
 		return ie.ErrInternal.With(token.Error().Error())
 	}
 
-	if err := c.login(); err != nil {
-		return err
+	if !c.opts.SkipLogin {
+		if err := c.login(); err != nil {
+			return err
+		}
 	}
 
 	c.setState(Connected)
@@ -166,6 +172,11 @@ func (c *Client) Disconnect() {
 	c.setState(Disconnected)
 	c.cancelFunc()
 	c.client.Disconnect(200)
+}
+
+// Returns the client address
+func (c *Client) Address() string {
+	return c.opts.Address
 }
 
 // Returns the client context
@@ -207,6 +218,7 @@ func (c *Client) login() (err error) {
 		Meta:     c.opts.Meta,
 		Time:     time.Now().UnixMilli(),
 		Groups:   c.opts.Groups,
+		NoCreate: c.opts.NoCreate,
 	}
 
 	tm := &m.Message{
