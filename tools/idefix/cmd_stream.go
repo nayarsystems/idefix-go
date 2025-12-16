@@ -83,7 +83,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
-			fmt.Print(generateLine(verbose, m, &lastLogTime))
+			fmt.Print(generateLine(verbose, k.To, m, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -127,7 +127,7 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	for {
 		select {
 		case k := <-s.Channel():
-			fmt.Print(generateLine(verbose, k.Data, &lastLogTime))
+			fmt.Print(generateLine(verbose, k.To, k.Data, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -138,9 +138,15 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func generateLine(verboseLevel int, data any, lastLogTime *time.Time) string {
+func generateLine(verboseLevel int, to string, payload any, lastLogTime *time.Time) string {
 	var result string
 
+	var data string
+	if to != "sys.evt.log" {
+		data = fmt.Sprintf("[%v] %v", to, payload)
+	} else {
+		data = fmt.Sprintf("%v", payload)
+	}
 	now := time.Now()
 	switch verboseLevel {
 	case 0:
