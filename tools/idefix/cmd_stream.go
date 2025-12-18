@@ -14,12 +14,15 @@ func init() {
 	cmdLog.MarkFlagRequired("address")
 	cmdLog.Flags().BoolP("wait", "w", false, "Wait for the device if not connected")
 	cmdLog.Flags().IntP("loglevel", "l", 2, "Filter lower log levels")
-	cmdLog.Flags().CountP("verbose", "v", "Show timestamp (-v) or timestamp with delta (-vv)")
+	cmdLog.Flags().BoolP("timestamp", "t", false, "Show timestamp (-t)")
+	cmdLog.Flags().Bool("timestamp-with-delta", false, "Show timestamp with delta")
 	cmdLog.Flags().BoolP("beautify", "b", false, "Enable colored output")
 	rootCmd.AddCommand(cmdLog)
 
 	cmdStream.Flags().StringP("address", "a", "", "Device address")
-	cmdStream.Flags().CountP("verbose", "v", "Show timestamp (-v) or timestamp with delta (-vv)")
+	cmdStream.Flags().BoolP("timestamp", "t", false, "Show timestamp (-t)")
+	cmdStream.Flags().Bool("timestamp-with-delta", false, "Show timestamp with delta")
+
 	rootCmd.AddCommand(cmdStream)
 }
 
@@ -44,9 +47,25 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		level = 2
 	}
-	verbose, err := cmd.Flags().GetCount("verbose")
+	timestamp, err := cmd.Flags().GetBool("timestamp")
 	if err != nil {
-		verbose = 0
+		timestamp = false
+	}
+	timestampWithDelta, err := cmd.Flags().GetBool("timestamp-with-delta")
+	if err != nil {
+		timestampWithDelta = false
+	}
+
+	var timestampLevel int
+	switch {
+	case timestampWithDelta:
+		timestampLevel = 2
+
+	case timestamp:
+		timestampLevel = 1
+
+	default:
+		timestampLevel = 0
 	}
 	useColor, err := cmd.Flags().GetBool("beautify")
 	if err != nil {
@@ -88,7 +107,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
-			fmt.Print(generateLogLine(verbose, m, l, useColor, &lastLogTime))
+			fmt.Print(generateLogLine(timestampLevel, m, l, useColor, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -104,9 +123,25 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	verbose, err := cmd.Flags().GetCount("verbose")
+	timestamp, err := cmd.Flags().GetBool("timestamp")
 	if err != nil {
-		verbose = 0
+		timestamp = false
+	}
+	timestampWithDelta, err := cmd.Flags().GetBool("timestamp-with-delta")
+	if err != nil {
+		timestampWithDelta = false
+	}
+
+	var timestampLevel int
+	switch {
+	case timestampWithDelta:
+		timestampLevel = 2
+
+	case timestamp:
+		timestampLevel = 1
+
+	default:
+		timestampLevel = 0
 	}
 
 	if len(args) != 1 {
@@ -132,7 +167,7 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	for {
 		select {
 		case k := <-s.Channel():
-			fmt.Print(generateStreamLine(verbose, k.To, k.Data, &lastLogTime))
+			fmt.Print(generateStreamLine(timestampLevel, k.To, k.Data, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -160,20 +195,20 @@ func colorize(s interface{}, c int, disabled bool) string {
 	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
 }
 
-func formatLogLevel(level int, noColor bool) string {
+func formatLogLevel(level int) string {
 	switch level {
 	case -1:
-		return colorize("TRC", colorMagenta, noColor)
+		return colorize("TRC", colorMagenta, false)
 	case 0:
-		return colorize("DBG", colorCyan, noColor)
+		return colorize("DBG", colorCyan, false)
 	case 1:
-		return colorize("INF", colorGreen, noColor)
+		return colorize("INF", colorGreen, false)
 	case 2:
-		return colorize("WRN", colorYellow, noColor)
+		return colorize("WRN", colorYellow, false)
 	case 3:
-		return colorize(colorize("ERR", colorRed, noColor), colorBold, noColor)
+		return colorize(colorize("ERR", colorRed, false), colorBold, false)
 	default:
-		return colorize(colorize("FTL", colorRed, noColor), colorBold, noColor)
+		return colorize(colorize("FTL", colorRed, false), colorBold, false)
 	}
 }
 
@@ -205,7 +240,7 @@ func formatLineWithTimestamp(verboseLevel int, data string, lastLogTime *time.Ti
 func generateLogLine(verboseLevel int, message string, level int, useColor bool, lastLogTime *time.Time) string {
 	var prefix string
 	if useColor {
-		prefix = fmt.Sprintf("%s ", formatLogLevel(level, false))
+		prefix = fmt.Sprintf("%s ", formatLogLevel(level))
 	}
 
 	data := fmt.Sprintf("%s%s", prefix, message)
