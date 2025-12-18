@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	cmdAliasAdd.Flags().StringP("alias", "", "", "Alias to add")
+	cmdAliasAdd.Flags().String("alias", "", "Alias to add")
 	cmdAliasAdd.MarkFlagRequired("alias")
 	cmdAlias.AddCommand(cmdAliasAdd)
 }
