@@ -188,27 +188,24 @@ const (
 	colorBold    = 1
 )
 
-func colorize(s interface{}, c int, disabled bool) string {
-	if disabled {
-		return fmt.Sprintf("%s", s)
-	}
+func colorize(s interface{}, c int) string {
 	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
 }
 
 func formatLogLevel(level int) string {
 	switch level {
 	case -1:
-		return colorize("TRC", colorMagenta, false)
+		return colorize("TRC", colorMagenta)
 	case 0:
-		return colorize("DBG", colorCyan, false)
+		return colorize("DBG", colorCyan)
 	case 1:
-		return colorize("INF", colorGreen, false)
+		return colorize("INF", colorGreen)
 	case 2:
-		return colorize("WRN", colorYellow, false)
+		return colorize("WRN", colorYellow)
 	case 3:
-		return colorize(colorize("ERR", colorRed, false), colorBold, false)
+		return colorize(colorize("ERR", colorRed), colorBold)
 	default:
-		return colorize(colorize("FTL", colorRed, false), colorBold, false)
+		return colorize(colorize("FTL", colorRed), colorBold)
 	}
 }
 
