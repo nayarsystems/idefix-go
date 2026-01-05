@@ -85,12 +85,26 @@ func main() {
 	for ctx.Err() == nil {
 		slog.Info("fetching bstates events...", "domain", domain, "address", deviceAddress, "since", since, "cursor", cursor)
 		res, err := client.EventsGet(&messages.EventsGetMsg{
-			Type:           "application/vnd.nayar.bstates", // bstates events only
-			Address:        deviceAddress,                   // events from this device address only (if empty, all addresses in the specified domain)
-			Domain:         domain,                          // events from this domain only
-			Since:          since,                           // fetch events since this time (can be empty and it's ignored if cursor is set)
-			ContinuationID: cursor,                          // pagination cursor (can be empty)
-			Timeout:        time.Minute,                     // 1 minute of long polling timeout. If no events arrive in this time, the request will timeout and we will re-issue it
+			// bstates events only
+			Type: "application/vnd.nayar.bstates",
+
+			// Events from this device address only (if empty, all addresses in the specified domain)
+			Address: deviceAddress,
+
+			// Events from this domain only
+			Domain: domain,
+
+			// Fetch events since this time (can be empty and it's ignored if cursor is set)
+			Since: since,
+
+			// Pagination cursor (can be empty)
+			ContinuationID: cursor,
+
+			// 1 minute of long polling timeout.
+			// If no events are available at the time of the request,
+			// the server will hold the request open until events arrive or timeout occurs.
+			// In case of timeout, the server will respond with ErrTimeout error
+			Timeout: time.Minute,
 		})
 
 		if err != nil {
