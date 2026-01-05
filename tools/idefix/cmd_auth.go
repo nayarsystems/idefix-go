@@ -9,30 +9,30 @@ import (
 )
 
 func init() {
-	cmdToolConfig.AddCommand(cmdToolConfigLoad)
+	cmdAuth.AddCommand(cmdAuthLoad)
 
-	cmdToolConfigStore.Flags().StringP("broker", "b", "ssl://mqtt.terathings.com", "Broker Address")
-	cmdToolConfigStore.Flags().StringP("encoding", "e", "mg", "Encoding")
-	cmdToolConfigStore.Flags().StringP("address", "a", "", "Address")
-	cmdToolConfigStore.Flags().StringP("token", "t", "", "Token")
-	cmdToolConfig.AddCommand(cmdToolConfigStore)
+	cmdAuthStore.Flags().StringP("broker", "b", "ssl://mqtt.terathings.com", "Broker Address")
+	cmdAuthStore.Flags().StringP("encoding", "e", "mg", "Encoding")
+	cmdAuthStore.Flags().StringP("address", "a", "", "Address")
+	cmdAuthStore.Flags().StringP("token", "t", "", "Token")
+	cmdAuth.AddCommand(cmdAuthStore)
 
-	rootCmd.AddCommand(cmdToolConfig)
+	rootCmd.AddCommand(cmdAuth)
 }
 
-var cmdToolConfig = &cobra.Command{
-	Use:   "tconfig",
+var cmdAuth = &cobra.Command{
+	Use:   "auth",
 	Short: "Manage idefix configurations",
 }
 
-var cmdToolConfigLoad = &cobra.Command{
+var cmdAuthLoad = &cobra.Command{
 	Use:   "show <name>",
 	Short: "Show and print configuration",
 	Args:  cobra.MinimumNArgs(1),
-	RunE:  cmdToolConfigShowRunE,
+	RunE:  cmdAuthShowRunE,
 }
 
-func cmdToolConfigShowRunE(cmd *cobra.Command, args []string) error {
+func cmdAuthShowRunE(cmd *cobra.Command, args []string) error {
 
 	cfg, err := idf.ReadConfig(args[0])
 	if err != nil {
@@ -45,14 +45,14 @@ func cmdToolConfigShowRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var cmdToolConfigStore = &cobra.Command{
+var cmdAuthStore = &cobra.Command{
 	Use:   "store <name>",
 	Short: "Store or modify a configuration",
 	Args:  cobra.MinimumNArgs(1),
-	RunE:  cmdToolConfigStoreRunE,
+	RunE:  cmdAuthStoreRunE,
 }
 
-func cmdToolConfigStoreRunE(cmd *cobra.Command, args []string) error {
+func cmdAuthStoreRunE(cmd *cobra.Command, args []string) error {
 	cfg, err := idf.ReadConfig(args[0])
 	if err != nil {
 		return err
@@ -78,5 +78,5 @@ func cmdToolConfigStoreRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return cmdToolConfigShowRunE(cmd, args)
+	return cmdAuthShowRunE(cmd, args)
 }
