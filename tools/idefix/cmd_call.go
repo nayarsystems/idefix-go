@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	idf "github.com/nayarsystems/idefix-go"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/nayarsystems/idefix-go/normalize"
 	"github.com/pterm/pterm"
@@ -103,7 +102,6 @@ func cmdCallRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	addr = idf.NormalizeAddress(addr)
 
 	amap := make(map[string]interface{})
 	if len(args) > 1 {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	idf "github.com/nayarsystems/idefix-go"
 	m "github.com/nayarsystems/idefix-go/messages"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +60,6 @@ func cmdGroupsGetRunE(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	msg.Address = idf.NormalizeAddress(msg.Address)
 
 	msg.Domain, _ = cmd.Flags().GetString("domain")
 
@@ -74,7 +72,6 @@ func cmdGroupsAddRunE(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	msg.Address = idf.NormalizeAddress(msg.Address)
 
 	msg.Domain, err = cmd.Flags().GetString("domain")
 	if err != nil {
@@ -95,7 +92,6 @@ func cmdGroupsRemoveRunE(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	msg.Address = idf.NormalizeAddress(msg.Address)
 
 	msg.Domain, err = cmd.Flags().GetString("domain")
 	if err != nil {
