@@ -84,6 +84,8 @@ func main() {
 	// Fetch and process bstates events in a loop
 	for ctx.Err() == nil {
 		slog.Info("fetching bstates events...", "domain", domain, "address", deviceAddress, "since", since, "cursor", cursor)
+		longPollingTimeout := time.Minute
+		queryContext, queryCancel := context.WithTimeout(client.Context(), longPollingTimeout+10*time.Second)
 		res, err := client.EventsGet(&messages.EventsGetMsg{
 			// bstates events only
 			Type: "application/vnd.nayar.bstates",
@@ -104,8 +106,9 @@ func main() {
 			// If no events are available at the time of the request,
 			// the server will hold the request open until events arrive or timeout occurs.
 			// In case of timeout, the server will respond with ErrTimeout error
-			Timeout: time.Minute,
-		})
+			Timeout: longPollingTimeout,
+		}, queryContext)
+		queryCancel()
 
 		if err != nil {
 			if !ie.ErrTimeout.Is(err) {
