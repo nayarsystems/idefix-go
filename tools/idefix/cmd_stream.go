@@ -14,11 +14,15 @@ func init() {
 	cmdLog.MarkFlagRequired("address")
 	cmdLog.Flags().BoolP("wait", "w", false, "Wait for the device if not connected")
 	cmdLog.Flags().IntP("loglevel", "l", 2, "Filter lower log levels")
-	cmdLog.Flags().CountP("verbose", "v", "Show timestamp (-v) or timestamp with delta (-vv)")
+	cmdLog.Flags().BoolP("timestamp", "t", false, "Show timestamp (-t)")
+	cmdLog.Flags().Bool("timestamp-with-delta", false, "Show timestamp with delta")
+	cmdLog.Flags().BoolP("beautify", "b", false, "Enable colored output")
 	rootCmd.AddCommand(cmdLog)
 
 	cmdStream.Flags().StringP("address", "a", "", "Device address")
-	cmdStream.Flags().CountP("verbose", "v", "Show timestamp (-v) or timestamp with delta (-vv)")
+	cmdStream.Flags().BoolP("timestamp", "t", false, "Show timestamp (-t)")
+	cmdStream.Flags().Bool("timestamp-with-delta", false, "Show timestamp with delta")
+
 	rootCmd.AddCommand(cmdStream)
 }
 
@@ -43,9 +47,29 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		level = 2
 	}
-	verbose, err := cmd.Flags().GetCount("verbose")
+	timestamp, err := cmd.Flags().GetBool("timestamp")
 	if err != nil {
-		verbose = 0
+		timestamp = false
+	}
+	timestampWithDelta, err := cmd.Flags().GetBool("timestamp-with-delta")
+	if err != nil {
+		timestampWithDelta = false
+	}
+
+	var timestampLevel int
+	switch {
+	case timestampWithDelta:
+		timestampLevel = 2
+
+	case timestamp:
+		timestampLevel = 1
+
+	default:
+		timestampLevel = 0
+	}
+	useColor, err := cmd.Flags().GetBool("beautify")
+	if err != nil {
+		useColor = false
 	}
 
 	ic, err := getConnectedClient()
@@ -83,7 +107,7 @@ func cmdLogRunE(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
-			fmt.Print(generateLine(verbose, k.To, m, &lastLogTime))
+			fmt.Print(generateLogLine(timestampLevel, m, l, useColor, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -99,9 +123,25 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	verbose, err := cmd.Flags().GetCount("verbose")
+	timestamp, err := cmd.Flags().GetBool("timestamp")
 	if err != nil {
-		verbose = 0
+		timestamp = false
+	}
+	timestampWithDelta, err := cmd.Flags().GetBool("timestamp-with-delta")
+	if err != nil {
+		timestampWithDelta = false
+	}
+
+	var timestampLevel int
+	switch {
+	case timestampWithDelta:
+		timestampLevel = 2
+
+	case timestamp:
+		timestampLevel = 1
+
+	default:
+		timestampLevel = 0
 	}
 
 	if len(args) != 1 {
@@ -127,7 +167,7 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	for {
 		select {
 		case k := <-s.Channel():
-			fmt.Print(generateLine(verbose, k.To, k.Data, &lastLogTime))
+			fmt.Print(generateStreamLine(timestampLevel, k.To, k.Data, &lastLogTime))
 
 		case <-s.Context().Done():
 			return s.Context().Err()
@@ -138,15 +178,41 @@ func cmdStreamRunE(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func generateLine(verboseLevel int, to string, payload any, lastLogTime *time.Time) string {
+// ANSI color codes
+const (
+	colorRed     = 31
+	colorGreen   = 32
+	colorYellow  = 33
+	colorMagenta = 35
+	colorCyan    = 36
+	colorBold    = 1
+)
+
+func colorize(s interface{}, c int) string {
+	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
+}
+
+func formatLogLevel(level int) string {
+	switch level {
+	case -1:
+		return colorize("TRC", colorMagenta)
+	case 0:
+		return colorize("DBG", colorCyan)
+	case 1:
+		return colorize("INF", colorGreen)
+	case 2:
+		return colorize("WRN", colorYellow)
+	case 3:
+		return colorize(colorize("ERR", colorRed), colorBold)
+	default:
+		return colorize(colorize("FTL", colorRed), colorBold)
+	}
+}
+
+// formatLineWithTimestamp formats a message with optional timestamp and delta
+func formatLineWithTimestamp(verboseLevel int, data string, lastLogTime *time.Time) string {
 	var result string
 
-	var data string
-	if to != "sys.evt.log" {
-		data = fmt.Sprintf("[%v] %v", to, payload)
-	} else {
-		data = fmt.Sprintf("%v", payload)
-	}
 	now := time.Now()
 	switch verboseLevel {
 	case 0:
@@ -166,4 +232,19 @@ func generateLine(verboseLevel int, to string, payload any, lastLogTime *time.Ti
 	*lastLogTime = now
 
 	return result
+}
+
+func generateLogLine(verboseLevel int, message string, level int, useColor bool, lastLogTime *time.Time) string {
+	var prefix string
+	if useColor {
+		prefix = fmt.Sprintf("%s ", formatLogLevel(level))
+	}
+
+	data := fmt.Sprintf("%s%s", prefix, message)
+	return formatLineWithTimestamp(verboseLevel, data, lastLogTime)
+}
+
+func generateStreamLine(verboseLevel int, to string, payload any, lastLogTime *time.Time) string {
+	data := fmt.Sprintf("[%v] %v", to, payload)
+	return formatLineWithTimestamp(verboseLevel, data, lastLogTime)
 }
