@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"strings"
 
@@ -78,7 +79,15 @@ func (c *Client) sendMessageWithContext(ctx context.Context, tm *m.Message) (err
 	select {
 	case <-msg.Done():
 	case <-ctx.Done():
-		return e.ErrTimeout
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			if errors.Is(ctxErr, context.DeadlineExceeded) {
+				return e.ErrTimeout
+			}
+			if errors.Is(ctxErr, context.Canceled) {
+				return e.ErrContextClosed
+			}
+		}
+		return e.ErrInternal
 	}
 	if msg.Error() != nil {
 		return e.ErrInternal.With(msg.Error().Error())
