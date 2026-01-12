@@ -5,7 +5,7 @@ go 1.25.4
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/nayarsystems/bstates v0.9.1
-	github.com/nayarsystems/idefix-go v0.3.1-0.20260105100142-2b13cbed8fea
+	github.com/nayarsystems/idefix-go v0.3.1-0.20260112174037-935810b693ce
 )
 
 require (
