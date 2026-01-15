@@ -284,10 +284,6 @@ func (st *SqliteStorage) GetCursor(id string) (string, error) {
 
 	err := st.st.QueryRowContext(ctx, query, id).Scan(&cursor)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			// Return empty string for non-existent sources (not an error)
-			return "", nil
-		}
 		return "", fmt.Errorf("failed to get source cursor: %w", err)
 	}
 

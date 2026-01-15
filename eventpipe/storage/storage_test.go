@@ -89,9 +89,9 @@ func testBasic(t *testing.T, st Storage) {
 		require.NoError(t, err)
 		require.Equal(t, "test-cursor-456", cursor)
 
-		// Test not found (should return empty string, not error)
+		// Test not found (should return error)
 		cursor, err = st.GetCursor("non-existent")
-		require.NoError(t, err)
+		require.Error(t, err)
 		require.Equal(t, "", cursor)
 	})
 

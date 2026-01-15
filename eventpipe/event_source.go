@@ -23,6 +23,10 @@ type EventSourceParams struct {
 	// If zero, query all events (limited by service query limits)
 	Since time.Time
 
+	// If specified, continue fetching events from this cursor
+	// if no cursor found in storage
+	ContinuationID string
+
 	// // Whether to restart cursor from RestartCursorFrom time
 	// RestartCursor bool
 
@@ -139,7 +143,7 @@ func (s *EventSource) producerFunc(put func(pipelineItem)) error {
 	var events []*m.Event
 	cursor, err := s.m.st.GetCursor(s.Id())
 	if err != nil {
-		return fmt.Errorf("failed to get cursor: %w", err)
+		cursor = s.p.ContinuationID
 	}
 	for s.waitWithContext(time.Second) == nil {
 		storageEvents, err := s.loadEvents()

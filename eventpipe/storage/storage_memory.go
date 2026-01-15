@@ -57,7 +57,7 @@ func (st *memoryStorage) GetCursor(id string) (string, error) {
 
 	cursor, exists := st.cursors[id]
 	if !exists {
-		return "", nil
+		return "", fmt.Errorf("cursor for source_id '%s' not found", id)
 	}
 	return cursor, nil
 }
