@@ -64,7 +64,7 @@ func main() {
 	if sinceRaw != "" {
 		var err error
 		since, err = dateparse.ParseStrict(sinceRaw)
-		if err != nil && sinceRaw != "" {
+		if err != nil {
 			slog.Error("invalid since timestamp", "error", err)
 			os.Exit(1)
 		}
