@@ -28,11 +28,6 @@ func (e eventItem) Id() string {
 }
 
 func (e eventItem) Bytes() []byte {
-	if err := normalizeEvent(e.Event); err != nil {
-		slog.Error("failed to normalize event", "error", err)
-		return []byte{}
-	}
-
 	// Convert Event to map[string]any using ToMsi
 	eventMap, err := e.Event.ToMsi()
 	if err != nil {
