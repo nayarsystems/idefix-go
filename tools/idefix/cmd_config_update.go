@@ -52,9 +52,8 @@ func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	if _, ok := env.Environment["commissioning_blocked"]; ok {
-		if env.Environment["commissioning_blocked"] != "0" {
-			fmt.Println(env.Environment["commissioning_blocked"] != "0")
+	if commissionBlocked, ok := env.Environment["commissioning_blocked"]; ok {
+		if commissionBlocked != "0" {
 			if result, _ := pterm.DefaultInteractiveConfirm.Show("The target device has already been commissioned through CWA. Continue?"); !result {
 				return nil
 			}
