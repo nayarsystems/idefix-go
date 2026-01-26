@@ -106,6 +106,9 @@ const (
 	// TopicTransportSchemasGet is used to get one schema
 	TopicTransportSchemasGet = TopicTransportIdefixPrefix + CmdSchemasGet
 
+	// TopicTransportSessionCreate is used to create a session (logout)
+	TopicTransportSessionCreate = TopicTransportIdefixPrefix + CmdSessionCreate
+
 	// TopicTransportSessionDelete is used to delete a session (logout)
 	TopicTransportSessionDelete = TopicTransportIdefixPrefix + CmdSessionDelete
 
@@ -241,6 +244,9 @@ const (
 
 	// CmdSchemasGet is the command to retrieve schemas from a domain
 	CmdSchemasGet = "schemas.get"
+
+	// CmdSessionCreate is the command to create a session
+	CmdSessionCreate = "session.create"
 
 	// CmdSessionDelete is the command to delete a session
 	CmdSessionDelete = "session.delete"
