@@ -28,6 +28,9 @@ type LoginMsg struct {
 type AddressTokenResetMsg struct {
 	// Address to query
 	Address string `json:"address" msgpack:"address" mapstructure:"address,omitempty" validate:"required"`
+
+	// New token to set
+	Token string `json:"token" msgpack:"token" mapstructure:"token,omitempty" validate:"required"`
 }
 
 type AddressDisableMsg struct {
@@ -513,6 +516,22 @@ type GroupRemoveMsg struct {
 	PropagateDown bool `json:"propagateDown" msgpack:"propagateDown" mapstructure:"propagateDown"`
 }
 type GroupRemoveResponseMsg struct {
+}
+
+type SessionCreateMsg struct {
+	// Address to create session from
+	Address string `json:"address" msgpack:"address" mapstructure:"address"`
+
+	// Groups to assign to the session
+	Groups []string `json:"groups" msgpack:"groups" mapstructure:"groups"`
+
+	// Session duration
+	Duration time.Duration `json:"duration" msgpack:"duration" mapstructure:"duration"`
+}
+
+type SessionCreateResponseMsg struct {
+	// Created session ID
+	Session string `json:"session" msgpack:"session" mapstructure:"session"`
 }
 
 type SessionDeleteMsg struct {
