@@ -1,9 +1,11 @@
 module github.com/nayarsystems/idefix-go
 
-go 1.18
+go 1.22
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
+	github.com/google/go-pipeline v0.0.0-20230411140531-6cbedfc1d3fc
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/nayarsystems/bstates v0.9.1
 	github.com/nayarsystems/buffer v0.1.1
 	github.com/nayarsystems/cacert-go v0.20240410.16
@@ -16,6 +18,7 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -30,8 +33,8 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 
@@ -42,7 +45,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/spf13/viper v1.18.2
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

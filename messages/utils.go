@@ -163,12 +163,7 @@ func GetMsi(input any) (msi, error) {
 	return nil, fmt.Errorf("can't get msi from %T", input)
 }
 
-// Gets the schema Id from a bstates based event's type field.
-// Example:
-//
-// - input: "application/vnd.nayar.bstates; id=\"oEM5eJzBBGbyT9CLrSKrQwdnP2C+CVM8JHjfA0g3MAB=\""
-//
-// - oputput: "oEM5eJzBBGbyT9CLrSKrQwdnP2C+CVM8JHjfA0g3MAB="
+// Deprecated: use bstates.GetSchemaIdFromType
 func BstatesParseSchemaIdFromType(evtype string) (string, error) {
 	r := regexp.MustCompile(`^application/vnd.nayar.bstates; id=([a-zA-Z0-9+/=]+)|"([a-zA-Z0-9+/=]+)"$`)
 
