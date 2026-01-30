@@ -149,6 +149,7 @@ func (st *SqliteStorage) setupSchema() error {
 		id TEXT NOT NULL,
 		data BLOB NOT NULL,
 		context BLOB,
+		locked BOOLEAN NOT NULL DEFAULT 0,
 		order_index INTEGER NOT NULL DEFAULT 0,
 		PRIMARY KEY (source_id, id),
 		FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE CASCADE
@@ -370,6 +371,32 @@ func (st *SqliteStorage) Update(item Item) error {
 	return nil
 }
 
+func (st *SqliteStorage) LockItem(sourceId, itemId string) error {
+	slog.Debug("locking item", "sourceId", sourceId, "itemId", itemId)
+	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
+	defer cancel()
+
+	query := "UPDATE items SET locked = 1 WHERE source_id = ? AND id = ?"
+	_, err := st.st.ExecContext(ctx, query, sourceId, itemId)
+	if err != nil {
+		return fmt.Errorf("failed to lock item: %w", err)
+	}
+	return nil
+}
+
+func (st *SqliteStorage) UnlockItem(sourceId, itemId string) error {
+	slog.Debug("unlocking item", "sourceId", sourceId, "itemId", itemId)
+	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
+	defer cancel()
+
+	query := "UPDATE items SET locked = 0 WHERE source_id = ? AND id = ?"
+	_, err := st.st.ExecContext(ctx, query, sourceId, itemId)
+	if err != nil {
+		return fmt.Errorf("failed to unlock item: %w", err)
+	}
+	return nil
+}
+
 func (st *SqliteStorage) DeleteItem(sourceId, itemId string) error {
 	slog.Debug("deleting item", "sourceId", sourceId, "itemId", itemId)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
@@ -412,6 +439,74 @@ func (st *SqliteStorage) GetItems(sourceId string, limit int) ([]Item, error) {
 
 	if err := rows.Err(); err != nil {
 		return []Item{}, fmt.Errorf("error iterating over item rows: %w", err)
+	}
+
+	return items, nil
+}
+
+func (st *SqliteStorage) GetLockedItems(sourceId string, limit int) ([]Item, error) {
+	slog.Debug("getting locked items", "sourceId", sourceId, "limit", limit)
+	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
+	defer cancel()
+
+	// Default limit if not specified
+	if limit <= 0 {
+		limit = 100
+	}
+
+	query := "SELECT source_id,id,data,context,order_index FROM items WHERE source_id = ? AND locked = 1 ORDER BY order_index LIMIT ?"
+	rows, err := st.st.QueryContext(ctx, query, sourceId, limit)
+	if err != nil {
+		return []Item{}, fmt.Errorf("failed to query locked items: %w", err)
+	}
+	defer rows.Close()
+
+	// Initialize as empty slice to ensure we never return nil
+	items := []Item{}
+	for rows.Next() {
+		var item sqliteItem
+		if err := rows.Scan(&item.sourceId, &item.id, &item.data, &item.context, &item.orderIndex); err != nil {
+			return []Item{}, fmt.Errorf("failed to scan locked item row: %w", err)
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return []Item{}, fmt.Errorf("error iterating over locked item rows: %w", err)
+	}
+
+	return items, nil
+}
+
+func (st *SqliteStorage) GetUnlockedItems(sourceId string, limit int) ([]Item, error) {
+	slog.Debug("getting unlocked items", "sourceId", sourceId, "limit", limit)
+	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
+	defer cancel()
+
+	// Default limit if not specified
+	if limit <= 0 {
+		limit = 100
+	}
+
+	query := "SELECT source_id,id,data,context,order_index FROM items WHERE source_id = ? AND locked = 0 ORDER BY order_index LIMIT ?"
+	rows, err := st.st.QueryContext(ctx, query, sourceId, limit)
+	if err != nil {
+		return []Item{}, fmt.Errorf("failed to query unlocked items: %w", err)
+	}
+	defer rows.Close()
+
+	// Initialize as empty slice to ensure we never return nil
+	items := []Item{}
+	for rows.Next() {
+		var item sqliteItem
+		if err := rows.Scan(&item.sourceId, &item.id, &item.data, &item.context, &item.orderIndex); err != nil {
+			return []Item{}, fmt.Errorf("failed to scan unlocked item row: %w", err)
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return []Item{}, fmt.Errorf("error iterating over unlocked item rows: %w", err)
 	}
 
 	return items, nil

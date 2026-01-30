@@ -95,7 +95,6 @@ func (edb *EventsStorage) GetEvents(sourceId string) ([]*eventItem, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get items from db: %w", err)
 	}
-	slog.Debug("retrieved items", "count", len(itemsList))
 	events := []*eventItem{}
 	for _, item := range itemsList {
 		// Deserialize msgpack to map[string]any
@@ -123,4 +122,67 @@ func (edb *EventsStorage) GetEvents(sourceId string) ([]*eventItem, error) {
 		events = append(events, &eItem)
 	}
 	return events, nil
+}
+
+func (edb *EventsStorage) GetUnlockedEvents(sourceId string, limit int) ([]*eventItem, error) {
+	itemsList, err := edb.St.GetUnlockedItems(sourceId, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get unlocked items from db: %w", err)
+	}
+	events := []*eventItem{}
+	for _, item := range itemsList {
+		// Deserialize msgpack to map[string]any
+		var eventMap map[string]any
+		if err := msgpack.Unmarshal(item.Bytes(), &eventMap); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal msgpack: %w", err)
+		}
+
+		// Convert map[string]any back to Event using ParseMsi
+		var event messages.Event
+		if err := event.ParseMsi(eventMap); err != nil {
+			return nil, fmt.Errorf("failed to parse event from map: %w", err)
+		}
+
+		context, err := decodeContextBytes(item.ContextBytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode context bytes: %w", err)
+		}
+
+		eItem := eventItem{
+			sourceId: item.SourceId(),
+			Event:    &event,
+			context:  context,
+		}
+		events = append(events, &eItem)
+	}
+	return events, nil
+}
+
+func (edb *EventsStorage) LockEvent(sourceId, eventId string) error {
+	return edb.St.LockItem(sourceId, eventId)
+}
+
+func (edb *EventsStorage) UnlockEvent(sourceId, eventId string) error {
+	return edb.St.UnlockItem(sourceId, eventId)
+}
+
+func (edb *EventsStorage) UnlockAllEvents(sourceId string) error {
+	lockedItems, err := edb.St.GetLockedItems(sourceId, 0)
+	if err != nil {
+		return fmt.Errorf("failed to get locked items from db: %w", err)
+	}
+	for len(lockedItems) > 0 {
+		for _, item := range lockedItems {
+			err := edb.St.UnlockItem(sourceId, item.Id())
+			if err != nil {
+				return fmt.Errorf("failed to unlock item with id '%s': %w", item.Id(), err)
+			}
+		}
+		lockedItems, err = edb.St.GetLockedItems(sourceId, 0)
+		if err != nil {
+			return fmt.Errorf("failed to get locked items from db: %w", err)
+		}
+
+	}
+	return nil
 }

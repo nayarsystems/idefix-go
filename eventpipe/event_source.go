@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"github.com/google/go-pipeline/pkg/pipeline"
+	"github.com/jaracil/ei"
 	ierrors "github.com/nayarsystems/idefix-go/errors"
 	m "github.com/nayarsystems/idefix-go/messages"
 )
 
 type EventSource struct {
-	l      *slog.Logger
-	m      *EventSourceManager
-	p      EventSourceParams
-	stages []pipeline.Stage[pipelineItem]
+	l          *slog.Logger
+	m          *EventSourceManager
+	p          EventSourceParams
+	stages     []pipeline.Stage[pipelineItem]
+	stageNames map[string]struct{}
 }
 
 type EventSourceParams struct {
@@ -71,45 +73,92 @@ func (s *EventSource) Push(stage EventStage, options ...EventStageOptionFn) (err
 	}
 
 	gopts := []pipeline.StageOptionFn{}
-	// if eventStageOptions.name == "" {
-	// 	return fmt.Errorf("stage name is required")
-	// }
+	if eventStageOptions.name == "" {
+		eventStageOptions.name = fmt.Sprintf("__s%d", len(s.stages))
+	}
+	if s.stageNames == nil {
+		s.stageNames = make(map[string]struct{})
+	}
+	if _, exists := s.stageNames[eventStageOptions.name]; exists {
+		return fmt.Errorf("stage with name '%s' already exists in the pipeline", eventStageOptions.name)
+	}
 	gopts = append(gopts, pipeline.Name(eventStageOptions.name))
 	gopts = append(gopts, pipeline.Concurrency(eventStageOptions.concurrency))
 	gopts = append(gopts, pipeline.InputBufferSize(eventStageOptions.bufferSize))
+
+	stageIndex := len(s.stages)
 
 	gstage := pipeline.NewStage(
 		func(in pipelineItem) (out pipelineItem, err error) {
 			if s.m.ctx.Err() != nil {
 				return in, s.m.ctx.Err()
 			}
+			isLastStage := stageIndex == len(s.stages)-1
 			if in.passthrough {
+				s.l.Debug("passing through event", "event_id", in.event.UID, "stage", eventStageOptions.name)
 				return in, nil
+			}
+			eventContext := in.eventContext
+			if eventContext == nil {
+				eventContext = make(map[string]any)
+			}
+			processedStages := ei.N(eventContext).M("processedStages").MapStrZ()
+			if processedStages == nil {
+				processedStages = make(map[string]any)
+				eventContext["processedStages"] = processedStages
+			}
+			if ei.N(processedStages).M(eventStageOptions.name).BoolZ() {
+				s.l.Debug("skipping event already processed in stage", "event_id", in.event.UID, "stage", eventStageOptions.name)
+				out = in
+				out.eventContext = eventContext
+				return out, nil
+			}
+			pipelineContext := ei.N(eventContext).M("pipelineContext").MapStrZ()
+			if pipelineContext == nil {
+				pipelineContext = make(map[string]any)
 			}
 			stageInput := EventStageInput{
 				Event:           in.event,
-				PipelineContext: in.eventContext,
+				PipelineContext: pipelineContext,
 			}
 			var stageOutput EventStageOutput
+			s.l.Debug("processing event in stage", "event_id", in.event.UID, "stage", eventStageOptions.name, "pipeline_context", stageInput.PipelineContext)
 			stageOutput, err = stage.Process(s.m.ctx, stageInput)
 			if err != nil {
 				return out, err
 			}
-			if stageOutput.Remove {
+			s.l.Debug("stage processing completed", "event_id", in.event.UID, "stage", eventStageOptions.name, "pipeline_context", stageOutput.PipelineContext)
+			if stageOutput.Remove || (stageOutput.Processed && isLastStage) {
 				s.deleteEvent(in.event)
 				out.passthrough = true
+				s.l.Debug("event processed and removed from pipeline", "event_id", in.event.UID, "stage", eventStageOptions.name)
 				return out, nil
 			}
+			if stageOutput.PipelineContext == nil {
+				stageOutput.PipelineContext = make(map[string]any)
+			}
+
+			eventContext["pipelineContext"] = stageOutput.PipelineContext
+			processedStages[eventStageOptions.name] = true
+
+			out.eventContext = eventContext
 			out.event = stageOutput.Event
-			out.eventContext = stageOutput.PipelineContext
 			if err = s.updateEvent(out.event, out.eventContext); err != nil {
 				return out, err
 			}
+			if isLastStage {
+				// Unlock the event for future processing
+				if err = s.unlockEvent(out.event); err != nil {
+					return out, err
+				}
+			}
+			s.l.Debug("event processed in stage", "event_id", out.event.UID, "stage", eventStageOptions.name)
 			return out, nil
 		},
 		gopts...,
 	)
 	s.stages = append(s.stages, gstage)
+	s.stageNames[eventStageOptions.name] = struct{}{}
 	return nil
 }
 
@@ -140,17 +189,27 @@ func (s *EventSource) RunAndMeasure() (stats *pipeline.Metrics, err error) {
 }
 
 func (s *EventSource) producerFunc(put func(pipelineItem)) error {
+	err := s.unlockAllEvents()
+	if err != nil {
+		return fmt.Errorf("failed to unlock events: %w", err)
+	}
+
 	var events []*m.Event
 	cursor, err := s.m.st.GetCursor(s.Id())
 	if err != nil {
 		cursor = s.p.ContinuationID
 	}
+
 	for s.waitWithContext(time.Second) == nil {
-		storageEvents, err := s.loadEvents()
+		storageEvents, err := s.loadUnlockedEvents()
 		if err != nil {
 			return fmt.Errorf("failed to load pending events: %w", err)
 		}
+		s.l.Info("loaded pending events from storage", "count", len(storageEvents), "cursor", cursor)
 		for _, e := range storageEvents {
+			if err := s.lockEvent(e.Event); err != nil {
+				return fmt.Errorf("failed to lock event: %w", err)
+			}
 			put(pipelineItem{
 				event:        e.Event,
 				eventContext: e.context,
@@ -165,6 +224,7 @@ func (s *EventSource) producerFunc(put func(pipelineItem)) error {
 		if err != nil {
 			return fmt.Errorf("failed to fetch events: %w", err)
 		}
+		s.l.Info("fetched events from source", "count", len(events), "cursor", cursor)
 
 		for _, e := range events {
 			if err := s.pushEvent(e, nil); err != nil {
@@ -184,7 +244,8 @@ func (s *EventSource) producerFunc(put func(pipelineItem)) error {
 
 func (s *EventSource) pushEvent(e *m.Event, meta map[string]any) (err error) {
 	db := EventsStorage{St: s.m.st}
-	return db.PushEvent(s.Id(), e, meta)
+	db.PushEvent(s.Id(), e, meta)
+	return err
 }
 
 func (s *EventSource) updateEvent(e *m.Event, meta map[string]any) (err error) {
@@ -197,13 +258,28 @@ func (s *EventSource) deleteEvent(e *m.Event) (err error) {
 	return db.DeleteEvent(s.Id(), e.UID)
 }
 
-func (s *EventSource) loadEvents() ([]*eventItem, error) {
+func (s *EventSource) loadUnlockedEvents() ([]*eventItem, error) {
 	db := EventsStorage{St: s.m.st}
-	events, err := db.GetEvents(s.Id())
-	if err != nil {
-		return nil, fmt.Errorf("failed to load pending events: %w", err)
-	}
-	return events, nil
+	items, err := db.GetUnlockedEvents(s.Id(), 100)
+	return items, err
+}
+
+func (s *EventSource) unlockAllEvents() error {
+	db := EventsStorage{St: s.m.st}
+	err := db.UnlockAllEvents(s.Id())
+	return err
+}
+
+func (s *EventSource) lockEvent(e *m.Event) error {
+	db := EventsStorage{St: s.m.st}
+	err := db.LockEvent(s.Id(), e.UID)
+	return err
+}
+
+func (s *EventSource) unlockEvent(e *m.Event) error {
+	db := EventsStorage{St: s.m.st}
+	err := db.UnlockEvent(s.Id(), e.UID)
+	return err
 }
 
 func (s *EventSource) fetchEvents(cursor string) ([]*m.Event, string, error) {

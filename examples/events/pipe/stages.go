@@ -13,34 +13,32 @@ import (
 type mockStage struct {
 	duration time.Duration
 	index    int
-	remove   bool
 }
 
 func (s *mockStage) Process(ctx context.Context, input eventpipe.EventStageInput) (eventpipe.EventStageOutput, error) {
 	contextData := input.PipelineContext
-	if contextData == nil {
-		contextData = map[string]any{}
-	}
-
 	index := ei.N(contextData).M("index").IntZ()
 	if index == s.index {
 		// Process the event
-		event := input.Event
-		slog.Info(fmt.Sprintf("STAGE %d", s.index), "id", event.UID)
 
 		ctx, cancel := context.WithTimeout(ctx, s.duration)
 		defer cancel()
 		<-ctx.Done()
 
+		event := input.Event
+		slog.Info(fmt.Sprintf("STAGE %d", s.index), "id", event.UID)
+
 		// Update index in context
 		index += 1
 		contextData["index"] = index
+	} else {
+		slog.Warn("this cannot happen, skipping processing", "expected_index", s.index, "current_index", index)
 	}
 
 	out := eventpipe.EventStageOutput{
 		Event:           input.Event,
 		PipelineContext: contextData,
-		Remove:          s.remove,
+		Processed:       true,
 	}
 	return out, nil
 }

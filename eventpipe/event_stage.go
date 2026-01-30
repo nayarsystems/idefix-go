@@ -26,7 +26,21 @@ type EventStageInput struct {
 type EventStageOutput struct {
 	Event           *m.Event
 	PipelineContext map[string]any
-	Remove          bool
+
+	// If set to true, the event process will stop here (in this stage)
+	// and the event will be removed from the pipeline.
+	Remove bool
+
+	// If Remove is true, this flag is ignored.
+	// Marks the event as processed. Processed events will not be
+	// retried again in the stages where the event was already processed.
+	// This is useful when an event is re-injected into the pipeline
+	// but we want to avoid re-processing it in the same stages.
+	// If the last stage marks the event as Processed, the event
+	// will be considered fully processed and removed from the pipeline as well.
+	// This means that it is not necessary to set Remove=true in the last stage
+	// if Processed=true is set.
+	Processed bool
 }
 
 type EventStageOptionFn func(so *eventStageOptions) error

@@ -13,7 +13,11 @@ type Storage interface {
 	Push(Item) error
 	Update(Item) error
 	DeleteItem(sourceId, itemId string) error
+	LockItem(sourceId, itemId string) error
+	UnlockItem(sourceId, itemId string) error
 	GetItems(sourceId string, limit int) ([]Item, error)
+	GetUnlockedItems(sourceId string, limit int) ([]Item, error)
+	GetLockedItems(sourceId string, limit int) ([]Item, error)
 	GetIndex(sourceId string) (uint64, error)
 }
 

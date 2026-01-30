@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -19,6 +20,7 @@ type memoryItem struct {
 	data       []byte
 	context    []byte
 	orderIndex uint64
+	locked     bool
 }
 
 func NewMemoryStorage() Storage {
@@ -169,14 +171,10 @@ func (st *memoryStorage) GetItems(sourceId string, limit int) ([]Item, error) {
 		allItems = append(allItems, item)
 	}
 
-	// Sort by order index using simple bubble sort
-	for i := 0; i < len(allItems); i++ {
-		for j := i + 1; j < len(allItems); j++ {
-			if allItems[i].orderIndex > allItems[j].orderIndex {
-				allItems[i], allItems[j] = allItems[j], allItems[i]
-			}
-		}
-	}
+	// Sort by order index using sort.Slice
+	sort.Slice(allItems, func(i, j int) bool {
+		return allItems[i].orderIndex < allItems[j].orderIndex
+	})
 
 	// Apply limit
 	if len(allItems) > limit {
@@ -196,6 +194,136 @@ func (st *memoryStorage) GetItems(sourceId string, limit int) ([]Item, error) {
 	}
 
 	return items, nil
+}
+
+func (st *memoryStorage) GetLockedItems(sourceId string, limit int) ([]Item, error) {
+	st.mu.RLock()
+	defer st.mu.RUnlock()
+
+	// Default limit if not specified
+	if limit <= 0 {
+		limit = 100
+	}
+
+	sourceItems, exists := st.items[sourceId]
+	if !exists {
+		return []Item{}, nil
+	}
+
+	// Filter locked items
+	lockedItems := make([]*memoryItem, 0)
+	for _, item := range sourceItems {
+		if item.locked {
+			lockedItems = append(lockedItems, item)
+		}
+	}
+
+	// Sort by order index using sort.Slice
+	sort.Slice(lockedItems, func(i, j int) bool {
+		return lockedItems[i].orderIndex < lockedItems[j].orderIndex
+	})
+
+	// Apply limit
+	if len(lockedItems) > limit {
+		lockedItems = lockedItems[:limit]
+	}
+
+	// Convert to Item interface and make copies
+	items := make([]Item, len(lockedItems))
+	for i, item := range lockedItems {
+		items[i] = &memoryItem{
+			sourceId:   item.sourceId,
+			id:         item.id,
+			data:       append([]byte(nil), item.data...),
+			context:    append([]byte(nil), item.context...),
+			orderIndex: item.orderIndex,
+		}
+	}
+
+	return items, nil
+}
+
+func (st *memoryStorage) GetUnlockedItems(sourceId string, limit int) ([]Item, error) {
+	st.mu.RLock()
+	defer st.mu.RUnlock()
+
+	// Default limit if not specified
+	if limit <= 0 {
+		limit = 100
+	}
+
+	sourceItems, exists := st.items[sourceId]
+	if !exists {
+		return []Item{}, nil
+	}
+
+	// Filter unlocked items
+	unlockedItems := make([]*memoryItem, 0)
+	for _, item := range sourceItems {
+		if !item.locked {
+			unlockedItems = append(unlockedItems, item)
+		}
+	}
+
+	// Sort by order index using sort.Slice
+	sort.Slice(unlockedItems, func(i, j int) bool {
+		return unlockedItems[i].orderIndex < unlockedItems[j].orderIndex
+	})
+
+	// Apply limit
+	if len(unlockedItems) > limit {
+		unlockedItems = unlockedItems[:limit]
+	}
+
+	// Convert to Item interface and make copies
+	items := make([]Item, len(unlockedItems))
+	for i, item := range unlockedItems {
+		items[i] = &memoryItem{
+			sourceId:   item.sourceId,
+			id:         item.id,
+			data:       append([]byte(nil), item.data...),
+			context:    append([]byte(nil), item.context...),
+			orderIndex: item.orderIndex,
+		}
+	}
+
+	return items, nil
+}
+
+func (st *memoryStorage) LockItem(sourceId string, itemId string) error {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	sourceItems, exists := st.items[sourceId]
+	if !exists {
+		return fmt.Errorf("item with source_id '%s' and id '%s' not found", sourceId, itemId)
+	}
+
+	item, exists := sourceItems[itemId]
+	if !exists {
+		return fmt.Errorf("item with source_id '%s' and id '%s' not found", sourceId, itemId)
+	}
+
+	item.locked = true
+	return nil
+}
+
+func (st *memoryStorage) UnlockItem(sourceId string, itemId string) error {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	sourceItems, exists := st.items[sourceId]
+	if !exists {
+		return fmt.Errorf("item with source_id '%s' and id '%s' not found", sourceId, itemId)
+	}
+
+	item, exists := sourceItems[itemId]
+	if !exists {
+		return fmt.Errorf("item with source_id '%s' and id '%s' not found", sourceId, itemId)
+	}
+
+	item.locked = false
+	return nil
 }
 
 // GetIndex returns the maximum order index for a source

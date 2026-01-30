@@ -120,20 +120,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	stageDuration := 2 * time.Second
-	if err = eventSource.Push(&mockStage{index: 0, duration: stageDuration}, eventpipe.OptName("mock 0"), eventpipe.OptConcurrency(10)); err != nil {
+	concurrency := uint(25)
+	stageDuration := 10 * time.Second
+	if err = eventSource.Push(&mockStage{index: 0, duration: stageDuration}, eventpipe.OptName("mock 0"), eventpipe.OptConcurrency(concurrency)); err != nil {
 		slog.Error("failed to add stage", "error", err)
 		os.Exit(1)
 	}
-	if err = eventSource.Push(&mockStage{index: 1, duration: stageDuration}, eventpipe.OptName("mock 1"), eventpipe.OptConcurrency(10)); err != nil {
+	if err = eventSource.Push(&mockStage{index: 1, duration: stageDuration}, eventpipe.OptName("mock 1"), eventpipe.OptConcurrency(concurrency)); err != nil {
 		slog.Error("failed to add stage", "error", err)
 		os.Exit(1)
 	}
-	if err = eventSource.Push(&mockStage{index: 2, duration: stageDuration}, eventpipe.OptName("mock 2"), eventpipe.OptConcurrency(10)); err != nil {
+	if err = eventSource.Push(&mockStage{index: 2, duration: stageDuration}, eventpipe.OptName("mock 2"), eventpipe.OptConcurrency(concurrency)); err != nil {
 		slog.Error("failed to add stage", "error", err)
 		os.Exit(1)
 	}
-	if err = eventSource.Push(&mockStage{index: 3, duration: stageDuration, remove: true}, eventpipe.OptName("mock 3"), eventpipe.OptConcurrency(10)); err != nil {
+	if err = eventSource.Push(&mockStage{index: 3, duration: stageDuration}, eventpipe.OptName("mock 3"), eventpipe.OptConcurrency(concurrency)); err != nil {
 		slog.Error("failed to add stage", "error", err)
 		os.Exit(1)
 	}
