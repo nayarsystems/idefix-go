@@ -35,25 +35,31 @@ func (e eventItem) Bytes() []byte {
 		return []byte{}
 	}
 
-	// Serialize map[string]any to msgpack
-	eventBytes, err := msgpack.Marshal(eventMap)
+	res, err := encodeMsi(eventMap)
 	if err != nil {
-		slog.Error("failed to marshal event to msgpack", "error", err)
+		slog.Error("failed to serialize event", "error", err)
 		return []byte{}
 	}
-	return eventBytes
+	return res
 }
 
 func (e eventItem) ContextBytes() []byte {
-	contextBytes, err := msgpack.Marshal(e.context)
+	contextBytes, err := encodeMsi(e.context)
 	if err != nil {
-		slog.Error("failed to marshal event context to msgpack", "error", err)
+		slog.Error("failed to serialize event context", "error", err)
 		return []byte{}
 	}
 	return contextBytes
 }
 
-func decodeContextBytes(contextBytes []byte) (map[string]any, error) {
+func encodeMsi(input map[string]any) ([]byte, error) {
+	if input == nil {
+		return []byte{}, nil
+	}
+	return msgpack.Marshal(input)
+}
+
+func decodeMsi(contextBytes []byte) (map[string]any, error) {
 	var context map[string]any
 	if len(contextBytes) == 0 {
 		return nil, nil
@@ -62,6 +68,21 @@ func decodeContextBytes(contextBytes []byte) (map[string]any, error) {
 		return nil, fmt.Errorf("failed to unmarshal context bytes: %w", err)
 	}
 	return context, nil
+}
+
+func normalizeMap(input map[string]any) (map[string]any, error) {
+	if input == nil {
+		return map[string]any{}, nil
+	}
+	bytes, err := encodeMsi(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode map: %w", err)
+	}
+	output, err := decodeMsi(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode map: %w", err)
+	}
+	return output, nil
 }
 
 func (edb *EventsStorage) PushEvent(sourceId string, event *messages.Event, context map[string]any) error {
@@ -109,7 +130,7 @@ func (edb *EventsStorage) GetEvents(sourceId string) ([]*eventItem, error) {
 			return nil, fmt.Errorf("failed to parse event from map: %w", err)
 		}
 
-		context, err := decodeContextBytes(item.ContextBytes())
+		context, err := decodeMsi(item.ContextBytes())
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode context bytes: %w", err)
 		}
@@ -143,7 +164,7 @@ func (edb *EventsStorage) GetUnlockedEvents(sourceId string, limit int) ([]*even
 			return nil, fmt.Errorf("failed to parse event from map: %w", err)
 		}
 
-		context, err := decodeContextBytes(item.ContextBytes())
+		context, err := decodeMsi(item.ContextBytes())
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode context bytes: %w", err)
 		}

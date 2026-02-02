@@ -127,6 +127,11 @@ func (s *EventSource) Push(stage EventStage, options ...EventStageOptionFn) (err
 			if err != nil {
 				return out, err
 			}
+			out.event = stageOutput.Event
+			if out.event == nil {
+				out.event = in.event
+			}
+
 			s.l.Debug("stage processing completed", "event_id", in.event.UID, "stage", eventStageOptions.name, "pipeline_context", stageOutput.PipelineContext)
 			if stageOutput.Remove || (stageOutput.Processed && isLastStage) {
 				s.deleteEvent(in.event)
@@ -139,10 +144,13 @@ func (s *EventSource) Push(stage EventStage, options ...EventStageOptionFn) (err
 			}
 
 			eventContext["pipelineContext"] = stageOutput.PipelineContext
-			processedStages[eventStageOptions.name] = true
+			processedStages[eventStageOptions.name] = stageOutput.Processed
 
-			out.eventContext = eventContext
-			out.event = stageOutput.Event
+			out.eventContext, err = normalizeMap(eventContext)
+			if err != nil {
+				s.l.Error("failed to normalize event context", "error", err)
+				return out, err
+			}
 			if err = s.updateEvent(out.event, out.eventContext); err != nil {
 				return out, err
 			}
