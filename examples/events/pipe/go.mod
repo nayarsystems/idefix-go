@@ -7,7 +7,7 @@ replace github.com/nayarsystems/idefix-go => ../../../
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jaracil/ei v0.0.0-20170808175009-4f519a480ebd
-	github.com/nayarsystems/idefix-go v0.3.1-0.20260202155243-104450d529b2
+	github.com/nayarsystems/idefix-go v0.3.1-0.20260203081217-19d49b3921a7
 )
 
 require (
