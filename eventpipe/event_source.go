@@ -136,7 +136,7 @@ func (s *EventSource) Push(stage EventStage, options ...EventStageOptionFn) (err
 			if stageOutput.Remove || (stageOutput.Processed && isLastStage) {
 				s.deleteEvent(in.event)
 				out.passthrough = true
-				s.l.Debug("event processed and removed from pipeline", "event_id", in.event.UID, "stage", eventStageOptions.name)
+				s.l.Debug("event removed from pipeline", "event_id", in.event.UID, "stage", eventStageOptions.name)
 				return out, nil
 			}
 			if stageOutput.PipelineContext == nil {
@@ -148,19 +148,21 @@ func (s *EventSource) Push(stage EventStage, options ...EventStageOptionFn) (err
 
 			out.eventContext, err = normalizeMap(eventContext)
 			if err != nil {
-				s.l.Error("failed to normalize event context", "error", err)
 				return out, err
 			}
 			if err = s.updateEvent(out.event, out.eventContext); err != nil {
 				return out, err
 			}
-			if isLastStage {
+			if isLastStage || !stageOutput.Processed {
 				// Unlock the event for future processing
 				if err = s.unlockEvent(out.event); err != nil {
 					return out, err
 				}
+				out.passthrough = true
+				s.l.Debug("event unlocked for future processing", "event_id", out.event.UID, "stage", eventStageOptions.name)
+			} else {
+				s.l.Debug("event processed in stage", "event_id", out.event.UID, "stage", eventStageOptions.name)
 			}
-			s.l.Debug("event processed in stage", "event_id", out.event.UID, "stage", eventStageOptions.name)
 			return out, nil
 		},
 		gopts...,
@@ -252,8 +254,7 @@ func (s *EventSource) producerFunc(put func(pipelineItem)) error {
 
 func (s *EventSource) pushEvent(e *m.Event, meta map[string]any) (err error) {
 	db := EventsStorage{St: s.m.st}
-	db.PushEvent(s.Id(), e, meta)
-	return err
+	return db.PushEvent(s.Id(), e, meta)
 }
 
 func (s *EventSource) updateEvent(e *m.Event, meta map[string]any) (err error) {
