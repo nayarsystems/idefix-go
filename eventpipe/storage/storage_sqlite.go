@@ -130,33 +130,53 @@ func (st *SqliteStorage) setupSchema() error {
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()
 
-	// Create sources schema
+	// Create sources table if it does not exist
 	sourcesSchema := `
-	CREATE TABLE IF NOT EXISTS sources (
-		id TEXT PRIMARY KEY,
-		cursor TEXT NOT NULL
-	)`
+	   CREATE TABLE IF NOT EXISTS sources (
+		   id TEXT PRIMARY KEY,
+		   cursor TEXT NOT NULL
+	   )`
 
 	if _, err := st.st.ExecContext(ctx, sourcesSchema); err != nil {
 		return fmt.Errorf("failed to create sources table: %w", err)
 	}
 
-	// Create items table (stores serialized items) with item source id as foreign key
-	// id + source_id forms a composite primary key
+	// Create items table if it does not exist (source_id + id is composite primary key)
 	itemsSchema := `
-	CREATE TABLE IF NOT EXISTS items (
-		source_id TEXT NOT NULL,
-		id TEXT NOT NULL,
-		data BLOB NOT NULL,
-		context BLOB,
-		locked BOOLEAN NOT NULL DEFAULT 0,
-		order_index INTEGER NOT NULL DEFAULT 0,
-		PRIMARY KEY (source_id, id),
-		FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE CASCADE
-	)`
+	   CREATE TABLE IF NOT EXISTS items (
+		   source_id TEXT NOT NULL,
+		   id TEXT NOT NULL,
+		   data BLOB NOT NULL,
+		   context BLOB,
+		   locked BOOLEAN NOT NULL DEFAULT 0,
+		   order_index INTEGER NOT NULL DEFAULT 0,
+		   PRIMARY KEY (source_id, id),
+		   FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE CASCADE
+	   )`
 
 	if _, err := st.st.ExecContext(ctx, itemsSchema); err != nil {
 		return fmt.Errorf("failed to create items table: %w", err)
+	}
+
+	// --- Schema versioning using PRAGMA user_version ---
+	const schemaVersion = 1 // Increment this value when you change the schema
+	var userVersion int
+	err := st.st.QueryRowContext(ctx, "PRAGMA user_version").Scan(&userVersion)
+	if err != nil {
+		return fmt.Errorf("failed to get user_version: %w", err)
+	}
+
+	if userVersion < schemaVersion {
+		// Only run ALTER TABLE if the schema version is outdated
+		addLockedColumn := `ALTER TABLE items ADD COLUMN locked BOOLEAN NOT NULL DEFAULT 0`
+		if _, err := st.st.ExecContext(ctx, addLockedColumn); err != nil {
+			// Ignore error if the column already exists
+			slog.Debug("locked column may already exist", "error", err)
+		}
+		// Update the schema version
+		if _, err := st.st.ExecContext(ctx, fmt.Sprintf("PRAGMA user_version = %d", schemaVersion)); err != nil {
+			slog.Warn("failed to update user_version", "error", err)
+		}
 	}
 
 	// Create index for efficient ordering queries
