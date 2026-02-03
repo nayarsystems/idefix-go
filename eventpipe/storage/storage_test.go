@@ -49,8 +49,9 @@ func TestStorage(t *testing.T) {
 	for dbName, st := range dbs {
 		t.Run(dbName, func(t *testing.T) {
 			testBasic(t, st)
-			dbIndex(t, st)
-			dbPushUpdate(t, st)
+			testIndex(t, st)
+			testPushUpdate(t, st)
+			testLocked(t, st)
 		})
 	}
 }
@@ -175,7 +176,7 @@ func testBasic(t *testing.T, st Storage) {
 		require.Equal(t, "item2", items[1].Id())
 
 		// Test delete item
-		err = st.DeleteItem("source1", "item1")
+		err = st.Delete("source1", "item1")
 		require.NoError(t, err)
 
 		items, err = st.GetItems("source1", 0)
@@ -203,7 +204,7 @@ func testBasic(t *testing.T, st Storage) {
 		require.NotNil(t, items, "GetItems should never return nil, always empty slice")
 
 		// Test delete non-existent item (should not error)
-		err = st.DeleteItem("source1", "non-existent")
+		err = st.Delete("source1", "non-existent")
 		require.NoError(t, err)
 	})
 
@@ -232,7 +233,7 @@ func testBasic(t *testing.T, st Storage) {
 	})
 }
 
-func dbIndex(t *testing.T, st Storage) {
+func testIndex(t *testing.T, st Storage) {
 	t.Run("max_order_index", func(t *testing.T) {
 		// Test empty source
 		maxIndex, err := st.GetIndex("empty-source")
@@ -335,7 +336,7 @@ func dbIndex(t *testing.T, st Storage) {
 	})
 }
 
-func dbPushUpdate(t *testing.T, st Storage) {
+func testPushUpdate(t *testing.T, st Storage) {
 	// Test push and update operations
 	t.Run("push_success", func(t *testing.T) {
 		item := mockItem{
@@ -412,4 +413,81 @@ func dbPushUpdate(t *testing.T, st Storage) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
 	})
+}
+
+func testLocked(t *testing.T, st Storage) {
+	source := "locked-test"
+	// Insert 6 items: A, B, C, D, E, F
+	ids := []string{"A", "B", "C", "D", "E", "F"}
+	for _, id := range ids {
+		item := mockItem{sourceId: source, id: id, data: []byte("data-" + id)}
+		err := st.Push(item)
+		require.NoError(t, err)
+	}
+
+	// Get all items to verify insertion
+	allItems, err := st.GetItems(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, ids, extractIds(allItems))
+
+	// Lock C and E
+	err = st.Lock(source, "C")
+	require.NoError(t, err)
+	err = st.Lock(source, "E")
+	require.NoError(t, err)
+
+	// Step 3: GetLockedItems returns [C, E] in order
+	locked, err := st.GetLocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, []string{"C", "E"}, extractIds(locked))
+
+	// Step 4: GetUnlockedItems returns [A, B, D, F] in order
+	unlocked, err := st.GetUnlocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, []string{"A", "B", "D", "F"}, extractIds(unlocked))
+
+	// Step 5: Unlock C, check again
+	err = st.Unlock(source, "C")
+	require.NoError(t, err)
+	locked, err = st.GetLocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, []string{"E"}, extractIds(locked))
+	unlocked, err = st.GetUnlocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, []string{"A", "B", "C", "D", "F"}, extractIds(unlocked))
+
+	// Step 6: Lock all, check
+	for _, id := range ids {
+		err := st.Lock(source, id)
+		require.NoError(t, err)
+	}
+	locked, err = st.GetLocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, ids, extractIds(locked))
+	unlocked, err = st.GetUnlocked(source, 0)
+	require.NoError(t, err)
+	require.NotNil(t, unlocked)
+	require.Empty(t, unlocked)
+
+	// Step 7: Unlock all, check
+	for _, id := range ids {
+		err := st.Unlock(source, id)
+		require.NoError(t, err)
+	}
+	locked, err = st.GetLocked(source, 0)
+	require.NoError(t, err)
+	require.NotNil(t, locked)
+	require.Empty(t, locked)
+	unlocked, err = st.GetUnlocked(source, 0)
+	require.NoError(t, err)
+	require.Equal(t, ids, extractIds(unlocked))
+}
+
+// Helper to extract IDs from []Item
+func extractIds(items []Item) []string {
+	ids := make([]string, len(items))
+	for i, item := range items {
+		ids[i] = item.Id()
+	}
+	return ids
 }

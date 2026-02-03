@@ -12,12 +12,12 @@ type Storage interface {
 	GetCursor(id string) (string, error)
 	Push(Item) error
 	Update(Item) error
-	DeleteItem(sourceId, itemId string) error
-	LockItem(sourceId, itemId string) error
-	UnlockItem(sourceId, itemId string) error
+	Delete(sourceId, itemId string) error
+	Lock(sourceId, itemId string) error
+	Unlock(sourceId, itemId string) error
 	GetItems(sourceId string, limit int) ([]Item, error)
-	GetUnlockedItems(sourceId string, limit int) ([]Item, error)
-	GetLockedItems(sourceId string, limit int) ([]Item, error)
+	GetUnlocked(sourceId string, limit int) ([]Item, error)
+	GetLocked(sourceId string, limit int) ([]Item, error)
 	GetIndex(sourceId string) (uint64, error)
 }
 

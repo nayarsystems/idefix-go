@@ -140,7 +140,7 @@ func (st *memoryStorage) Update(item Item) error {
 	return nil
 }
 
-func (st *memoryStorage) DeleteItem(sourceId string, itemId string) error {
+func (st *memoryStorage) Delete(sourceId string, itemId string) error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -196,7 +196,7 @@ func (st *memoryStorage) GetItems(sourceId string, limit int) ([]Item, error) {
 	return items, nil
 }
 
-func (st *memoryStorage) GetLockedItems(sourceId string, limit int) ([]Item, error) {
+func (st *memoryStorage) GetLocked(sourceId string, limit int) ([]Item, error) {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
@@ -243,7 +243,7 @@ func (st *memoryStorage) GetLockedItems(sourceId string, limit int) ([]Item, err
 	return items, nil
 }
 
-func (st *memoryStorage) GetUnlockedItems(sourceId string, limit int) ([]Item, error) {
+func (st *memoryStorage) GetUnlocked(sourceId string, limit int) ([]Item, error) {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
@@ -290,7 +290,7 @@ func (st *memoryStorage) GetUnlockedItems(sourceId string, limit int) ([]Item, e
 	return items, nil
 }
 
-func (st *memoryStorage) LockItem(sourceId string, itemId string) error {
+func (st *memoryStorage) Lock(sourceId string, itemId string) error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -308,7 +308,7 @@ func (st *memoryStorage) LockItem(sourceId string, itemId string) error {
 	return nil
 }
 
-func (st *memoryStorage) UnlockItem(sourceId string, itemId string) error {
+func (st *memoryStorage) Unlock(sourceId string, itemId string) error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 

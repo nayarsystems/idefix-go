@@ -391,7 +391,7 @@ func (st *SqliteStorage) Update(item Item) error {
 	return nil
 }
 
-func (st *SqliteStorage) LockItem(sourceId, itemId string) error {
+func (st *SqliteStorage) Lock(sourceId, itemId string) error {
 	slog.Debug("locking item", "sourceId", sourceId, "itemId", itemId)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()
@@ -404,7 +404,7 @@ func (st *SqliteStorage) LockItem(sourceId, itemId string) error {
 	return nil
 }
 
-func (st *SqliteStorage) UnlockItem(sourceId, itemId string) error {
+func (st *SqliteStorage) Unlock(sourceId, itemId string) error {
 	slog.Debug("unlocking item", "sourceId", sourceId, "itemId", itemId)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()
@@ -417,7 +417,7 @@ func (st *SqliteStorage) UnlockItem(sourceId, itemId string) error {
 	return nil
 }
 
-func (st *SqliteStorage) DeleteItem(sourceId, itemId string) error {
+func (st *SqliteStorage) Delete(sourceId, itemId string) error {
 	slog.Debug("deleting item", "sourceId", sourceId, "itemId", itemId)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()
@@ -464,7 +464,7 @@ func (st *SqliteStorage) GetItems(sourceId string, limit int) ([]Item, error) {
 	return items, nil
 }
 
-func (st *SqliteStorage) GetLockedItems(sourceId string, limit int) ([]Item, error) {
+func (st *SqliteStorage) GetLocked(sourceId string, limit int) ([]Item, error) {
 	slog.Debug("getting locked items", "sourceId", sourceId, "limit", limit)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()
@@ -498,7 +498,7 @@ func (st *SqliteStorage) GetLockedItems(sourceId string, limit int) ([]Item, err
 	return items, nil
 }
 
-func (st *SqliteStorage) GetUnlockedItems(sourceId string, limit int) ([]Item, error) {
+func (st *SqliteStorage) GetUnlocked(sourceId string, limit int) ([]Item, error) {
 	slog.Debug("getting unlocked items", "sourceId", sourceId, "limit", limit)
 	ctx, cancel := context.WithTimeout(st.ctx, st.timeout)
 	defer cancel()

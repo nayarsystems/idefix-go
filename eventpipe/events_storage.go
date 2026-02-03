@@ -108,7 +108,7 @@ func (edb *EventsStorage) UpdateEvent(sourceId string, event *messages.Event, co
 }
 
 func (edb *EventsStorage) DeleteEvent(sourceId, eventId string) error {
-	return edb.St.DeleteItem(sourceId, eventId)
+	return edb.St.Delete(sourceId, eventId)
 }
 
 func (edb *EventsStorage) GetEvents(sourceId string) ([]*eventItem, error) {
@@ -146,7 +146,7 @@ func (edb *EventsStorage) GetEvents(sourceId string) ([]*eventItem, error) {
 }
 
 func (edb *EventsStorage) GetUnlockedEvents(sourceId string, limit int) ([]*eventItem, error) {
-	itemsList, err := edb.St.GetUnlockedItems(sourceId, limit)
+	itemsList, err := edb.St.GetUnlocked(sourceId, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unlocked items from db: %w", err)
 	}
@@ -180,26 +180,26 @@ func (edb *EventsStorage) GetUnlockedEvents(sourceId string, limit int) ([]*even
 }
 
 func (edb *EventsStorage) LockEvent(sourceId, eventId string) error {
-	return edb.St.LockItem(sourceId, eventId)
+	return edb.St.Lock(sourceId, eventId)
 }
 
 func (edb *EventsStorage) UnlockEvent(sourceId, eventId string) error {
-	return edb.St.UnlockItem(sourceId, eventId)
+	return edb.St.Unlock(sourceId, eventId)
 }
 
 func (edb *EventsStorage) UnlockAllEvents(sourceId string) error {
-	lockedItems, err := edb.St.GetLockedItems(sourceId, 0)
+	lockedItems, err := edb.St.GetLocked(sourceId, 0)
 	if err != nil {
 		return fmt.Errorf("failed to get locked items from db: %w", err)
 	}
 	for len(lockedItems) > 0 {
 		for _, item := range lockedItems {
-			err := edb.St.UnlockItem(sourceId, item.Id())
+			err := edb.St.Unlock(sourceId, item.Id())
 			if err != nil {
 				return fmt.Errorf("failed to unlock item with id '%s': %w", item.Id(), err)
 			}
 		}
-		lockedItems, err = edb.St.GetLockedItems(sourceId, 0)
+		lockedItems, err = edb.St.GetLocked(sourceId, 0)
 		if err != nil {
 			return fmt.Errorf("failed to get locked items from db: %w", err)
 		}
