@@ -1,6 +1,7 @@
 package idefixgo
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -62,12 +63,16 @@ type BstatesSource struct {
 	timestampFieldFactor     float32
 }
 
+type MetaBstatesResult = map[string]*BstatesSource
+type AddressBstatesResult = map[string]MetaBstatesResult
+type SchemaBstatesResult = map[string]AddressBstatesResult
+
 // domain -> address -> schema -> meta-hash -> source of states
 
 // GetBstatesResult represents the result of retrieving bstate information
 // from the Idefix system. It is structured as a nested map to provide
 // easy access to bstate sources.
-type GetBstatesResult = map[string]map[string]map[string]map[string]*BstatesSource
+type GetBstatesResult = map[string]SchemaBstatesResult
 
 // GetSchema retrieves the schema associated with the provided hash from the Idefix service.
 //
@@ -119,13 +124,31 @@ func GetBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (tot
 	return
 }
 
-func getBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (numblobs uint, cid string, err error) {
-	m, err := ic.GetEvents(p.Domain, p.AddressFilter, p.Since, p.Limit, p.Cid, p.Timeout)
-	if err != nil {
-		return
+func getBstates(ic *Client, p *GetBstatesParams, stateMap GetBstatesResult) (totalBlobs uint, cid string, err error) {
+	cid = p.Cid
+	timeout := p.Timeout
+	for totalBlobs < p.Limit {
+		callCtx, callCancel := context.WithTimeout(context.Background(), timeout+time.Second*10)
+		m, err := ic.EventsGet((&messages.EventsGetMsg{
+			Domain:         p.Domain,
+			Address:        p.AddressFilter,
+			Since:          p.Since,
+			Limit:          p.Limit,
+			ContinuationID: cid,
+			Timeout:        timeout,
+		}), callCtx)
+		callCancel()
+		if err != nil {
+			return totalBlobs, cid, err
+		}
+		cid = m.ContinuationID
+		numblobs, err := fillStateMap(ic, m.Events, p, stateMap)
+		if err != nil {
+			return totalBlobs, cid, err
+		}
+		totalBlobs += numblobs
+		timeout = time.Second
 	}
-	cid = m.ContinuationID
-	numblobs, err = fillStateMap(ic, m.Events, p, stateMap)
 	return
 }
 
