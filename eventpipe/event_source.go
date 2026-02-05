@@ -29,9 +29,6 @@ type EventSourceParams struct {
 	// if no cursor found in storage
 	ContinuationID string
 
-	// // Whether to restart cursor from RestartCursorFrom time
-	// RestartCursor bool
-
 	// Domain of the source
 	Domain string
 

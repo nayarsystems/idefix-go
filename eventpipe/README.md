@@ -4,26 +4,32 @@ Package for processing events from Idefix through a configurable pipeline with p
 
 ## Overview
 
-`eventpipe` fetches events from the Idefix backend and passes them through a chain of user-defined stages. Events and their processing state are persisted in storage (SQLite or in-memory), so the pipeline can resume from where it left off after a restart.
+`eventpipe` fetches events from the Idefix cloud and passes them through a chain of user-defined stages. Events and their processing state are persisted in storage (SQLite or in-memory), so the pipeline can resume from where it left off after a restart.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
     subgraph Producer
-        LOAD["Load pending events (FIFO)"]
-        FETCH[Fetch new events from backend]
-        LOAD --> FETCH
-        FETCH -- "store new events" --> ST
+        FETCH[Fetch new events from cloud]
+        LOAD[Load pending events - FIFO]
     end
 
-    ST[(Storage)] -- "pending events" --> LOAD
-    LOAD --> S0[Stage 0] --> S1[Stage ...] --> SN[Stage N]
+    ST[(Storage)]
+    DONE([Done])
 
-    S0 & S1 & SN -. "persist PipelineContext" .-> ST
-    S0 & S1 & SN -- "Remove=true" --> DONE([Done])
-    S0 & S1 & SN -- "Processed=false (retry later)" --> ST
-    SN -- "Processed=true" --> DONE
+    FETCH -- store --> ST
+    ST -- pending --> LOAD
+    LOAD --> STAGES
+
+    subgraph STAGES [Pipeline]
+        direction LR
+        S0[Stage 0] --> S1[...] --> SN[Stage N]
+    end
+
+    STAGES -. "persist context" .-> ST
+    STAGES -- "Processed=false (retry)" --> ST
+    STAGES -- "Remove / last stage done" --> DONE
 ```
 
 Each event carries a `PipelineContext` that stages can modify. After each stage, the context is persisted to storage. When a stage marks an event as `Processed`, it advances to the next stage (and on restart, that stage is skipped). If a stage does not mark the event as processed, the event is unlocked in storage and re-injected by the producer in the next iteration. If the last stage marks the event as `Processed`, the event is removed from storage (fully done). A stage can set `Remove` to discard the event permanently at any point.
@@ -54,8 +60,8 @@ source, err := esm.NewSource(eventpipe.EventSourceParams{
     Id:      "my-source",
     Domain:  "my-domain",
     Address: "device-001",       // optional: filter by device
-    Type:    "temperature",      // optional: filter by event type
-    Since:   time.Now().Add(-24*time.Hour),
+    Type:    "application/vnd.nayar.bstates", // optional: filter by event type (regex)
+    Since:   time.Now().Add(-24*time.Hour), // only used if no cursor in storage
 })
 ```
 
@@ -90,7 +96,7 @@ source.Push(&myStage{},
 Each event carries a `PipelineContext` (map[string]any) that stages can read and modify. This context is persisted to storage after each stage completes, so if the pipeline restarts, the next stage will receive the last persisted context. This enables:
 
 - Passing data between stages (e.g., intermediate computation results).
-- Tracking which stages have already processed the event (`processedStages` map).
+- Tracking which stages have already processed the event.
 - Resuming from the exact point where processing stopped.
 
 ### Storage
