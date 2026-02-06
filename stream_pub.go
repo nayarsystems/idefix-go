@@ -48,7 +48,7 @@ func (c *Client) NewPublisherStream(address string, topic string, capacity uint,
 	res := m.StreamCreateSubResMsg{}
 	err := s.c.Call2(address, &m.Message{To: m.TopicRemoteStartPublisher, Data: m.StreamCreateMsg{
 		TargetTopic: topic,
-		Timeout:     time.Second * 30,
+		Timeout:     timeout,
 		PayloadOnly: s.payloadOnly,
 	}}, &res, time.Second*5)
 	if err != nil {

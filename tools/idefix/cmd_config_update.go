@@ -25,25 +25,6 @@ var cmdConfigUpdate = &cobra.Command{
 func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 	conf := cmdConfigGetBaseParams(cmd)
 
-	// Read the new configuration file
-	file, err := cmd.Flags().GetString("file")
-	if err != nil {
-		return err
-	}
-	forceSync, err := cmd.Flags().GetBool("sync-now")
-	if err != nil {
-		return err
-	}
-	if file == "" {
-		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will empty the current configuration file from the client. Continue?"); !result {
-			return nil
-		}
-	} else {
-		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will update the current configuration file. Continue?"); !result {
-			return nil
-		}
-	}
-
 	spinner, err := pterm.DefaultSpinner.Start()
 	if err != nil {
 		return err
@@ -64,6 +45,39 @@ func cmdConfigUpdateRunE(cmd *cobra.Command, args []string) (err error) {
 	}
 	defer ic.Disconnect()
 	spinner.Success("connected")
+
+	// Show warning in case the environment variables are already set
+	env, err := ic.AddressEnvironmentGet(&m.AddressEnvironmentGetMsg{Address: conf.address})
+	if err != nil {
+		return err
+	}
+
+	if commissionBlocked, ok := env.Environment["commissioning_blocked"]; ok {
+		if commissionBlocked != "0" {
+			if result, _ := pterm.DefaultInteractiveConfirm.Show("The target device has already been commissioned through CWA. Continue?"); !result {
+				return nil
+			}
+		}
+	}
+
+	// Read the new configuration file
+	file, err := cmd.Flags().GetString("file")
+	if err != nil {
+		return err
+	}
+	forceSync, err := cmd.Flags().GetBool("sync-now")
+	if err != nil {
+		return err
+	}
+	if file == "" {
+		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will empty the current configuration file from the client. Continue?"); !result {
+			return nil
+		}
+	} else {
+		if result, _ := pterm.DefaultInteractiveConfirm.Show("This will update the current configuration file. Continue?"); !result {
+			return nil
+		}
+	}
 
 	newConfig := []byte{}
 
