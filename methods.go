@@ -48,7 +48,11 @@ func (c *Client) Call(remoteAddress string, msg *m.Message, timeout time.Duratio
 	if err := c.sendMessage(msg); err != nil {
 		return nil, err
 	}
-	msg, err = sub.WaitOne(timeout)
+
+	waitCtx, waitCancel := c.contextWithTimeout(timeout)
+	defer waitCancel()
+
+	msg, err = sub.WaitOneWithContext(waitCtx)
 	if err != nil {
 		return nil, ie.ErrTimeout
 	}
@@ -73,7 +77,11 @@ func (c *Client) CallWithContext(ctx context.Context, remoteAddress string, msg 
 	if err := c.sendMessageWithContext(ctx, msg); err != nil {
 		return nil, err
 	}
-	msg, err = sub.WaitOneWithContext(ctx)
+
+	waitCtx, waitCancel := c.contextWithCancel(ctx)
+	defer waitCancel()
+
+	msg, err = sub.WaitOneWithContext(waitCtx)
 	if err != nil {
 		return nil, ie.ErrTimeout
 	}
@@ -127,7 +135,9 @@ func (c *Client) NewSubscriber(capacity uint, topic ...string) *minips.Subscribe
 func (c *Client) WaitOne(topic string, timeout time.Duration) (*m.Message, error) {
 	sub := c.ps.NewSubscriber(1, topic)
 	defer sub.Close()
-	return sub.WaitOne(timeout)
+	ctx, cancel := c.contextWithTimeout(timeout)
+	defer cancel()
+	return sub.WaitOneWithContext(ctx)
 }
 
 // WaitOneWithContext waits for a single message on the specified topic until the context gets cancelled.
@@ -138,12 +148,14 @@ func (c *Client) WaitOne(topic string, timeout time.Duration) (*m.Message, error
 func (c *Client) WaitOneWithContext(ctx context.Context, topic string) (*m.Message, error) {
 	sub := c.ps.NewSubscriber(1, topic)
 	defer sub.Close()
+	ctx, cancel := c.contextWithCancel(ctx)
+	defer cancel()
 	return sub.WaitOneWithContext(ctx)
 }
 
 func (c *Client) Syscall(message *m.Message, response any, ctx ...context.Context) (err error) {
 	var callCtx context.Context
-	if ctx == nil || len(ctx) == 0 {
+	if len(ctx) == 0 {
 		var cancel context.CancelFunc
 		callCtx, cancel = context.WithDeadline(c.ctx, time.Now().Add(time.Second*10))
 		defer cancel()
@@ -440,4 +452,28 @@ func (c *Client) Environment(query *m.EnvironmentGetMsg, ctx ...context.Context)
 	response = &m.EnvironmentGetResponseMsg{}
 	err = c.Syscall(message, response, ctx...)
 	return
+}
+
+// This method combines the client's main context with the provided context.
+// If either context is cancelled, the combined context will be cancelled as well.
+// This allows for more flexible cancellation handling in operations that depend on both contexts.
+func (c *Client) contextWithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
+	combined, cancel := context.WithCancel(c.ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+			// If the provided context is cancelled, we also want to cancel the
+			// combined context
+			cancel()
+		case <-c.ctx.Done():
+			// If the client's main context is cancelled, combined context will
+			// be cancelled automatically, so we just return
+		}
+	}()
+	return combined, cancel
+}
+
+// This method creates a new context derived from the client's main context with a specified timeout. If the timeout is exceeded, the context will be cancelled.
+func (c *Client) contextWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(c.ctx, timeout)
 }

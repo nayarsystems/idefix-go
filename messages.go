@@ -77,6 +77,9 @@ func (c *Client) sendMessageWithContext(ctx context.Context, tm *m.Message) (err
 
 	msg := c.client.Publish(c.publishTopic(flags), 1, false, data)
 	select {
+	case <-c.ctx.Done():
+		// mqtt client disconnected
+		return e.ErrContextClosed
 	case <-msg.Done():
 	case <-ctx.Done():
 		if ctxErr := ctx.Err(); ctxErr != nil {
