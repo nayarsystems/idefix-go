@@ -108,12 +108,13 @@ func main() {
 	defer eventSourceManager.Close()
 
 	eventSource, err := eventSourceManager.NewSource(eventpipe.EventSourceParams{
-		Id:             "example-events-pipe",
-		Domain:         domain,
-		Address:        deviceAddress,
-		Type:           eventType,
-		Since:          since,
-		ContinuationID: cursor,
+		Id:                 "example-events-pipe",
+		Domain:             domain,
+		Address:            deviceAddress,
+		Type:               eventType,
+		Since:              since,
+		ContinuationID:     cursor,
+		LongPollingTimeout: time.Hour,
 	})
 	if err != nil {
 		slog.Error("failed to create event source", "error", err)
