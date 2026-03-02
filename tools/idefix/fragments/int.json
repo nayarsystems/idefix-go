@@ -1,0 +1,10 @@
+{
+    "instances": {
+        "transport": {
+            "config": {
+                "broker": "int1.idefix.nayar.systems",
+                "ignoreAPNConfig": true
+            }
+        }
+    }
+}
