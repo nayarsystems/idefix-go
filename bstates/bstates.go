@@ -30,7 +30,7 @@ func GetSchemaFromEvent(ic *ifx.Client, event *messages.Event) (*bstates.StateSc
 }
 
 func GetStates(event *messages.Event, schema *bstates.StateSchema) ([]*bstates.State, error) {
-	payload, err := normalizeEventPayload(event.Payload)
+	payload, err := NormalizeEventPayload(event.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to normalize event payload: %w", err)
 	}
@@ -77,13 +77,13 @@ func GetSchemaIdFromType(evtype string) (string, error) {
 	return matches[1] + matches[2], nil
 }
 
-func normalizeEventPayload(anyPayload any) ([]byte, error) {
+func NormalizeEventPayload(anyPayload any) ([]byte, error) {
 	fromMsi := func(pv map[string]any) ([]byte, error) {
 		payloadRaw, ok := pv["Data"]
 		if !ok {
 			return nil, fmt.Errorf("'Data' key not found in payload map")
 		}
-		return normalizeEventPayload(payloadRaw)
+		return NormalizeEventPayload(payloadRaw)
 	}
 
 	switch pv := anyPayload.(type) {
