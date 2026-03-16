@@ -2,16 +2,9 @@ package eventpipe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	m "github.com/nayarsystems/idefix-go/messages"
-)
-
-// Create custom errors
-var (
-	ErrUnableToProcessNow = errors.New("cannot process event now. Try later")
-	ErrSkipEvent          = errors.New("skip this event")
 )
 
 type EventStage interface {
