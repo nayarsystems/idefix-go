@@ -234,7 +234,7 @@ func (c *Client) AddressAccessRulesUpdate(query *m.AddressAccessRulesUpdateMsg, 
 }
 
 func (c *Client) AddressDomainGet(query *m.AddressDomainGetMsg, ctx ...context.Context) (response *m.Domain, err error) {
-	message := &m.Message{To: m.CmdDomainGet, Data: query}
+	message := &m.Message{To: m.CmdAddressDomainGet, Data: query}
 	response = &m.Domain{}
 	err = c.Syscall(message, response, ctx...)
 	return
