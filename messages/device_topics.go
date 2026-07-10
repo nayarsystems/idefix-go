@@ -26,6 +26,14 @@ const (
 	// - response: SyncConfigResponseMsg
 	TopicCmdSyncConfig = "sys.cmd.sync_config"
 
+	// TopicCmdPing is used to check that a device is reachable and measure the round-trip time.
+	// The device does no work besides echoing the sequence number back, keeping the exchange minimal.
+	//
+	// - message: PingReqMsg
+	//
+	// - response: PingResMsg
+	TopicCmdPing = "sys.cmd.ping"
+
 	// TopicCmdGetDevInfo is used to get the entire ENV for every device matched with the given mongo expression
 	//
 	// - message: DevListReqMsg

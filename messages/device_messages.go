@@ -74,6 +74,18 @@ func (m *SysInfoResMsg) ParseMsi(input msi) (err error) {
 }
 
 /************/
+/*   Ping   */
+/************/
+
+type PingReqMsg struct {
+	Seq uint32 `bson:"seq" json:"seq" msgpack:"seq" mapstructure:"seq"`
+}
+
+type PingResMsg struct {
+	Seq uint32 `bson:"seq" json:"seq" msgpack:"seq" mapstructure:"seq"`
+}
+
+/************/
 /*   Exec   */
 /************/
 
