@@ -391,11 +391,35 @@ type DomainCountAddressesResponseMsg struct {
 type DomainListAddressesMsg struct {
 	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
 	Limit  uint   `json:"limit" msgpack:"limit" mapstructure:"limit,omitempty"`
-	Skip   uint   `json:"skip" msgpack:"skip" mapstructure:"skip,omitempty"`
+
+	// Deprecated: skipping is linear on the number of skipped entries. Use Cid instead.
+	Skip uint `json:"skip" msgpack:"skip" mapstructure:"skip,omitempty"`
+
+	// Continuation id returned by a previous call. Resumes the listing right after the
+	// last address of that page. Takes precedence over Skip.
+	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
+
+	// Dot notation paths of the extra client fields to return per address. Valid roots are
+	// "domain", "env.<key>" and "lastState.<sourceId>[.<field>...]".
+	//
+	// Requesting any "env" path also requires the $environmentGet group on the domain, and any
+	// "lastState" path requires $addressStatesGet, on top of $domainListAddresses.
+	Fields []string `json:"fields,omitempty" msgpack:"fields,omitempty" mapstructure:"fields,omitempty"`
 }
 
 type DomainListAddressesResponseMsg struct {
-	Addresses map[string]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+	// Addresses maps every address to the requested information. The value depends on Fields:
+	//
+	//   - Fields set: a nested map, the requested subset of the client, mirroring its shape.
+	//     e.g. {"domain": "a.b", "env": {"description": "..."}}
+	//   - Fields empty: the domain of the address, as a plain string.
+	//
+	// Deprecated: the plain string form is kept for backwards compatibility and may be removed.
+	// New callers should always pass Fields, using []string{"domain"} to get the old information.
+	Addresses map[string]any `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+
+	// Continuation id to request the next page. Empty when there are no more addresses.
+	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
 }
 
 type DomainEnvironmentGetMsg struct {
