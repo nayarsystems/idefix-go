@@ -25,6 +25,9 @@ const (
 	// TopicTransportDomainListAddresses list every address assigned to domains under the specified domain
 	TopicTransportDomainListAddresses = TopicTransportIdefixPrefix + CmdDomainListAddresses
 
+	// TopicTransportDomainGetAddresses get client fields and incrementally sync addresses under the specified domain
+	TopicTransportDomainGetAddresses = TopicTransportIdefixPrefix + CmdDomainGetAddresses
+
 	// TopicTransportDomainListGroups: used to list every group under the specified domain
 	TopicTransportDomainListGroups = TopicTransportIdefixPrefix + CmdDomainListGroups
 
@@ -156,6 +159,9 @@ const (
 
 	// CmdDomainListAddresses is the command to list all addresses associated with a specific domain
 	CmdDomainListAddresses = "domain.list.addresses"
+
+	// CmdDomainGetAddresses is the command to get client fields and incrementally sync addresses under a domain
+	CmdDomainGetAddresses = "domain.get.addresses"
 
 	// CmdDomainListGroups is the command to list all groups within a specific domain
 	CmdDomainListGroups = "domain.list.groups"

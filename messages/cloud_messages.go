@@ -398,28 +398,49 @@ type DomainListAddressesMsg struct {
 	// Continuation id returned by a previous call. Resumes the listing right after the
 	// last address of that page. Takes precedence over Skip.
 	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
-
-	// Dot notation paths of the extra client fields to return per address. Valid roots are
-	// "domain", "env.<key>" and "lastState.<sourceId>[.<field>...]".
-	//
-	// Requesting any "env" path also requires the $environmentGet group on the domain, and any
-	// "lastState" path requires $addressStatesGet, on top of $domainListAddresses.
-	Fields []string `json:"fields,omitempty" msgpack:"fields,omitempty" mapstructure:"fields,omitempty"`
 }
 
 type DomainListAddressesResponseMsg struct {
-	// Addresses maps every address to the requested information. The value depends on Fields:
-	//
-	//   - Fields set: a nested map, the requested subset of the client, mirroring its shape.
-	//     e.g. {"domain": "a.b", "env": {"description": "..."}}
-	//   - Fields empty: the domain of the address, as a plain string.
-	//
-	// Deprecated: the plain string form is kept for backwards compatibility and may be removed.
-	// New callers should always pass Fields, using []string{"domain"} to get the old information.
-	Addresses map[string]any `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+	// Addresses maps every address to its domain.
+	Addresses map[string]string `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
 
 	// Continuation id to request the next page. Empty when there are no more addresses.
 	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
+}
+
+type DomainGetAddressesMsg struct {
+	Domain string `json:"domain" msgpack:"domain" mapstructure:"domain,omitempty" validate:"required"`
+	Limit  uint   `json:"limit,omitempty" msgpack:"limit,omitempty" mapstructure:"limit,omitempty"`
+
+	// Continuation id. The only state the client keeps: persist it and resend it to get the next
+	// page of the initial snapshot and, once that is done, the deltas. Empty starts a new sync.
+	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
+
+	// Dot notation paths of the client fields to return per address. Valid roots are "domain",
+	// "aliases" (the client's alias addresses; the primary is already the response key),
+	// "env.<key>" (the client's own env, not inherited) and "lastState.<sourceId>[.<field>...]".
+	//
+	// Requesting "aliases" requires the $addressAliasGet group on the domain, "env" requires
+	// $environmentGet and "lastState" requires $addressStatesGet, all on top of $domainGetAddresses.
+	Fields []string `json:"fields,omitempty" msgpack:"fields,omitempty" mapstructure:"fields,omitempty"`
+
+	// Timeout enables long-polling: when the delta phase has nothing to return, the router holds
+	// the request up to this duration, answering as soon as a client changes (capped server-side).
+	Timeout time.Duration `json:"timeout,omitempty" msgpack:"timeout,omitempty" mapstructure:"timeout,omitempty"`
+}
+
+type DomainGetAddressesResponseMsg struct {
+	// Addresses maps every address to the requested fields as a nested object (a pruned subset of
+	// the client). Apply as an upsert keyed by address.
+	Addresses map[string]any `json:"addresses" msgpack:"addresses" mapstructure:"addresses,omitempty"`
+
+	// Continuation id to request more. Never empty in this operation: keep resending it.
+	Cid string `json:"cid,omitempty" msgpack:"cid,omitempty" mapstructure:"cid,omitempty"`
+
+	// UpToDate is true on exactly one response: the one that completes the initial enumeration, at
+	// which point you hold the full snapshot. It is false while enumerating and while receiving
+	// deltas afterwards. omitempty, so it only appears on that response.
+	UpToDate bool `json:"upToDate,omitempty" msgpack:"upToDate,omitempty" mapstructure:"upToDate,omitempty"`
 }
 
 type DomainEnvironmentGetMsg struct {

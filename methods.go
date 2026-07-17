@@ -356,6 +356,13 @@ func (c *Client) DomainListAddresses(query *m.DomainListAddressesMsg, ctx ...con
 	return
 }
 
+func (c *Client) DomainGetAddresses(query *m.DomainGetAddressesMsg, ctx ...context.Context) (response *m.DomainGetAddressesResponseMsg, err error) {
+	message := &m.Message{To: m.CmdDomainGetAddresses, Data: query}
+	response = &m.DomainGetAddressesResponseMsg{}
+	err = c.Syscall(message, response, ctx...)
+	return
+}
+
 func (c *Client) GroupAddAddress(query *m.GroupAddAddressMsg, ctx ...context.Context) (response *m.GroupAddAddressResponseMsg, err error) {
 	message := &m.Message{To: m.CmdGroupAddAddress, Data: query}
 	response = &m.GroupAddAddressResponseMsg{}
