@@ -26,6 +26,8 @@ func init() {
 	cmdEventGet.PersistentFlags().String("meta-filter", "{\"$true\": 1}", "Mongo expression to filter events by the meta field")
 	cmdEventGet.PersistentFlags().String("csvdir", "", "Directory path used to export all events in csv format (if specified)")
 	cmdEventGet.PersistentFlags().Bool("continue", false, "Keep polling until cancelation")
+	cmdEventGet.PersistentFlags().String("type", "", "Filter by the indicated event type")
+	cmdEventGet.PersistentFlags().Bool("no-payload", false, "Do not request the event payload")
 	cmdEvent.AddCommand(cmdEventGet)
 
 	cmdEventGetRaw.Flags().String("format", "json", "Format to show results: [pretty, json]")
@@ -132,6 +134,8 @@ type GetEventsBaseParams struct {
 	MetaFilter    eval.CompiledExpr
 	Continue      bool
 	Csvdir        string
+	Type          string
+	NoPayload     bool
 }
 
 func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBaseParams, error) {
@@ -148,6 +152,8 @@ func parseGetEventsBaseParams(cmd *cobra.Command, args []string) (*GetEventsBase
 	sinceraw, _ := cmd.Flags().GetString("since")
 	params.Continue, _ = cmd.Flags().GetBool("continue")
 	params.Csvdir, _ = cmd.Flags().GetString("csvdir")
+	params.Type, _ = cmd.Flags().GetString("type")
+	params.NoPayload, _ = cmd.Flags().GetBool("no-payload")
 	params.Since, err = dateparse.ParseStrict(sinceraw)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 'since': %w", err)
