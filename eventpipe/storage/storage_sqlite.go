@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jaracil/ei"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SqliteStorage struct {
@@ -65,7 +65,7 @@ func (st *SqliteStorage) connect() error {
 	// Simple SQLite connection string
 	dsn := fmt.Sprintf("file:%s", st.dbPath)
 
-	st.st, err = sql.Open("sqlite3", dsn)
+	st.st, err = sql.Open("sqlite", dsn)
 	if err != nil {
 		return fmt.Errorf("failed to open SQLite database: %w", err)
 	}
